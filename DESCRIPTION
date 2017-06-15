@@ -1,0 +1,22 @@
+Package: soundgen
+Type: Package
+Title: Parametric Voice Synthesis
+Version: 0.1.0
+Authors@R: person("Andrey", "Anikin", email = "rty_anik@yahoo.com", role = c("aut", "cre"))
+Maintainer: Andrey Anikin <rty_anik@yahoo.com>
+URL: http://cogsci.se/soundgen.html
+Description: Tools for acoustic analysis and parametric synthesis of harmonic sounds.
+    Generates a combination of sine waves and noise filtered to add formants. 
+    The resulting sound can contain multiple harmonics, noise components, a flexible spectral envelope, effects like subharmonics or jitter, and one or more syllables.
+    This can be used to synthesize vocalizations of animals or human voice. 
+    Soundgen can be used as a command-line tool in R console or as an interactive Shiny app. 
+    Note that soundgen is not intended as a text-to-speech engine.
+License: GPL (>= 2)
+Encoding: UTF-8
+LazyData: true
+Imports: tuneR,
+    seewave,
+    zoo,
+    shiny,
+    shinyBS
+RoxygenNote: 6.0.1
