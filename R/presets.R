@@ -112,7 +112,7 @@ permittedValues = matrix ( c (
   'f2_width', 120, 25, 400, 25,
   'f3_width', 200, 25, 400, 25,
   'f4_width', 100, 25, 400, 25
-), ncol=5, byrow=T)
+), ncol=5, byrow=TRUE)
 temp = permittedValues[,1]
 permittedValues = apply (permittedValues[,2:5], 2, as.numeric)
 colnames(permittedValues)=c('default','low','high','step')

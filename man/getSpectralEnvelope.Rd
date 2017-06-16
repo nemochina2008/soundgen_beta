@@ -78,15 +78,15 @@ FFT.
 \examples{
 # [a] with F1-F4 visible
 image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50,
-  exactFormants=convertStringToFormants('a'),
+  exactFormants=soundgen:::convertStringToFormants('a'),
   temperature=0, samplingRate=16000)))
 # some "wiggling" of specified formants plus extra formants on top
 image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50,
-  exactFormants=convertStringToFormants('a'),
+  exactFormants=soundgen:::convertStringToFormants('a'),
   temperature=0.1, extraFormants_ampl=10, samplingRate=16000)))
 # stronger extra formants
 image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50,
-  exactFormants=convertStringToFormants('a'),
+  exactFormants=soundgen:::convertStringToFormants('a'),
   temperature=0.1, extraFormants_ampl=30, samplingRate=16000)))
 # a schwa based on the length of vocal tract = 15.5 cm
 image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50, exactFormants=NA,

@@ -6,7 +6,7 @@
 \usage{
 divideIntoSyllables(nSyl, sylDur_mean, pauseDur_mean, sylDur_min = 20,
   sylDur_max = 10000, pauseDur_min = 20, pauseDur_max = 1000,
-  temperature = 0.025, plot = F)
+  temperature = 0.025, plot = FALSE)
 }
 \arguments{
 \item{nSyl}{the desired number of syllables}
@@ -41,7 +41,7 @@ temperature is zero.
 }
 \examples{
 soundgen:::divideIntoSyllables (nSyl=5, sylDur_mean=180,
-  pauseDur_mean=55, temperature=0.2, plot=T)
+  pauseDur_mean=55, temperature=0.2, plot=TRUE)
 soundgen:::divideIntoSyllables (nSyl=5, sylDur_mean=180,
-  pauseDur_mean=55, temperature=0, plot=T)
+  pauseDur_mean=55, temperature=0, plot=TRUE)
 }

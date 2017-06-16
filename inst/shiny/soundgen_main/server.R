@@ -20,7 +20,7 @@ server <- function(input, output, session) {
                              'f3' = data.frame('time'=0, 'freq'=permittedValues['f3_freq','default'], 'amp'=permittedValues['f1_amp','default'], 'width'=permittedValues['f3_width','default'])
                            ),
                            'exactFormants_unvoiced' = NA,
-                           'updateDur' = F
+                           'updateDur' = FALSE
   )
 
   durTotal = reactive({
@@ -37,7 +37,7 @@ server <- function(input, output, session) {
   sliders_to_reset = c('')
 
   reset_all = reactive({  # this key function is EXTREMELY bug-prone - careful with what you change! The right order is crucial
-    myPars$updateDur = F # to prevent duration-related settings in myPars from being updated by event listener observeEvent(input$sylDur_mean) when a new preset is loaded
+    myPars$updateDur = FALSE # to prevent duration-related settings in myPars from being updated by event listener observeEvent(input$sylDur_mean) when a new preset is loaded
 
     # first reset everything to defaults
     for (v in rownames(permittedValues)[1 : which(rownames(permittedValues)=='repeatBout')]){
@@ -146,11 +146,11 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$sylDur_mean, { # has to be updated manually, b/c breathingAnchors are the only time anchors expressed in ms rather than 0 to 1 (b/c we don't want to rescale pre-syllable aspiration depending on the syllable duration)
-    if (myPars$updateDur==T){ # doesn't run if updateDur==F (set to F in reset_all())
+    if (myPars$updateDur==TRUE){ # doesn't run if updateDur==FALSE (set to F in reset_all())
       myPars$breathingAnchors$time[myPars$breathingAnchors$time>0] = round(myPars$breathingAnchors$time[myPars$breathingAnchors$time>0] * (input$nSyl*input$sylDur_mean+input$pauseDur_mean*(input$nSyl-1))/durTotal()) # rescale positive time anchors, but not negative ones (ie the length of pre-syllable aspiration does not vary as the syllable length changes - just doesn't seem to make sense)
       updateSliderInput(session, inputId='breathingTime', value=range(myPars$breathingAnchors$time))
     }
-    myPars$updateDur = T # after the first change (resetting), this update should be executed
+    myPars$updateDur = TRUE # after the first change (resetting), this update should be executed
   })
 
 
@@ -163,7 +163,7 @@ server <- function(input, output, session) {
     pitch_y_lwr = min ( input$pitchRange[1], min(myPars$pitchAnchors$ampl)/1.1 )
     pitch_y_upr = max ( input$pitchRange[2], max(myPars$pitchAnchors$ampl)*1.1 )
     print(pitch_y_upr)
-    getSmoothContour (anchors=myPars$pitchAnchors, len=input$sylDur_mean*permittedValues['pitch','high']/1000, plot=T, ylim=c(pitch_y_lwr,pitch_y_upr), samplingRate=permittedValues['pitch','high'], thisIsPitch=T)
+    getSmoothContour (anchors=myPars$pitchAnchors, len=input$sylDur_mean*permittedValues['pitch','high']/1000, plot=TRUE, ylim=c(pitch_y_lwr,pitch_y_upr), samplingRate=permittedValues['pitch','high'], thisIsPitch=TRUE)
   })
 
   observeEvent(input$plot_intonation_click, {
@@ -207,7 +207,7 @@ server <- function(input, output, session) {
                                           'ampl'=rep(myPars$pitchAnchors$ampl[1],2))  # flat pitch equal to the first pitch anchor
   })
 
-  output$pitch_anchors = renderTable(expr=data.frame('Time, ms'=round(myPars$pitchAnchors$time*input$sylDur_mean,0), 'Pitch, Hz'=round(myPars$pitchAnchors$ampl,0), row.names=1:length(myPars$pitchAnchors$time)), digits=0, align='c', rownames=F)
+  output$pitch_anchors = renderTable(expr=data.frame('Time, ms'=round(myPars$pitchAnchors$time*input$sylDur_mean,0), 'Pitch, Hz'=round(myPars$pitchAnchors$ampl,0), row.names=1:length(myPars$pitchAnchors$time)), digits=0, align='c', rownames=FALSE)
 
 
   ## P I T C H   G L O B A L
@@ -217,9 +217,9 @@ server <- function(input, output, session) {
 
   myPitchContour_global <- reactive({
     if (input$nSyl>1){
-      getDiscreteContour (anchors=myPars$pitchAnchors_global, len=input$nSyl, method='spline', plot=T, ylab='Pitch delta, semitones', ampl_floor=permittedValues['pitchDeltas','low'], ampl_ceiling=permittedValues['pitchDeltas','high'], ylim=c(permittedValues['pitchDeltas','low'], permittedValues['pitchDeltas','high']))
+      getDiscreteContour (anchors=myPars$pitchAnchors_global, len=input$nSyl, method='spline', plot=TRUE, ylab='Pitch delta, semitones', ampl_floor=permittedValues['pitchDeltas','low'], ampl_ceiling=permittedValues['pitchDeltas','high'], ylim=c(permittedValues['pitchDeltas','low'], permittedValues['pitchDeltas','high']))
     } else {
-      plot (1:10, 1:10, type='n', xlab='', ylab='', axes=F)
+      plot (1:10, 1:10, type='n', xlab='', ylab='', axes=FALSE)
       text (x=5, y=5, labels = 'Need >1 syllable!', adj=.5, col='blue', cex=1)
     }
 
@@ -266,7 +266,7 @@ server <- function(input, output, session) {
     myPars[['pitchAnchors_global']] = data.frame('time'=c(0,1),'ampl'=c(0,0))  # flat pitch modulation across syllables
   })
 
-  output$pitch_anchors_global = renderTable(expr=data.frame('Time 0 to 1'=myPars$pitchAnchors_global$time, 'Pitch delta, semitones'=round(myPars$pitchAnchors_global$ampl,0), row.names=1:length(myPars$pitchAnchors_global$time)), digits=2, align='c', rownames=F)
+  output$pitch_anchors_global = renderTable(expr=data.frame('Time 0 to 1'=myPars$pitchAnchors_global$time, 'Pitch delta, semitones'=round(myPars$pitchAnchors_global$ampl,0), row.names=1:length(myPars$pitchAnchors_global$time)), digits=2, align='c', rownames=FALSE)
 
 
   ## BREATHING
@@ -280,7 +280,7 @@ server <- function(input, output, session) {
     br_ylim_low = permittedValues['breathing_ampl', 'low']
     br_ylim_high = permittedValues['breathing_ampl', 'high']
     nTicks = length(seq(br_ylim_low, br_ylim_high, by=20))-1
-    getSmoothContour(anchors=myPars$breathingAnchors, plot=T, xlim=c(br_xlim_low, br_xlim_high), ylim=c(br_ylim_low, br_ylim_high), voiced=input$sylDur_mean, contourLabel='breathing', ampl_floor=br_ylim_low, ampl_ceiling=br_ylim_high, yaxp=c(br_ylim_low, br_ylim_high, nTicks))
+    getSmoothContour(anchors=myPars$breathingAnchors, plot=TRUE, xlim=c(br_xlim_low, br_xlim_high), ylim=c(br_ylim_low, br_ylim_high), voiced=input$sylDur_mean, contourLabel='breathing', ampl_floor=br_ylim_low, ampl_ceiling=br_ylim_high, yaxp=c(br_ylim_low, br_ylim_high, nTicks))
   })
 
   observeEvent(input$plot_unvoiced_click, {
@@ -321,7 +321,7 @@ server <- function(input, output, session) {
       'ampl'=rep(myPars$breathingAnchors$ampl[1],2)  # flat pitch equal to the first pitch anchor
     )})
 
-  output$breathing_anchors = renderTable(expr=data.frame('Time, ms'=round(myPars$breathingAnchors$time,0), 'Amplitude, dB'=round(myPars$breathingAnchors$ampl,0), row.names=1:length(myPars$breathingAnchors$time)), digits=0, align='c', rownames=F)
+  output$breathing_anchors = renderTable(expr=data.frame('Time, ms'=round(myPars$breathingAnchors$time,0), 'Amplitude, dB'=round(myPars$breathingAnchors$ampl,0), row.names=1:length(myPars$breathingAnchors$time)), digits=0, align='c', rownames=FALSE)
 
 
   ## MOUTH OPENING
@@ -330,7 +330,7 @@ server <- function(input, output, session) {
   })
 
   myMouthOpening <- reactive({
-    getSmoothContour(anchors=myPars$mouthAnchors, len=durSyl_withBreathing()/1000*1000, samplingRate=1000, plot=T, contourLabel='mouth', xlim=c(0,durSyl_withBreathing()), xaxs="i", ylim=c(permittedValues['mouthOpening','low'],permittedValues['mouthOpening','high']), ampl_floor=permittedValues['mouthOpening','low'], ampl_ceiling=permittedValues['mouthOpening','high'])  # # xaxs="i" to enforce exact axis limits, otherwise we exceed the range. OR: xlim=range(myPars$breathingAnchors$time)
+    getSmoothContour(anchors=myPars$mouthAnchors, len=durSyl_withBreathing()/1000*1000, samplingRate=1000, plot=TRUE, contourLabel='mouth', xlim=c(0,durSyl_withBreathing()), xaxs="i", ylim=c(permittedValues['mouthOpening','low'],permittedValues['mouthOpening','high']), ampl_floor=permittedValues['mouthOpening','low'], ampl_ceiling=permittedValues['mouthOpening','high'])  # # xaxs="i" to enforce exact axis limits, otherwise we exceed the range. OR: xlim=range(myPars$breathingAnchors$time)
   })
 
   observeEvent(input$plot_mouth_click, {
@@ -374,7 +374,7 @@ server <- function(input, output, session) {
                                           'ampl'=c(.5,.5))  # default mouth opening
   })
 
-  output$mouth_anchors = renderTable(expr=data.frame('Time, ms'=as.integer(round(myPars$mouthAnchors$time*durSyl_withBreathing())), 'Open'=myPars$mouthAnchors$ampl, row.names=1:length(myPars$mouthAnchors$time)), digits=2, align='c', rownames=F)
+  output$mouth_anchors = renderTable(expr=data.frame('Time, ms'=as.integer(round(myPars$mouthAnchors$time*durSyl_withBreathing())), 'Open'=myPars$mouthAnchors$ampl, row.names=1:length(myPars$mouthAnchors$time)), digits=2, align='c', rownames=FALSE)
 
 
   ## AMPLITUDE ENVELOPE LOCAL (PER VOICED SYLLABLE)
@@ -383,7 +383,7 @@ server <- function(input, output, session) {
   })
 
   amplEnvelope_syl <- reactive({
-    getSmoothContour (anchors=myPars$amplAnchors, plot=T, xaxs="i", xlim=c(0,input$sylDur_mean), ylim=c(0, -throwaway_dB), ampl_floor=0, ampl_ceiling=-throwaway_dB, len=input$sylDur_mean/1000*1000, samplingRate=1000)  # xaxs="i" to enforce exact axis limits, otherwise we exceed the range
+    getSmoothContour (anchors=myPars$amplAnchors, plot=TRUE, xaxs="i", xlim=c(0,input$sylDur_mean), ylim=c(0, -throwaway_dB), ampl_floor=0, ampl_ceiling=-throwaway_dB, len=input$sylDur_mean/1000*1000, samplingRate=1000)  # xaxs="i" to enforce exact axis limits, otherwise we exceed the range
   })
 
   observeEvent(input$plot_ampl_syl_click, {
@@ -427,7 +427,7 @@ server <- function(input, output, session) {
                                          'ampl'=rep(myPars$amplAnchors$ampl[1],2))  # flat ampl equal to the first ampl anchor
   })
 
-  output$ampl_syl_anchors = renderTable(expr=data.frame('Time, ms'=as.integer(round(myPars$amplAnchors$time*input$sylDur_mean,0)), 'Amplitude'=myPars$amplAnchors$ampl, row.names=1:length(myPars$amplAnchors$time)), digits=0, align='c', rownames=F)
+  output$ampl_syl_anchors = renderTable(expr=data.frame('Time, ms'=as.integer(round(myPars$amplAnchors$time*input$sylDur_mean,0)), 'Amplitude'=myPars$amplAnchors$ampl, row.names=1:length(myPars$amplAnchors$time)), digits=0, align='c', rownames=FALSE)
 
 
   ## AMPLITUDE ENVELOPE GLOBAL (PER BOUT)
@@ -437,9 +437,9 @@ server <- function(input, output, session) {
 
   amplEnvelope_global <- reactive({
     if (input$nSyl>1){
-      getSmoothContour (anchors=myPars$amplAnchors_global, xaxs="i", xlim=c(0,durTotal()), ylim=c(0, -throwaway_dB), ampl_floor=0, ampl_ceiling=-throwaway_dB, len=durTotal()/1000*100, samplingRate=100, plot=T)
+      getSmoothContour (anchors=myPars$amplAnchors_global, xaxs="i", xlim=c(0,durTotal()), ylim=c(0, -throwaway_dB), ampl_floor=0, ampl_ceiling=-throwaway_dB, len=durTotal()/1000*100, samplingRate=100, plot=TRUE)
     } else {
-      plot (1:10, 1:10, type='n', xlab='', ylab='', axes=F)
+      plot (1:10, 1:10, type='n', xlab='', ylab='', axes=FALSE)
       text (x=5, y=5, labels = 'Need >1 syllable!', adj=.5, col='blue', cex=1)
     }
   })
@@ -485,21 +485,21 @@ server <- function(input, output, session) {
                                                 'ampl'=rep(myPars$amplAnchors_global$ampl[1],2))  # flat ampl equal to the first ampl anchor
   })
 
-  output$ampl_global_anchors = renderTable(expr=data.frame('Time, ms'=as.integer(round(myPars$amplAnchors_global$time*durTotal(),0)), 'Amplitude'=myPars$amplAnchors_global$ampl, row.names=1:length(myPars$amplAnchors_global$time)), digits=0, align='c', rownames=F)
+  output$ampl_global_anchors = renderTable(expr=data.frame('Time, ms'=as.integer(round(myPars$amplAnchors_global$time*durTotal(),0)), 'Amplitude'=myPars$amplAnchors_global$ampl, row.names=1:length(myPars$amplAnchors_global$time)), digits=0, align='c', rownames=FALSE)
 
 
   ## O T H E R    P L O T S
   output$plot_syllables = renderPlot({
-    divideIntoSyllables (sylDur_mean=input$sylDur_mean, nSyl=input$nSyl, pauseDur_mean=input$pauseDur_mean, sylDur_min=permittedValues['sylDur_mean','low'], sylDur_max=permittedValues['sylDur_mean','high'], pauseDur_min=permittedValues['pauseDur_mean','low'], pauseDur_max=permittedValues['pauseDur_mean','high'], temperature=input$temperature, plot=T)
+    divideIntoSyllables (sylDur_mean=input$sylDur_mean, nSyl=input$nSyl, pauseDur_mean=input$pauseDur_mean, sylDur_min=permittedValues['sylDur_mean','low'], sylDur_max=permittedValues['sylDur_mean','high'], pauseDur_min=permittedValues['pauseDur_mean','low'], pauseDur_max=permittedValues['pauseDur_mean','high'], temperature=input$temperature, plot=TRUE)
   })
 
   output$plot_variation = renderPlot({
-    divideIntoSyllables (sylDur_mean=input$sylDur_mean, nSyl=input$nSyl, pauseDur_mean=input$pauseDur_mean, sylDur_min=permittedValues['sylDur_mean','low'], sylDur_max=permittedValues['sylDur_mean','high'], pauseDur_min=permittedValues['pauseDur_mean','low'], pauseDur_max=permittedValues['pauseDur_mean','high'], temperature=input$temperature, plot=T)
+    divideIntoSyllables (sylDur_mean=input$sylDur_mean, nSyl=input$nSyl, pauseDur_mean=input$pauseDur_mean, sylDur_min=permittedValues['sylDur_mean','low'], sylDur_max=permittedValues['sylDur_mean','high'], pauseDur_min=permittedValues['pauseDur_mean','low'], pauseDur_max=permittedValues['pauseDur_mean','high'], temperature=input$temperature, plot=TRUE)
   })
 
   output$plot_spectrum = renderPlot({
     # meanspec (myPars$sound, f=input$samplingRate, dB='max0', wl=floor(input$spec_windowLength*input$samplingRate/1000/2)*2, flim=c(0,10), main='Spectrum')
-    getRolloff(pitch_per_gc=getSmoothContour(myPars$pitchAnchors), rolloff_exp=input$rolloff_exp, rolloff_exp_delta=input$rolloff_exp_delta, quadratic_delta=input$quadratic_delta, quadratic_nHarm=input$quadratic_nHarm, adjust_rolloff_per_kHz=input$adjust_rolloff_per_kHz, baseline_Hz=200, throwaway_dB=throwaway_dB, samplingRate=input$samplingRate, plot=T)
+    getRolloff(pitch_per_gc=getSmoothContour(myPars$pitchAnchors), rolloff_exp=input$rolloff_exp, rolloff_exp_delta=input$rolloff_exp_delta, quadratic_delta=input$quadratic_delta, quadratic_nHarm=input$quadratic_nHarm, adjust_rolloff_per_kHz=input$adjust_rolloff_per_kHz, baseline_Hz=200, throwaway_dB=throwaway_dB, samplingRate=input$samplingRate, plot=TRUE)
   })
 
   output$plot_settings = renderPlot({
@@ -527,7 +527,7 @@ server <- function(input, output, session) {
   })
 
   output$spectrogram <- renderPlot({
-    spectro_denoised (myPars$sound, samplingRate=input$samplingRate, wn='gaussian', windowLength=input$spec_windowLength, step=round(input$spec_windowLength/4), osc=T, xlab='Time, ms', ylab='Frequency, kHz', main='Spectrogram', contrast=input$spec_contrast, brightness=input$spec_brightness, colorTheme=input$spec_colorTheme, method=input$spec_method, ylim=c(input$spec_ylim[1], input$spec_ylim[2]))
+    spectro_denoised (myPars$sound, samplingRate=input$samplingRate, wn='gaussian', windowLength=input$spec_windowLength, step=round(input$spec_windowLength/4), osc=TRUE, xlab='Time, ms', ylab='Frequency, kHz', main='Spectrogram', contrast=input$spec_contrast, brightness=input$spec_brightness, colorTheme=input$spec_colorTheme, method=input$spec_method, ylim=c(input$spec_ylim[1], input$spec_ylim[2]))
   })
 
 
@@ -563,7 +563,7 @@ server <- function(input, output, session) {
       file.remove(paste0('www/',myPars$myfile)) # first remove the previous sound file to avoid cluttering up the www/ folder
     }
     myPars$sound = eval(parse(text=mycall())) # generate audio
-    randomID = paste (sample (c(letters, 0:9), 8, replace=T), collapse='')
+    randomID = paste (sample (c(letters, 0:9), 8, replace=TRUE), collapse='')
     myPars$myfile = paste0(randomID, '.wav')
     seewave::savewav (myPars$sound, f=input$samplingRate, filename=paste0('www/',myPars$myfile)) # this is the new sound file. NB: has to be saved in www/ !!!
     output$myAudio = renderUI (

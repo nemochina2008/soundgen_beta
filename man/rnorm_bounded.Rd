@@ -5,7 +5,7 @@
 \title{Random draw from a truncated normal distribution}
 \usage{
 rnorm_bounded(n = 1, mean = 0, sd = 1, low = NULL, high = NULL,
-  roundToInteger = F)
+  roundToInteger = FALSE)
 }
 \arguments{
 \item{n}{the number of values to return}
@@ -32,7 +32,8 @@ is repeated until there are enough values within the specified range. Fully
 vectorized.
 }
 \examples{
-soundgen:::rnorm_bounded (n=3, mean=10, sd=5, low=7, high=NULL, roundToInteger=c(T,F,F))
+soundgen:::rnorm_bounded (n=3, mean=10, sd=5, low=7, high=NULL,
+  roundToInteger=c(TRUE,FALSE,FALSE))
 soundgen:::rnorm_bounded (n=3, mean=c(10, 50, 100), sd=c(5, 0, 20),
-  roundToInteger=T) # vectorized
+  roundToInteger=TRUE) # vectorized
 }

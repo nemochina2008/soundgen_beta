@@ -4,7 +4,7 @@
 \alias{wiggleAnchors}
 \title{Randomly modify anchors}
 \usage{
-wiggleAnchors(df, temperature, temp_coef, low, high, wiggleAllRows = F)
+wiggleAnchors(df, temperature, temp_coef, low, high, wiggleAllRows = FALSE)
 }
 \arguments{
 \item{df}{dataframe of anchors, for ex. \code{data.frame(time = c(0, .1, .8,
@@ -39,7 +39,7 @@ running forever!
 }
 \examples{
 soundgen:::wiggleAnchors(df=data.frame(time=c(0,.1,.8,1), ampl=c(100,230,180,90)),
-  temperature=.2, temp_coef=.1, low=c(0,50), high=c(1,1000), wiggleAllRows = F) # pitch
+  temperature=.2, temp_coef=.1, low=c(0,50), high=c(1,1000), wiggleAllRows = FALSE) # pitch
 soundgen:::wiggleAnchors(df=data.frame(time=c(-100,100,600,900), ampl=c(-120,-80,0,-120)),
-  temperature=.1, temp_coef=.5, low=c(-Inf,-120), high=c(+Inf,30), wiggleAllRows=T) # breathing
+  temperature=.1, temp_coef=.5, low=c(-Inf,-120), high=c(+Inf,30), wiggleAllRows=TRUE) # breathing
 }

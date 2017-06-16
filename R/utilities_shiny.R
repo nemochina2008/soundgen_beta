@@ -43,7 +43,7 @@ pickle = function(l){
       out = paste0(out, names(l)[i], '=data.frame( time=c(', paste0(round(l[[i]]$time,2),collapse=","), '), freq=c(', freq, '), amp=c(', amp, '), width=c(', width, ')),\n')
     }
     substr(out, nchar(out)-1, nchar(out)) = ')'  #  replace the last comma with )
-  }, silent=T)
+  }, silent=TRUE)
   if (class(temp)=='try-error') return(NA)
   return(out)  # to go back to the list structure, use eval(parse(text=out))
 }

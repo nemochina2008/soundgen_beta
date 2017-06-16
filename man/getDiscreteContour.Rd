@@ -6,7 +6,7 @@
 \usage{
 getDiscreteContour(len, anchors = data.frame(time = c(0, 1), ampl = c(1, 1)),
   method = c("spline", "loess")[2], ampl_floor = NULL,
-  ampl_ceiling = NULL, ylim = NULL, plot = F, ...)
+  ampl_ceiling = NULL, ylim = NULL, plot = FALSE, ...)
 }
 \arguments{
 \item{len}{the number of syllables (equivalently, the length of generated contour)}
@@ -43,6 +43,6 @@ A discrete version of \code{\link{getSmoothContour}} with modified plotting. Int
 }
 \examples{
 # for a bout consisting of 10 syllables
-soundgen:::getDiscreteContour (len=10, method='spline', plot=T, ylab='Semitones',
+soundgen:::getDiscreteContour (len=10, method='spline', plot=TRUE, ylab='Semitones',
   anchors=data.frame(time=c(0,.2,.6,1),ampl=c(0,-3,1,0)))
 }

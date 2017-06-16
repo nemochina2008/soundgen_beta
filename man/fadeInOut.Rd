@@ -4,7 +4,7 @@
 \alias{fadeInOut}
 \title{Fade-in and fade-out}
 \usage{
-fadeInOut(ampl, do_fadeIn = T, do_fadeOut = T, length_fade = 1000)
+fadeInOut(ampl, do_fadeIn = TRUE, do_fadeOut = TRUE, length_fade = 1000)
 }
 \arguments{
 \item{ampl}{numeric vector such as a waveform}
@@ -28,7 +28,7 @@ both ends of input vector.
 \examples{
 ampl = sin(1:1000)
 plot(soundgen:::fadeInOut(ampl, length_fade=100), type='l')
-plot(soundgen:::fadeInOut(ampl, length_fade=300, do_fadeOut=F), type='l')
+plot(soundgen:::fadeInOut(ampl, length_fade=300, do_fadeOut=FALSE), type='l')
 # if the vector is shorter than twice the specified length_fade,
 # fade-in/out regions overlap
 plot(soundgen:::fadeInOut(ampl, length_fade=700), type='l')

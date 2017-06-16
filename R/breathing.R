@@ -60,7 +60,7 @@ getBreathing = function(len, breathingAnchors=data.frame('time'=c(0,300), 'ampl'
   breathingAnchors$ampl = 2^(breathingAnchors$ampl/10)
 
   # convert anchors to a smooth contour of breathing amplitudes
-  breathingStrength = getSmoothContour(len=len, anchors=breathingAnchors, ampl_floor=permittedValues['breathing_ampl','low'], ampl_ceiling=permittedValues['breathing_ampl','high'], samplingRate=samplingRate, plot=F)   # plot(breathingStrength)
+  breathingStrength = getSmoothContour(len=len, anchors=breathingAnchors, ampl_floor=permittedValues['breathing_ampl','low'], ampl_ceiling=permittedValues['breathing_ampl','high'], samplingRate=samplingRate, plot=FALSE)   # plot(breathingStrength)
   if (is.na(breathingStrength)){
     return (rep(0,len))
   }
@@ -84,7 +84,7 @@ getBreathing = function(len, breathingAnchors=data.frame('time'=c(0,300), 'ampl'
   breathing = as.numeric (seewave::istft(z1_filtered, f=samplingRate, ovlp=overlap, wl=windowLength_points, output="matrix")) # inverse FFT
   breathing = matchLengths(breathing, len=len) # pad with 0s or shorten to the required length
   breathing = breathing/max(breathing) * breathingStrength # normalize
-  breathing = fadeInOut(breathing, do_fadeIn=T, do_fadeOut=T, length_fade=floor(attackLen*samplingRate/1000))  # add attack
+  breathing = fadeInOut(breathing, do_fadeIn=TRUE, do_fadeOut=TRUE, length_fade=floor(attackLen*samplingRate/1000))  # add attack
   # plot(breathing, type='l')
   # playme(breathing, samplingRate=samplingRate); spectro_denoised(breathing, samplingRate=samplingRate)
   # seewave::meanspec(breathing, f=samplingRate, wl=windowLength_points, dB='max0')

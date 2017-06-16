@@ -148,7 +148,7 @@ getEntropy = function(x) {
 #' # basic spectrogram
 #' spectro_denoised(sound, samplingRate=16000)
 #' # add an oscillogram
-#' spectro_denoised(sound, samplingRate=16000, osc=T)
+#' spectro_denoised(sound, samplingRate=16000, osc=TRUE)
 #' # broad-band instead of narrow-band
 #' spectro_denoised(sound, samplingRate=16000, windowLength=5)
 #' # spectral derivatives
@@ -165,9 +165,9 @@ getEntropy = function(x) {
 #' spectro_denoised(sound, samplingRate=16000, contrast=1, brightness=-1)
 #'
 #' # add bells and whistles
-#' spectro_denoised(sound, samplingRate=16000, osc=T, contrast=1, brightness=-1,
+#' spectro_denoised(sound, samplingRate=16000, osc=TRUE, contrast=1, brightness=-1,
 #'   colorTheme='heat.colors', xlab = 'Time, ms', ylab = 'Frequency, kHz', ylim=c(0,5))
-spectro_denoised = function (soundfile, frameBank=NULL, samplingRate=NULL, windowLength=50, step=15, wn='gaussian', zp=0, median_smoothing_freq=0, median_smoothing_time=0, denoise_median_time=0, percentNoise=0, noiseReduction=0, contrast=.2, brightness=0, method=c('spectrum','spectralDerivative')[1], output=c('none','original','processed')[1], ylim=NULL, plot=T, osc=F, colorTheme = c('bw','seewave','...')[1], xlab='', ...) {
+spectro_denoised = function (soundfile, frameBank=NULL, samplingRate=NULL, windowLength=50, step=15, wn='gaussian', zp=0, median_smoothing_freq=0, median_smoothing_time=0, denoise_median_time=0, percentNoise=0, noiseReduction=0, contrast=.2, brightness=0, method=c('spectrum','spectralDerivative')[1], output=c('none','original','processed')[1], ylim=NULL, plot=TRUE, osc=F, colorTheme = c('bw','seewave','...')[1], xlab='', ...) {
   if (is.null(ylim)) ylim = c(0, floor(samplingRate/2/1000))
   contrast_exp = exp(3*contrast) # visualization: plot(exp(3*seq(-1,1,by=.01)), type='l')
   brightness_exp = exp(3*brightness)
@@ -267,12 +267,12 @@ spectro_denoised = function (soundfile, frameBank=NULL, samplingRate=NULL, windo
   }
 
   if (plot){
-    op <- par(no.readonly = T)
+    op <- par(no.readonly = TRUE)
     if (osc){
       layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = c(3,1))
       par(mar = c(5.1, 4.1, 0, 2.1), xaxt='s', yaxt='n')
       plot(seq(1, duration*1000, length.out=length(sound)), sound, type = "l", xaxs = "i", yaxs = "i", xlab=xlab, ylab='')
-      axis(side = 1, labels = T)
+      axis(side = 1, labels = TRUE)
       abline(h = 0, lty = 2)
       par(mar = c(0, 4.1, 2.1, 2.1), xaxt='n', yaxt='s')
       xlab=''

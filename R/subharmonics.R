@@ -56,7 +56,7 @@ getVocalFry_per_epoch = function(rolloff, pitch_per_gc, nSubharm, sideband_width
 
   # clean up
   rolloff_new[rolloff_new<throwaway] = 0
-  rolloff_new = rolloff_new [apply(rolloff_new, 1, sum)>0,,drop=F]
+  rolloff_new = rolloff_new [apply(rolloff_new, 1, sum)>0,,drop=FALSE]
   return(rolloff_new)
 }
 
@@ -120,7 +120,7 @@ getVocalFry = function(rolloff, pitch_per_gc, g0=100, sideband_width_hz=100, thr
   rolloff_new = vector("list", nEpochs)
   for (e in 1:nEpochs){
     idx = epoch_start_idx[e] : epoch_end_idx[e]
-    rolloff_new[[e]] = getVocalFry_per_epoch (rolloff = rolloff[,idx,drop=F],
+    rolloff_new[[e]] = getVocalFry_per_epoch (rolloff = rolloff[,idx,drop=FALSE],
                                               pitch_per_gc = pitch_per_gc[idx],
                                               nSubharm = nSubharm_per_epoch[e],
                                               sideband_width_vector=sideband_width_hz[idx],

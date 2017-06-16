@@ -33,17 +33,17 @@
 #' @return Numeric vector.
 #' @examples
 #' a=soundgen:::getSmoothContour (anchors=data.frame(time=c(50,137,300), ampl=c(0.03, 0.78, 0.5)),
-#'   voiced=200, ampl_floor=0, plot=T, main='', samplingRate=samplingRate) # breathing
+#'   voiced=200, ampl_floor=0, plot=TRUE, main='', samplingRate=16000) # breathing
 #' a=soundgen:::getSmoothContour (anchors=data.frame(time=c(0,.1), ampl=c(350, 800)),
-#'   len=5500, thisIsPitch=T, plot=T, samplingRate=3500) # pitch
+#'   len=5500, thisIsPitch=TRUE, plot=TRUE, samplingRate=3500) # pitch
 #'
 #' # a single anchor = constant pitch
 #' a=soundgen:::getSmoothContour (anchors=data.frame(time=0, ampl=800),
-#'   len=500, thisIsPitch=T, plot=T, samplingRate=500)
+#'   len=500, thisIsPitch=TRUE, plot=TRUE, samplingRate=500)
 #' # two anchors = loglinear pitch change
 #' a=soundgen:::getSmoothContour (anchors=data.frame(time=c(0,1), ampl=c(220,440)),
-#'   len=500, thisIsPitch=T, plot=T, samplingRate=500)
-getSmoothContour = function(anchors=data.frame(time=c(0,1), ampl=c(0,1)), len=NULL, thisIsPitch=F, method=c('spline','loess')[2], ampl_floor=NULL, ampl_ceiling=NULL, plot=F, main='', xlim=NULL, ylim=NULL, samplingRate=44100, voiced=NULL, contourLabel=NULL, ...){
+#'   len=500, thisIsPitch=TRUE, plot=TRUE, samplingRate=500)
+getSmoothContour = function(anchors=data.frame(time=c(0,1), ampl=c(0,1)), len=NULL, thisIsPitch=FALSE, method=c('spline','loess')[2], ampl_floor=NULL, ampl_ceiling=NULL, plot=FALSE, main='', xlim=NULL, ylim=NULL, samplingRate=44100, voiced=NULL, contourLabel=NULL, ...){
   if (!is.null(ampl_floor)){anchors$ampl[anchors$ampl<ampl_floor] = ampl_floor}
   if (!is.null(ampl_ceiling)){anchors$ampl[anchors$ampl>ampl_ceiling] = ampl_ceiling}
   if (thisIsPitch){
@@ -82,20 +82,20 @@ getSmoothContour = function(anchors=data.frame(time=c(0,1), ampl=c(0,1)), len=NU
       # let's draw a smooth curve through the given anchors
       span = (1/(1+exp(duration_ms/500)) + 0.5) / 1.1^(nrow(anchors)-3) # NB: need to compensate for variable number of points, namely decrease smoothing as the number of points increases, hence the "1.1^..." term # duration_ms = 50:9000; span = 1/(1+exp(duration_ms/500)) + 0.5; plot (duration_ms, span, type='l')
       l = loess(anchors_long~time, span=span) # plot (time, anchors_long)
-      smoothContour = try (predict(l, time), silent=T) # plot(time, smoothContour)
+      smoothContour = try (predict(l, time), silent=TRUE) # plot(time, smoothContour)
 
       # for long duration etc, larger span may be necessary to avoid an error in loess
       while (class(smoothContour)=='try-error'){
         span = span+0.1
         l = loess(anchors_long~time, span=span)
-        smoothContour = try (predict(l, time), silent=T)
+        smoothContour = try (predict(l, time), silent=TRUE)
       }
       # plot (smoothContour, type='l')
 
-      while (sum(smoothContour<ampl_floor-1e-6, na.rm=T) > 0) { # in case we get values below ampl_floor, less smoothing should be used. NB: -1e-6 avoid floating point problem, otherwise we get weird cases of -120 (float) < -120 (integer)
+      while (sum(smoothContour<ampl_floor-1e-6, na.rm=TRUE) > 0) { # in case we get values below ampl_floor, less smoothing should be used. NB: -1e-6 avoid floating point problem, otherwise we get weird cases of -120 (float) < -120 (integer)
         span = span/1.1
         l = loess(anchors_long~time, span=span)
-        smoothContour = try (predict(l, time), silent=T)
+        smoothContour = try (predict(l, time), silent=TRUE)
       }
     }
     smoothContour[smoothContour < ampl_floor] = ampl_floor
@@ -159,9 +159,9 @@ getSmoothContour = function(anchors=data.frame(time=c(0,1), ampl=c(0,1)), len=NU
 #' @return Numeric vector.
 #' @examples
 #' # for a bout consisting of 10 syllables
-#' soundgen:::getDiscreteContour (len=10, method='spline', plot=T, ylab='Semitones',
+#' soundgen:::getDiscreteContour (len=10, method='spline', plot=TRUE, ylab='Semitones',
 #'   anchors=data.frame(time=c(0,.2,.6,1),ampl=c(0,-3,1,0)))
-getDiscreteContour = function(len, anchors=data.frame(time=c(0,1),ampl=c(1,1)), method=c('spline','loess')[2], ampl_floor=NULL, ampl_ceiling=NULL, ylim=NULL, plot=F, ...){
+getDiscreteContour = function(len, anchors=data.frame(time=c(0,1),ampl=c(1,1)), method=c('spline','loess')[2], ampl_floor=NULL, ampl_ceiling=NULL, ylim=NULL, plot=FALSE, ...){
   contour = getSmoothContour(len=len, anchors=anchors, method=method, ampl_floor=ampl_floor, ampl_ceiling=ampl_ceiling)
   if (plot){
     if(is.null(ylim)) {ylim = c( min(min(contour),min(anchors$ampl)), max(max(contour),max(anchors$ampl)))}
@@ -197,20 +197,20 @@ getDiscreteContour = function(len, anchors=data.frame(time=c(0,1),ampl=c(1,1)), 
 #' @return Modified original dataframe.
 #' @examples
 #' soundgen:::wiggleAnchors(df=data.frame(time=c(0,.1,.8,1), ampl=c(100,230,180,90)),
-#'   temperature=.2, temp_coef=.1, low=c(0,50), high=c(1,1000), wiggleAllRows = F) # pitch
+#'   temperature=.2, temp_coef=.1, low=c(0,50), high=c(1,1000), wiggleAllRows = FALSE) # pitch
 #' soundgen:::wiggleAnchors(df=data.frame(time=c(-100,100,600,900), ampl=c(-120,-80,0,-120)),
-#'   temperature=.1, temp_coef=.5, low=c(-Inf,-120), high=c(+Inf,30), wiggleAllRows=T) # breathing
-wiggleAnchors = function(df, temperature, temp_coef, low, high, wiggleAllRows=F){
+#'   temperature=.1, temp_coef=.5, low=c(-Inf,-120), high=c(+Inf,30), wiggleAllRows=TRUE) # breathing
+wiggleAnchors = function(df, temperature, temp_coef, low, high, wiggleAllRows=FALSE){
   if (is.na(df)) return(NA)
   if(wiggleAllRows){
-    df[,1] = rnorm_bounded(n=nrow(df), mean=df[,1], sd=temperature*max(abs(df[,1]))*temp_coef, low=low[1], high=high[1], roundToInteger=F)
+    df[,1] = rnorm_bounded(n=nrow(df), mean=df[,1], sd=temperature*max(abs(df[,1]))*temp_coef, low=low[1], high=high[1], roundToInteger=FALSE)
   } else { # don't wiggle the first and last time values
     idx1 = ifelse(nrow(df)<3, NA, 2:(nrow(df)-1))
     if (!is.na(idx1)){
       temp = df[idx1,1]
-      df[idx1,1] =  rnorm_bounded(n=length(temp), mean=temp, sd=temperature*max(abs(df[,1]))*temp_coef, low=low[1], high=high[1], roundToInteger=F)
+      df[idx1,1] =  rnorm_bounded(n=length(temp), mean=temp, sd=temperature*max(abs(df[,1]))*temp_coef, low=low[1], high=high[1], roundToInteger=FALSE)
     }
   }
-  df[,2] = rnorm_bounded(n=nrow(df), mean=df[,2], sd=temperature*abs(high[2]-low[2])*temp_coef, low=low[2], high=high[2], roundToInteger=F)
+  df[,2] = rnorm_bounded(n=nrow(df), mean=df[,2], sd=temperature*abs(high[2]-low[2])*temp_coef, low=low[2], high=high[2], roundToInteger=FALSE)
   return(df)
 }

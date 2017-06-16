@@ -10,7 +10,7 @@ spectro_denoised(soundfile, frameBank = NULL, samplingRate = NULL,
   denoise_median_time = 0, percentNoise = 0, noiseReduction = 0,
   contrast = 0.2, brightness = 0, method = c("spectrum",
   "spectralDerivative")[1], output = c("none", "original", "processed")[1],
-  ylim = NULL, plot = T, osc = F, colorTheme = c("bw", "seewave",
+  ylim = NULL, plot = TRUE, osc = F, colorTheme = c("bw", "seewave",
   "...")[1], xlab = "", ...)
 }
 \arguments{
@@ -96,7 +96,7 @@ sound = generateBout(sylDur_mean=1000, samplingRate=16000,
 # basic spectrogram
 spectro_denoised(sound, samplingRate=16000)
 # add an oscillogram
-spectro_denoised(sound, samplingRate=16000, osc=T)
+spectro_denoised(sound, samplingRate=16000, osc=TRUE)
 # broad-band instead of narrow-band
 spectro_denoised(sound, samplingRate=16000, windowLength=5)
 # spectral derivatives
@@ -113,6 +113,6 @@ spectro_denoised(sound, samplingRate=16000, median_smoothing_freq=5, median_smoo
 spectro_denoised(sound, samplingRate=16000, contrast=1, brightness=-1)
 
 # add bells and whistles
-spectro_denoised(sound, samplingRate=16000, osc=T, contrast=1, brightness=-1,
+spectro_denoised(sound, samplingRate=16000, osc=TRUE, contrast=1, brightness=-1,
   colorTheme='heat.colors', xlab = 'Time, ms', ylab = 'Frequency, kHz', ylim=c(0,5))
 }

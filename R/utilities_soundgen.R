@@ -89,7 +89,7 @@ convertStringToFormants = function(phonemeString, speaker='M1'){
   }
 
   # remove formants with amplitude 0 at all time points
-  exactFormants = exactFormants [which(unlist(lapply(exactFormants, function(f)sum(f$amp) != 0))),drop=F]
+  exactFormants = exactFormants [which(unlist(lapply(exactFormants, function(f)sum(f$amp) != 0))),drop=FALSE]
 
   return (exactFormants)
 }
@@ -113,10 +113,11 @@ convertStringToFormants = function(phonemeString, speaker='M1'){
 #'   corresponding value is rounded to the nearest integer.
 #' @return A vector of length n.
 #' @examples
-#' soundgen:::rnorm_bounded (n=3, mean=10, sd=5, low=7, high=NULL, roundToInteger=c(T,F,F))
+#' soundgen:::rnorm_bounded (n=3, mean=10, sd=5, low=7, high=NULL,
+#'   roundToInteger=c(TRUE,FALSE,FALSE))
 #' soundgen:::rnorm_bounded (n=3, mean=c(10, 50, 100), sd=c(5, 0, 20),
-#'   roundToInteger=T) # vectorized
-rnorm_bounded = function(n=1, mean=0, sd=1, low=NULL, high=NULL, roundToInteger=F){
+#'   roundToInteger=TRUE) # vectorized
+rnorm_bounded = function(n=1, mean=0, sd=1, low=NULL, high=NULL, roundToInteger=FALSE){
   if (sum(sd!=0)==0) {
     out = rep(mean,n)
     out[roundToInteger] = round (out[roundToInteger],0)
@@ -575,11 +576,11 @@ addVectors = function(v1, v2, insertionPoint){
 #' @examples
 #' ampl = sin(1:1000)
 #' plot(soundgen:::fadeInOut(ampl, length_fade=100), type='l')
-#' plot(soundgen:::fadeInOut(ampl, length_fade=300, do_fadeOut=F), type='l')
+#' plot(soundgen:::fadeInOut(ampl, length_fade=300, do_fadeOut=FALSE), type='l')
 #' # if the vector is shorter than twice the specified length_fade,
 #' # fade-in/out regions overlap
 #' plot(soundgen:::fadeInOut(ampl, length_fade=700), type='l')
-fadeInOut = function(ampl, do_fadeIn=T, do_fadeOut=T, length_fade=1000){
+fadeInOut = function(ampl, do_fadeIn=TRUE, do_fadeOut=TRUE, length_fade=1000){
   if ((!do_fadeIn & !do_fadeOut) | length_fade<2) return(ampl)
 
   length_fade = min(length_fade, length(ampl))
@@ -644,10 +645,10 @@ getGlottalCycles = function (pitch, samplingRate=44100){
 #' @return Returns a matrix with a list of start-end points for syllables
 #' @examples
 #' soundgen:::divideIntoSyllables (nSyl=5, sylDur_mean=180,
-#'   pauseDur_mean=55, temperature=0.2, plot=T)
+#'   pauseDur_mean=55, temperature=0.2, plot=TRUE)
 #' soundgen:::divideIntoSyllables (nSyl=5, sylDur_mean=180,
-#'   pauseDur_mean=55, temperature=0, plot=T)
-divideIntoSyllables = function (nSyl, sylDur_mean, pauseDur_mean, sylDur_min=20, sylDur_max=10000, pauseDur_min=20, pauseDur_max=1000, temperature=0.025, plot=F){
+#'   pauseDur_mean=55, temperature=0, plot=TRUE)
+divideIntoSyllables = function (nSyl, sylDur_mean, pauseDur_mean, sylDur_min=20, sylDur_max=10000, pauseDur_min=20, pauseDur_max=1000, temperature=0.025, plot=FALSE){
   out = matrix(ncol=2,nrow=0)
   colnames(out) = c('start','end')
   if (nSyl==1){
