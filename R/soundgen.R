@@ -259,7 +259,7 @@ generateBout = function(repeatBout=1, nSyl=1, sylDur_mean=300, pauseDur_mean=200
         unvoicedDur_syl = round ( diff(range(breathingAnchors_syl[[s]]$time)) * samplingRate/1000 )
 
         # calculate noise spectrum
-        if (is.na(exactFormants_unvoiced)){
+        if (is.na(exactFormants_unvoiced[1])){
           spectralEnvelope_unvoiced = NA
         } else {
           movingFormants = max(unlist(lapply(exactFormants_unvoiced, nrow)))>1 | sum(mouthAnchors$ampl != .5)>0 # are noise formants moving, as opposed to constant?

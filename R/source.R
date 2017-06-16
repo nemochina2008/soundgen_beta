@@ -63,7 +63,7 @@ generateNoise = function(len, breathingAnchors=data.frame('time'=c(0,300), 'ampl
 
   # convert anchors to a smooth contour of breathing amplitudes
   breathingStrength = getSmoothContour(len=len, anchors=breathingAnchors, ampl_floor=permittedValues['breathing_ampl','low'], ampl_ceiling=permittedValues['breathing_ampl','high'], samplingRate=samplingRate, plot=FALSE)   # plot(breathingStrength)
-  if (is.na(breathingStrength)){
+  if (sum(is.na(breathingStrength)) > 0){
     return (rep(0,len))
   }
 
@@ -71,7 +71,7 @@ generateNoise = function(len, breathingAnchors=data.frame('time'=c(0,300), 'ampl
   step = seq(1, len+windowLength_points, by=windowLength_points-(overlap*windowLength_points/100)) # len+windowLength_points gives us two extra windows, since otherwise the sequence is a bit shorter than needed after i-fft
   nr = windowLength_points/2
   nc = length(step)
-  if (is.na(filter_breathing)) {
+  if (is.na(filter_breathing[1])) {
     filter_breathing = matrix(rep (1, nr), nrow=1)
     filterRowIdx = rep(1, nc)
   } else {

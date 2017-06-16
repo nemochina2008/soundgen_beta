@@ -169,7 +169,6 @@ server <- function(input, output, session) {
   myPitchContour <- reactive({
     pitch_y_lwr = min ( input$pitchRange[1], min(myPars$pitchAnchors$ampl)/1.1 )
     pitch_y_upr = max ( input$pitchRange[2], max(myPars$pitchAnchors$ampl)*1.1 )
-    print(pitch_y_upr)
     getSmoothContour (anchors=myPars$pitchAnchors, len=input$sylDur_mean*permittedValues['pitch','high']/1000, plot=TRUE, ylim=c(pitch_y_lwr,pitch_y_upr), samplingRate=permittedValues['pitch','high'], thisIsPitch=TRUE)
   })
 
