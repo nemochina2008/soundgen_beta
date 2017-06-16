@@ -77,20 +77,23 @@ FFT.
 }
 \examples{
 # [a] with F1-F4 visible
-image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=convertStringToFormants('a'),
+image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50,
+  exactFormants=convertStringToFormants('a'),
   temperature=0, samplingRate=16000)))
 # some "wiggling" of specified formants plus extra formants on top
-image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=convertStringToFormants('a'),
+image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50,
+  exactFormants=convertStringToFormants('a'),
   temperature=0.1, extraFormants_ampl=10, samplingRate=16000)))
 # stronger extra formants
-image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=convertStringToFormants('a'),
+image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50,
+  exactFormants=convertStringToFormants('a'),
   temperature=0.1, extraFormants_ampl=30, samplingRate=16000)))
 # a schwa based on the length of vocal tract = 15.5 cm
-image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=NA,
+image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50, exactFormants=NA,
   temperature=.1, vocalTract_length=15.5, samplingRate=16000)))
 
 # manual specification of formants
-image(t(getSpectralEnvelope(nr=512, nc=50, samplingRate=16000,
+image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50, samplingRate=16000,
   exactFormants=list('f1' = data.frame('time'=0, 'freq'=900, 'amp'=30, 'width'=120),
                      'f2' = data.frame('time'=0, 'freq'=1300, 'amp'=30, 'width'=120),
                      'f3' = data.frame('time'=0, 'freq'=3200, 'amp'=20, 'width'=200)))))

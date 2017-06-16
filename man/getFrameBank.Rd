@@ -35,5 +35,5 @@ optionally zero-padded) frames, i.e. chunks of the sound file of the right
 size and spacing. Handy for further processing.
 }
 \examples{
-a = getFrameBank(sin(1:1000), 16000, 512, 'gaussian', 15, 0)
+a = soundgen:::getFrameBank(sin(1:1000), 16000, 512, 'gaussian', 15, 0)
 }

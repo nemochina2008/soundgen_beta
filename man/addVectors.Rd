@@ -24,12 +24,12 @@ are converted to 0.
 \examples{
 v1 = 1:6
 v2 = rep(100, 3)
-addVectors(v1, v2, insertionPoint = 5)
-addVectors(v1, v2, insertionPoint = -4)
+soundgen:::addVectors(v1, v2, insertionPoint = 5)
+soundgen:::addVectors(v1, v2, insertionPoint = -4)
 # note the asymmetry: insertionPoint refers to the first arg
-addVectors(v2, v1, insertionPoint = -4)
+soundgen:::addVectors(v2, v1, insertionPoint = -4)
 
 v3 = rep(100, 15)
-addVectors(v1, v3, insertionPoint = -4)
-addVectors(v2, v3, insertionPoint = 7)
+soundgen:::addVectors(v1, v3, insertionPoint = -4)
+soundgen:::addVectors(v2, v3, insertionPoint = 7)
 }

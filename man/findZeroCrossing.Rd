@@ -31,7 +31,7 @@ plot(ampl, type='b')
 lines(1:100, rep(0,100), lty=2)
 zc = vector()
 for (i in 1:length(ampl)){
-  zc[i] = findZeroCrossing (ampl, i) # find zc closest to each of 100 points
+  zc[i] = soundgen:::findZeroCrossing (ampl, i) # find zc closest to each of 100 points
 }
 for (z in unique(zc)){
   points(z, ampl[z], col='red', pch=17) # only on upward segments

@@ -43,6 +43,6 @@ A discrete version of \code{\link{getSmoothContour}} with modified plotting. Int
 }
 \examples{
 # for a bout consisting of 10 syllables
-getDiscreteContour (len=10, method='spline', plot=T, ylab='Semitones',
+soundgen:::getDiscreteContour (len=10, method='spline', plot=T, ylab='Semitones',
   anchors=data.frame(time=c(0,.2,.6,1),ampl=c(0,-3,1,0)))
 }

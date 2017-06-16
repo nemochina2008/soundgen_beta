@@ -38,8 +38,8 @@ unreasonable given the scale of df$ampl, \code{wiggleAnchors} will keep
 running forever!
 }
 \examples{
-wiggleAnchors(df = data.frame(time = c(0, .1, .8, 1), ampl = c(100, 230, 180, 90)),
-  temperature=.2, temp_coef=.1, low=c(0, 50), high=c(1, 1000), wiggleAllRows = F) # pitch
-wiggleAnchors(df = data.frame(time = c(-100, 100, 600, 900), ampl = c(-120, -80, 0, -120)),
-  temperature=.1, temp_coef=.5, low=c(-Inf, -120), high=c(+Inf, 30), wiggleAllRows = T) # breathing
+soundgen:::wiggleAnchors(df=data.frame(time=c(0,.1,.8,1), ampl=c(100,230,180,90)),
+  temperature=.2, temp_coef=.1, low=c(0,50), high=c(1,1000), wiggleAllRows = F) # pitch
+soundgen:::wiggleAnchors(df=data.frame(time=c(-100,100,600,900), ampl=c(-120,-80,0,-120)),
+  temperature=.1, temp_coef=.5, low=c(-Inf,-120), high=c(+Inf,30), wiggleAllRows=T) # breathing
 }

@@ -32,6 +32,7 @@ is repeated until there are enough values within the specified range. Fully
 vectorized.
 }
 \examples{
-rnorm_bounded (n=3, mean=10, sd=5, low=7, high=NULL, roundToInteger=c(T,F,F))
-rnorm_bounded (n=3, mean=c(10, 50, 100), sd=c(5, 0, 20), roundToInteger=T) # vectorized
+soundgen:::rnorm_bounded (n=3, mean=10, sd=5, low=7, high=NULL, roundToInteger=c(T,F,F))
+soundgen:::rnorm_bounded (n=3, mean=c(10, 50, 100), sd=c(5, 0, 20),
+  roundToInteger=T) # vectorized
 }

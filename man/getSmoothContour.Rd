@@ -56,15 +56,15 @@ with musical notes rather than frequencies in Hz). Pitch plots have two Y
 axes: one showing Hz and the other showing musical notation.
 }
 \examples{
-a=getSmoothContour (anchors=data.frame(time=c(50,137,300), ampl=c(0.03, 0.78, 0.5)),
+a=soundgen:::getSmoothContour (anchors=data.frame(time=c(50,137,300), ampl=c(0.03, 0.78, 0.5)),
   voiced=200, ampl_floor=0, plot=T, main='', samplingRate=samplingRate) # breathing
-a=getSmoothContour (anchors=data.frame(time=c(0,.1), ampl=c(350, 800)),
+a=soundgen:::getSmoothContour (anchors=data.frame(time=c(0,.1), ampl=c(350, 800)),
   len=5500, thisIsPitch=T, plot=T, samplingRate=3500) # pitch
 
 # a single anchor = constant pitch
-a=getSmoothContour (anchors=data.frame(time=0, ampl=800),
+a=soundgen:::getSmoothContour (anchors=data.frame(time=0, ampl=800),
   len=500, thisIsPitch=T, plot=T, samplingRate=500)
 # two anchors = loglinear pitch change
-a=getSmoothContour (anchors=data.frame(time=c(0,1), ampl=c(220,440)),
+a=soundgen:::getSmoothContour (anchors=data.frame(time=c(0,1), ampl=c(220,440)),
   len=500, thisIsPitch=T, plot=T, samplingRate=500)
 }

@@ -56,7 +56,7 @@ gaussian.w = function (n){
 #' @return A matrix with \code{nrow = windowLength_points/2} and \code{ncol}
 #'   depending on \code{length(sound)} and \code{step}
 #' @examples
-#' a = getFrameBank(sin(1:1000), 16000, 512, 'gaussian', 15, 0)
+#' a = soundgen:::getFrameBank(sin(1:1000), 16000, 512, 'gaussian', 15, 0)
 getFrameBank = function(sound, samplingRate, windowLength_points, wn, step, zp, filter=NULL){
   # normalize
   if (min(sound)>0) {sound = scale(sound)}

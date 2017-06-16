@@ -37,7 +37,7 @@ playme = function(sound, samplingRate=44100){
 #' @return Returns a list of formant values, which can be fed directly into
 #'   \code{\link{getSpectralEnvelope}}
 #' @examples
-#' convertStringToFormants (phonemeString='aaeuiiiii', speaker='M1')
+#' soundgen:::convertStringToFormants (phonemeString='aaeuiiiii', speaker='M1')
 convertStringToFormants = function(phonemeString, speaker='M1'){
   availablePresets = names(presets[[speaker]]$Formants)
   input_phonemes = strsplit(phonemeString, "")[[1]]
@@ -113,8 +113,9 @@ convertStringToFormants = function(phonemeString, speaker='M1'){
 #'   corresponding value is rounded to the nearest integer.
 #' @return A vector of length n.
 #' @examples
-#' rnorm_bounded (n=3, mean=10, sd=5, low=7, high=NULL, roundToInteger=c(T,F,F))
-#' rnorm_bounded (n=3, mean=c(10, 50, 100), sd=c(5, 0, 20), roundToInteger=T) # vectorized
+#' soundgen:::rnorm_bounded (n=3, mean=10, sd=5, low=7, high=NULL, roundToInteger=c(T,F,F))
+#' soundgen:::rnorm_bounded (n=3, mean=c(10, 50, 100), sd=c(5, 0, 20),
+#'   roundToInteger=T) # vectorized
 rnorm_bounded = function(n=1, mean=0, sd=1, low=NULL, high=NULL, roundToInteger=F){
   if (sum(sd!=0)==0) {
     out = rep(mean,n)
@@ -168,7 +169,7 @@ rnorm_bounded = function(n=1, mean=0, sd=1, low=NULL, high=NULL, roundToInteger=
 #' lines(1:100, rep(0,100), lty=2)
 #' zc = vector()
 #' for (i in 1:length(ampl)){
-#'   zc[i] = findZeroCrossing (ampl, i) # find zc closest to each of 100 points
+#'   zc[i] = soundgen:::findZeroCrossing (ampl, i) # find zc closest to each of 100 points
 #' }
 #' for (z in unique(zc)){
 #'   points(z, ampl[z], col='red', pch=17) # only on upward segments
@@ -293,10 +294,10 @@ crossFade = function (ampl1, ampl2, length_ms=15, samplingRate=44100, length_poi
 #'   of required length.
 #' @examples
 #' s = c(1,3,2,2,2,0,0,4,4,1,1,1,1,1,3,3)
-#' clumper(s, 2)
-#' clumper(s, 3)
-#' clumper(s, seq(1, 3, length.out=length(s)))
-#' clumper(c('a','a','a','b','b','c','c','c','a','c'), 4)
+#' soundgen:::clumper(s, 2)
+#' soundgen:::clumper(s, 3)
+#' soundgen:::clumper(s, seq(1, 3, length.out=length(s)))
+#' soundgen:::clumper(c('a','a','a','b','b','c','c','c','a','c'), 4)
 clumper = function(s, minLength){
   if (max(minLength) < 2) return(s)
   if (length(unique(s))<2 | (length(minLength==1) && length(s)<minLength) | (length(s)<minLength[1])) return(rep(round(median(s)), length(s)))
@@ -361,9 +362,9 @@ clumper = function(s, minLength){
 #'   produce less and less random behavior
 #' @return Returns a numeric vector of length len and range from 0 to rw_range.
 #' @examples
-#' plot(getRandomWalk(len=1000, rw_range=5, rw_smoothing=.2), type='l')
-#' plot(getRandomWalk(len=1000, rw_range=15, rw_smoothing=.2, trend=c(.5, -.5)), type='l')
-#' plot(getRandomWalk(len=1000, rw_range=15, rw_smoothing=.2, trend=c(15, -1)), type='l')
+#' plot(soundgen:::getRandomWalk(len=1000, rw_range=5, rw_smoothing=.2))
+#' plot(soundgen:::getRandomWalk(len=1000, rw_range=15, rw_smoothing=.2, trend=c(.5, -.5)))
+#' plot(soundgen:::getRandomWalk(len=1000, rw_range=15, rw_smoothing=.2, trend=c(15, -1)))
   getRandomWalk = function(len, rw_range=1, rw_smoothing=.2, method=c('linear','spline')[2], trend=0){
   if (len<2){return (rgamma(1, 1/rw_range^2, 1/rw_range^2))}
 
@@ -407,10 +408,10 @@ clumper = function(s, minLength){
 #' @param minLength the mimimum length of each epoch
 #' @return Returns a vector of integers (0/1/2) of the same length as rw.
 #' @examples
-#' rw = getRandomWalk(len=100, rw_range=100, rw_smoothing=.2)
+#' rw = soundgen:::getRandomWalk(len=100, rw_range=100, rw_smoothing=.2)
 #' plot (rw, type='l')
-#' plot (getBinaryRandomWalk(rw, noiseAmount=75, minLength=10))
-#' plot (getBinaryRandomWalk(rw, noiseAmount=5, minLength=10))
+#' plot (soundgen:::getBinaryRandomWalk(rw, noiseAmount=75, minLength=10))
+#' plot (soundgen:::getBinaryRandomWalk(rw, noiseAmount=5, minLength=10))
 getBinaryRandomWalk = function(rw, noiseAmount=50, minLength=50){
   len = length(rw)
   if (noiseAmount==0) return(rep(0,len))
@@ -443,7 +444,7 @@ getBinaryRandomWalk = function(rw, noiseAmount=50, minLength=50){
 #'   of the input) and gc_upsampled (new indices of glottal cycles on an
 #'   upsampled scale)
 #' @examples
-#' upsample(c(100,150,130), samplingRate=16000)
+#' soundgen:::upsample(c(100,150,130), samplingRate=16000)
 upsample = function(pitch_per_gc, samplingRate=44100){
   gcLength_points = round (samplingRate/pitch_per_gc)
   gc_upsampled = c(1, cumsum(gcLength_points))
@@ -475,10 +476,10 @@ upsample = function(pitch_per_gc, samplingRate=44100){
 #'   what should it be padded with? Defaults to 0
 #' @return Returns the modified vector of the required length.
 #' @examples
-#' matchLengths (c(1,2,3), len=5)
-#' matchLengths (3:7, len=3)
-#' matchLengths (3:7, len=3, padDir='left') # trimmed on the left
-#' matchLengths (3:7, len=30, padDir='left') # padded with zeroes on the left
+#' soundgen:::matchLengths (c(1,2,3), len=5)
+#' soundgen:::matchLengths (3:7, len=3)
+#' soundgen:::matchLengths (3:7, len=3, padDir='left') # trimmed on the left
+#' soundgen:::matchLengths (3:7, len=30, padDir='left') # padded with zeroes on the left
 matchLengths = function(myseq, len, padDir=c('left', 'right', 'central')[3], padWith=0){
   #  padDir specifies where to cut/add zeros ('left' / 'right' / 'central')
   if (length(myseq) == len) {return (myseq)}
@@ -506,7 +507,6 @@ matchLengths = function(myseq, len, padDir=c('left', 'right', 'central')[3], pad
   }
   return (myseq)
 }
-# matchLengths (c(1,2,3), len=5, padDir='central', padWith=0)
 
 
 #' Add overlapping vectors
@@ -523,14 +523,14 @@ matchLengths = function(myseq, len, padDir=c('left', 'right', 'central')[3], pad
 #' @examples
 #' v1 = 1:6
 #' v2 = rep(100, 3)
-#' addVectors(v1, v2, insertionPoint = 5)
-#' addVectors(v1, v2, insertionPoint = -4)
+#' soundgen:::addVectors(v1, v2, insertionPoint = 5)
+#' soundgen:::addVectors(v1, v2, insertionPoint = -4)
 #' # note the asymmetry: insertionPoint refers to the first arg
-#' addVectors(v2, v1, insertionPoint = -4)
+#' soundgen:::addVectors(v2, v1, insertionPoint = -4)
 #'
 #' v3 = rep(100, 15)
-#' addVectors(v1, v3, insertionPoint = -4)
-#' addVectors(v2, v3, insertionPoint = 7)
+#' soundgen:::addVectors(v1, v3, insertionPoint = -4)
+#' soundgen:::addVectors(v2, v3, insertionPoint = 7)
 addVectors = function(v1, v2, insertionPoint){
   if (!is.numeric(v1)) stop(paste('Non-numeric v1:', head(v1)))
   if (!is.numeric(v2)) stop(paste('Non-numeric v2:', head(v2)))
@@ -574,11 +574,11 @@ addVectors = function(v1, v2, insertionPoint){
 #' @return Returns a numeric vector of the same length as input
 #' @examples
 #' ampl = sin(1:1000)
-#' plot(fadeInOut(ampl, length_fade=100), type='l')
-#' plot(fadeInOut(ampl, length_fade=300, do_fadeOut=F), type='l')
+#' plot(soundgen:::fadeInOut(ampl, length_fade=100), type='l')
+#' plot(soundgen:::fadeInOut(ampl, length_fade=300, do_fadeOut=F), type='l')
 #' # if the vector is shorter than twice the specified length_fade,
 #' # fade-in/out regions overlap
-#' plot(fadeInOut(ampl, length_fade=700), type='l')
+#' plot(soundgen:::fadeInOut(ampl, length_fade=700), type='l')
 fadeInOut = function(ampl, do_fadeIn=T, do_fadeOut=T, length_fade=1000){
   if ((!do_fadeIn & !do_fadeOut) | length_fade<2) return(ampl)
 
@@ -609,7 +609,7 @@ fadeInOut = function(ampl, do_fadeIn=T, do_fadeOut=T, length_fade=1000){
 #' @param samplingRate sampling rate at which f0 values are provided
 #' @examples
 #' # 100 ms of audio with f0 steadily increasing from 150 to 200 Hz
-#' getGlottalCycles (seq(150, 200, length.out=350), samplingRate = 3500)
+#' soundgen:::getGlottalCycles (seq(150, 200, length.out=350), samplingRate = 3500)
 getGlottalCycles = function (pitch, samplingRate=44100){
   glottalCycles = numeric()
   i = 1 # the first border is the first time point
@@ -643,8 +643,10 @@ getGlottalCycles = function (pitch, samplingRate=44100){
 #' @param plot produce a plot of syllable structure?
 #' @return Returns a matrix with a list of start-end points for syllables
 #' @examples
-#' divideIntoSyllables (nSyl=5, sylDur_mean=180, pauseDur_mean=55, temperature=0.2, plot=T)
-#' divideIntoSyllables (nSyl=5, sylDur_mean=180, pauseDur_mean=55, temperature=0, plot=T)
+#' soundgen:::divideIntoSyllables (nSyl=5, sylDur_mean=180,
+#'   pauseDur_mean=55, temperature=0.2, plot=T)
+#' soundgen:::divideIntoSyllables (nSyl=5, sylDur_mean=180,
+#'   pauseDur_mean=55, temperature=0, plot=T)
 divideIntoSyllables = function (nSyl, sylDur_mean, pauseDur_mean, sylDur_min=20, sylDur_max=10000, pauseDur_min=20, pauseDur_max=1000, temperature=0.025, plot=F){
   out = matrix(ncol=2,nrow=0)
   colnames(out) = c('start','end')

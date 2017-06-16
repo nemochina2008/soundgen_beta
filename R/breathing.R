@@ -32,25 +32,28 @@
 #' @examples
 #' # 1 s of white noise
 #' samplingRate = 16000
-#' noise = getBreathing(len = samplingRate, rolloff_breathing = 0, samplingRate = samplingRate)
+#' noise = soundgen:::getBreathing(len = samplingRate,
+#'   rolloff_breathing = 0, samplingRate = samplingRate)
 #' # playme (noise, samplingRate = samplingRate)
 #' # 1 s of noise with rolloff -6 dB
-#' noise = getBreathing(len = samplingRate, rolloff_breathing = -6, samplingRate = samplingRate)
+#' noise = soundgen:::getBreathing(len = samplingRate,
+#'   rolloff_breathing = -6, samplingRate = samplingRate)
 #'
 #' # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 #' windowLength_points = 1024
-#' filter_breathing = getSpectralEnvelope(nr=windowLength_points/2, nc=1, samplingRate=samplingRate,
+#' filter_breathing = soundgen:::getSpectralEnvelope(nr=windowLength_points/2,
+#'   nc=1, samplingRate=samplingRate,
 #'   exactFormants=list('f1'=data.frame(time=0, freq=7000, amp=50, width=2000)))
-#' noise = getBreathing(len = samplingRate, rolloff_breathing = -12,
+#' noise = soundgen:::getBreathing(len = samplingRate, rolloff_breathing = -12,
 #'   samplingRate = samplingRate, filter_breathing=filter_breathing)
 #' # plot (filter_breathing, type='l')
 #' # playme (noise, samplingRate = samplingRate)
 #'
 #' # low-frequency, wind-like noise
-#' filter_breathing = getSpectralEnvelope(nr=windowLength_points/2, nc=1,
-#'   rolloff_lip=0, samplingRate=samplingRate,
+#' filter_breathing = soundgen:::getSpectralEnvelope(nr=windowLength_points/2,
+#'   nc=1, rolloff_lip=0, samplingRate=samplingRate,
 #'   exactFormants=list('f1'=data.frame(time=0, freq=150, amp=30, width=90)))
-#' noise = getBreathing(len = samplingRate, rolloff_breathing = -12,
+#' noise = soundgen:::getBreathing(len = samplingRate, rolloff_breathing = -12,
 #'   samplingRate = samplingRate, filter_breathing=filter_breathing)
 getBreathing = function(len, breathingAnchors=data.frame('time'=c(0,300), 'ampl'=c(throwaway_dB,throwaway_dB)), rolloff_breathing=-6, attackLen=10, windowLength_points=1024, samplingRate=44100, overlap=75, filter_breathing=NA){
   # convert anchor amplitudes from dB to linear multipliers

@@ -25,9 +25,10 @@ NULL
 #' @param pitch a contour of fundamental frequency (numeric vector). NB: for computational efficiency, provide the pitch contour at a reduced sampling rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be upsampled before synthesis.
 #' @inheritParams generateBout
 #' @examples
-#' pitch=getSmoothContour(len=3500, anchors=data.frame('time'=c(0,1), 'ampl'=c(200,300)))
+#' pitch=soundgen:::getSmoothContour(len=3500,
+#'   anchors=data.frame('time'=c(0,1), 'ampl'=c(200,300)))
 #' plot(pitch)
-#' sound = generateSyllable(pitch, samplingRate=16000)
+#' sound = soundgen:::generateSyllable(pitch, samplingRate=16000)
 #' # playme(sound, samplingRate=16000) # no formants yet
 generateSyllable = function(pitch, attackLen=50, noiseAmount=0, noiseIntensity=0, jitterDep=0, jitterLength_ms=1, vibratoFreq=100, vibratoDep=0, shimmerDep=0, creakyBreathy=0, rolloff_exp=-18, rolloff_exp_delta=-2, adjust_rolloff_per_kHz=-6, quadratic_delta=0, quadratic_nHarm=3, formantStrength=1, temperature=0, min_epoch_length_ms=300, g0=100, sideband_width_hz=0, rolloff_lip=6, trill_dep=0, trill_freq=30, amplAnchors=NA, overlap=75, windowLength_points=2048, samplingRate=44100, pitch_floor=75, pitch_ceiling=3500, pitchSamplingRate=3500) {
   ## PRE-SYNTHESIS EFFECTS (NB: the order in which effects are added is NOT arbitrary!)

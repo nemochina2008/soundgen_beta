@@ -23,9 +23,9 @@ Internal soudgen function.
 Takes a continuous random walk and converts it to continuous epochs of repeated values 0/1/2, each at least minLength points long. 0/1/2 correspond to different noise regimes: 0 = no noise, 1 = subharmonics, 2 = subharmonics and jitter/shimmer.
 }
 \examples{
-rw = getRandomWalk(len=100, rw_range=100, rw_smoothing=.2)
+rw = soundgen:::getRandomWalk(len=100, rw_range=100, rw_smoothing=.2)
 plot (rw, type='l')
-plot (getBinaryRandomWalk(rw, noiseAmount=75, minLength=10))
-plot (getBinaryRandomWalk(rw, noiseAmount=5, minLength=10))
+plot (soundgen:::getBinaryRandomWalk(rw, noiseAmount=75, minLength=10))
+plot (soundgen:::getBinaryRandomWalk(rw, noiseAmount=5, minLength=10))
 }
 \keyword{internal}

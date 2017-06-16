@@ -47,39 +47,39 @@
 #' @export
 #' @examples
 #' # steady exponential rolloff of -12 dB per octave
-#' rolloff = getRolloff (pitch_per_gc=150, rolloff_exp=-12, rolloff_exp_delta=0, plot=T)
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=150, rolloff_exp=-12, rolloff_exp_delta=0, plot=T)
 #' # the rate of rolloff slows down with each octave
-#' rolloff = getRolloff (pitch_per_gc=150, rolloff_exp=-12, rolloff_exp_delta=2, plot=T)
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=150, rolloff_exp=-12, rolloff_exp_delta=2, plot=T)
 #' # the rate of rolloff increases with each octave
-#' rolloff = getRolloff (pitch_per_gc=150, rolloff_exp=-12, rolloff_exp_delta=-2, plot=T)
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=150, rolloff_exp=-12, rolloff_exp_delta=-2, plot=T)
 #'
 #' # variable f0
 #' # the lower f0, the more harmonics are non-zero
-#' rolloff = getRolloff (pitch_per_gc=c(150,800,3000), rolloff_exp_delta=0, plot=T)
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=c(150,800,3000), rolloff_exp_delta=0, plot=T)
 #' # without the correction for f0 (adjust_rolloff_per_kHz),
 #' # high-pitched sounds have the same rolloff as low-pitched sounds,
 #' # producing unnaturally strong high-frequency harmonics
-#' rolloff = getRolloff (pitch_per_gc=c(150,800,3000), rolloff_exp_delta=0,
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=c(150,800,3000), rolloff_exp_delta=0,
 #'   adjust_rolloff_per_kHz=0, plot=T)
 #'
 #' # parabolic adjustment of lower harmonics
-#' rolloff = getRolloff (pitch_per_gc=350, quadratic_delta=0, quadratic_nHarm=2,
-#'   samplingRate=16000, plot=T)
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=350, quadratic_delta=0,
+#'   quadratic_nHarm=2, samplingRate=16000, plot=T)
 #' # quadratic_nHarm=1 affects only f0
-#' rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=30, quadratic_nHarm=1,
-#'   samplingRate=16000, plot=T)
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=150, quadratic_delta=30,
+#'   quadratic_nHarm=1, samplingRate=16000, plot=T)
 #' # quadratic_nHarm=2 or 3 affects only h1
-#' rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=30, quadratic_nHarm=2,
-#'   samplingRate=16000, plot=T)
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=150, quadratic_delta=30,
+#'   quadratic_nHarm=2, samplingRate=16000, plot=T)
 #' # quadratic_nHarm=4 affects h1 and h2, etc
-#' rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=30, quadratic_nHarm=4,
-#'   samplingRate=16000, plot=T)
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=150, quadratic_delta=30,
+#'   quadratic_nHarm=4, samplingRate=16000, plot=T)
 #' # negative quadratic_delta weakens lower harmonics
-#' rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=-20, quadratic_nHarm=7,
-#'   samplingRate=16000, plot=T)
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=150, quadratic_delta=-20,
+#'   quadratic_nHarm=7, samplingRate=16000, plot=T)
 #' # only harmonics below 2000 Hz are affected
-#' rolloff = getRolloff (pitch_per_gc=c(150,600), quadratic_delta=-20, quadratic_ceiling=2000,
-#'   samplingRate=16000, plot=T)
+#' rolloff = soundgen:::getRolloff(pitch_per_gc=c(150,600),
+#'   quadratic_delta=-20, quadratic_ceiling=2000, samplingRate=16000, plot=T)
 getRolloff = function(pitch_per_gc=c(440), nHarmonics=100, rolloff_exp=-12, rolloff_exp_delta=-2, quadratic_delta=0, quadratic_nHarm=2, quadratic_ceiling=NULL, adjust_rolloff_per_kHz=-6, baseline_Hz=200, throwaway_dB=-120, samplingRate=44100, plot=F){
   ## Exponential decay
   deltas = matrix(0, nrow=nHarmonics, ncol=length(pitch_per_gc))
@@ -165,10 +165,6 @@ getRolloff = function(pitch_per_gc=c(440), nHarmonics=100, rolloff_exp=-12, roll
 
   return (rolloff)
 }
-# a = getRolloff (pitch_per_gc=c(3000), rolloff_exp=0, rolloff_exp_delta=0, quadratic_delta=20, quadratic_nHarm=5, quadratic_ceiling=NULL, adjust_rolloff_per_kHz=0, baseline_Hz=200, throwaway_dB=-120, plot=T)
-# plot (a[,1], type='l', ylim=c(0,max(a)))
-# points (a[,2], type='l', col='red')
-
 
 
 #' Spectral envelope
@@ -222,20 +218,23 @@ getRolloff = function(pitch_per_gc=c(440), nHarmonics=100, rolloff_exp=-12, roll
 #'   frequency bins = windowLength_points/2 and nc is the number of time steps)
 #' @examples
 #' # [a] with F1-F4 visible
-#' image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=convertStringToFormants('a'),
+#' image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50,
+#'   exactFormants=convertStringToFormants('a'),
 #'   temperature=0, samplingRate=16000)))
 #' # some "wiggling" of specified formants plus extra formants on top
-#' image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=convertStringToFormants('a'),
+#' image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50,
+#'   exactFormants=convertStringToFormants('a'),
 #'   temperature=0.1, extraFormants_ampl=10, samplingRate=16000)))
 #' # stronger extra formants
-#' image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=convertStringToFormants('a'),
+#' image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50,
+#'   exactFormants=convertStringToFormants('a'),
 #'   temperature=0.1, extraFormants_ampl=30, samplingRate=16000)))
 #' # a schwa based on the length of vocal tract = 15.5 cm
-#' image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=NA,
+#' image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50, exactFormants=NA,
 #'   temperature=.1, vocalTract_length=15.5, samplingRate=16000)))
 #'
 #' # manual specification of formants
-#' image(t(getSpectralEnvelope(nr=512, nc=50, samplingRate=16000,
+#' image(t(soundgen:::getSpectralEnvelope(nr=512, nc=50, samplingRate=16000,
 #'   exactFormants=list('f1' = data.frame('time'=0, 'freq'=900, 'amp'=30, 'width'=120),
 #'                      'f2' = data.frame('time'=0, 'freq'=1300, 'amp'=30, 'width'=120),
 #'                      'f3' = data.frame('time'=0, 'freq'=3200, 'amp'=20, 'width'=200)))))

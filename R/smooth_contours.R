@@ -32,16 +32,16 @@
 #' @param ... other plotting options
 #' @return Numeric vector.
 #' @examples
-#' a=getSmoothContour (anchors=data.frame(time=c(50,137,300), ampl=c(0.03, 0.78, 0.5)),
+#' a=soundgen:::getSmoothContour (anchors=data.frame(time=c(50,137,300), ampl=c(0.03, 0.78, 0.5)),
 #'   voiced=200, ampl_floor=0, plot=T, main='', samplingRate=samplingRate) # breathing
-#' a=getSmoothContour (anchors=data.frame(time=c(0,.1), ampl=c(350, 800)),
+#' a=soundgen:::getSmoothContour (anchors=data.frame(time=c(0,.1), ampl=c(350, 800)),
 #'   len=5500, thisIsPitch=T, plot=T, samplingRate=3500) # pitch
 #'
 #' # a single anchor = constant pitch
-#' a=getSmoothContour (anchors=data.frame(time=0, ampl=800),
+#' a=soundgen:::getSmoothContour (anchors=data.frame(time=0, ampl=800),
 #'   len=500, thisIsPitch=T, plot=T, samplingRate=500)
 #' # two anchors = loglinear pitch change
-#' a=getSmoothContour (anchors=data.frame(time=c(0,1), ampl=c(220,440)),
+#' a=soundgen:::getSmoothContour (anchors=data.frame(time=c(0,1), ampl=c(220,440)),
 #'   len=500, thisIsPitch=T, plot=T, samplingRate=500)
 getSmoothContour = function(anchors=data.frame(time=c(0,1), ampl=c(0,1)), len=NULL, thisIsPitch=F, method=c('spline','loess')[2], ampl_floor=NULL, ampl_ceiling=NULL, plot=F, main='', xlim=NULL, ylim=NULL, samplingRate=44100, voiced=NULL, contourLabel=NULL, ...){
   if (!is.null(ampl_floor)){anchors$ampl[anchors$ampl<ampl_floor] = ampl_floor}
@@ -159,7 +159,7 @@ getSmoothContour = function(anchors=data.frame(time=c(0,1), ampl=c(0,1)), len=NU
 #' @return Numeric vector.
 #' @examples
 #' # for a bout consisting of 10 syllables
-#' getDiscreteContour (len=10, method='spline', plot=T, ylab='Semitones',
+#' soundgen:::getDiscreteContour (len=10, method='spline', plot=T, ylab='Semitones',
 #'   anchors=data.frame(time=c(0,.2,.6,1),ampl=c(0,-3,1,0)))
 getDiscreteContour = function(len, anchors=data.frame(time=c(0,1),ampl=c(1,1)), method=c('spline','loess')[2], ampl_floor=NULL, ampl_ceiling=NULL, ylim=NULL, plot=F, ...){
   contour = getSmoothContour(len=len, anchors=anchors, method=method, ampl_floor=ampl_floor, ampl_ceiling=ampl_ceiling)
@@ -196,10 +196,10 @@ getDiscreteContour = function(len, anchors=data.frame(time=c(0,1),ampl=c(1,1)), 
 #'   for breathing, FALSE for other anchors)
 #' @return Modified original dataframe.
 #' @examples
-#' wiggleAnchors(df = data.frame(time = c(0, .1, .8, 1), ampl = c(100, 230, 180, 90)),
-#'   temperature=.2, temp_coef=.1, low=c(0, 50), high=c(1, 1000), wiggleAllRows = F) # pitch
-#' wiggleAnchors(df = data.frame(time = c(-100, 100, 600, 900), ampl = c(-120, -80, 0, -120)),
-#'   temperature=.1, temp_coef=.5, low=c(-Inf, -120), high=c(+Inf, 30), wiggleAllRows = T) # breathing
+#' soundgen:::wiggleAnchors(df=data.frame(time=c(0,.1,.8,1), ampl=c(100,230,180,90)),
+#'   temperature=.2, temp_coef=.1, low=c(0,50), high=c(1,1000), wiggleAllRows = F) # pitch
+#' soundgen:::wiggleAnchors(df=data.frame(time=c(-100,100,600,900), ampl=c(-120,-80,0,-120)),
+#'   temperature=.1, temp_coef=.5, low=c(-Inf,-120), high=c(+Inf,30), wiggleAllRows=T) # breathing
 wiggleAnchors = function(df, temperature, temp_coef, low, high, wiggleAllRows=F){
   if (is.na(df)) return(NA)
   if(wiggleAllRows){

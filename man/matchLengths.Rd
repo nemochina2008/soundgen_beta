@@ -30,8 +30,8 @@ Adjusts a vector to match the required length by either trimming one or both
 ends or padding them with zeros.
 }
 \examples{
-matchLengths (c(1,2,3), len=5)
-matchLengths (3:7, len=3)
-matchLengths (3:7, len=3, padDir='left') # trimmed on the left
-matchLengths (3:7, len=30, padDir='left') # padded with zeroes on the left
+soundgen:::matchLengths (c(1,2,3), len=5)
+soundgen:::matchLengths (3:7, len=3)
+soundgen:::matchLengths (3:7, len=3, padDir='left') # trimmed on the left
+soundgen:::matchLengths (3:7, len=30, padDir='left') # padded with zeroes on the left
 }
