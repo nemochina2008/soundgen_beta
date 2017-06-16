@@ -1,4 +1,11 @@
 server <- function(input, output, session) {
+  # clean-up of www/ folder: remove all files except temp.wav
+  files = list.files('www/')
+  files = files[files != 'temp.wav']
+  for (f in files){
+    file.remove(paste0('www/', f))
+  }
+
   ## S E T U P
   myPars <- reactiveValues('myfile'=NULL,
                            'sound'=as.numeric(tuneR::readWave('www/temp.wav')@left), # w/o as.numeric we get integers and spectro_denoised complains

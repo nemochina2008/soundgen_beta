@@ -81,20 +81,20 @@ getSmoothContour = function(anchors=data.frame(time=c(0,1), ampl=c(0,1)), len=NU
 
       # let's draw a smooth curve through the given anchors
       span = (1/(1+exp(duration_ms/500)) + 0.5) / 1.1^(nrow(anchors)-3) # NB: need to compensate for variable number of points, namely decrease smoothing as the number of points increases, hence the "1.1^..." term # duration_ms = 50:9000; span = 1/(1+exp(duration_ms/500)) + 0.5; plot (duration_ms, span, type='l')
-      l = loess(anchors_long~time, span=span) # plot (time, anchors_long)
+      l = suppressWarnings(loess(anchors_long~time, span=span)) # plot (time, anchors_long)
       smoothContour = try (predict(l, time), silent=TRUE) # plot(time, smoothContour)
 
       # for long duration etc, larger span may be necessary to avoid an error in loess
       while (class(smoothContour)=='try-error'){
         span = span+0.1
-        l = loess(anchors_long~time, span=span)
+        l = suppressWarnings(loess(anchors_long~time, span=span))
         smoothContour = try (predict(l, time), silent=TRUE)
       }
       # plot (smoothContour, type='l')
 
       while (sum(smoothContour<ampl_floor-1e-6, na.rm=TRUE) > 0) { # in case we get values below ampl_floor, less smoothing should be used. NB: -1e-6 avoid floating point problem, otherwise we get weird cases of -120 (float) < -120 (integer)
         span = span/1.1
-        l = loess(anchors_long~time, span=span)
+        l = suppressWarnings(loess(anchors_long~time, span=span))
         smoothContour = try (predict(l, time), silent=TRUE)
       }
     }
@@ -201,7 +201,7 @@ getDiscreteContour = function(len, anchors=data.frame(time=c(0,1),ampl=c(1,1)), 
 #' soundgen:::wiggleAnchors(df=data.frame(time=c(-100,100,600,900), ampl=c(-120,-80,0,-120)),
 #'   temperature=.1, temp_coef=.5, low=c(-Inf,-120), high=c(+Inf,30), wiggleAllRows=TRUE) # breathing
 wiggleAnchors = function(df, temperature, temp_coef, low, high, wiggleAllRows=FALSE){
-  if (is.na(df)) return(NA)
+  if (sum(is.na(df)) > 0) return(NA)
   if(wiggleAllRows){
     df[,1] = rnorm_bounded(n=nrow(df), mean=df[,1], sd=temperature*max(abs(df[,1]))*temp_coef, low=low[1], high=high[1], roundToInteger=FALSE)
   } else { # don't wiggle the first and last time values

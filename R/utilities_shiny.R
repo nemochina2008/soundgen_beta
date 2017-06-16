@@ -29,7 +29,7 @@ semitonesToHz = function(s){
 pickle = function(l){
   if (is.null(l) | length(l)<1) {
     return (NA)
-  } else if (is.na(l)){
+  } else if (sum(is.na(l)) > 0){
     return (NA)
   }
 

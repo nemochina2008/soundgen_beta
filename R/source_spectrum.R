@@ -83,7 +83,7 @@
 getRolloff = function(pitch_per_gc=c(440), nHarmonics=100, rolloff_exp=-12, rolloff_exp_delta=-2, quadratic_delta=0, quadratic_nHarm=2, quadratic_ceiling=NULL, adjust_rolloff_per_kHz=-6, baseline_Hz=200, throwaway_dB=-120, samplingRate=44100, plot=FALSE){
   ## Exponential decay
   deltas = matrix(0, nrow=nHarmonics, ncol=length(pitch_per_gc))
-  if (rolloff_exp_delta != 0){
+  if (sum(rolloff_exp_delta != 0) > 0){
     for (h in 2:nHarmonics){
       deltas[h,] = rolloff_exp_delta * (pitch_per_gc*h-baseline_Hz)/1000 # rolloff changes by rolloff_exp_delta per octave for each octave above H2
     }
@@ -326,7 +326,7 @@ getSpectralEnvelope = function(nr, nc, exactFormants=NA, formantStrength=1, roll
   }
 
   # mouth opening
-  if (length(mouthAnchors)<1 | is.na(mouthAnchors)){
+  if (length(mouthAnchors)<1 | sum(is.na(mouthAnchors)) > 0){
     mouthOpening_upsampled = rep(0.5, nc) # defaults to mouth half-open the whole time - sort of hanging loosely agape ;))
     mouthOpen_binary = rep(1,nc)
   } else {
