@@ -10,7 +10,7 @@ addVectors(v1, v2, insertionPoint)
 \item{v1, v2}{numeric vectors}
 
 \item{insertionPoint}{the index of element in vector 1 at which vector 2 will
-be pasted (any integer, can also be negative)}
+be insterted (any integer, can also be negative)}
 }
 \description{
 Internal soundgen function.
@@ -26,7 +26,9 @@ v1 = 1:6
 v2 = rep(100, 3)
 addVectors(v1, v2, insertionPoint = 5)
 addVectors(v1, v2, insertionPoint = -4)
-addVectors(v2, v1, insertionPoint = -4) # note the asymmetry: insertionPoint refers to the first arg
+# note the asymmetry: insertionPoint refers to the first arg
+addVectors(v2, v1, insertionPoint = -4)
+
 v3 = rep(100, 15)
 addVectors(v1, v3, insertionPoint = -4)
 addVectors(v2, v3, insertionPoint = 7)

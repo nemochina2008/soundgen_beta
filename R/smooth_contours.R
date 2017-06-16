@@ -25,9 +25,10 @@
 #'   only a few anchors
 #' @param ampl_floor,ampl_ceiling lower/upper bounds for the contour
 #' @param plot (boolean) produce a plot?
-#' @param samplingRate sampling rate used to convert time values to points
+#' @param samplingRate sampling rate used to convert time values to points (Hz)
 #' @param voiced,contourLabel graphical pars for plotting breathing contours
 #'   (see examples below)
+#' @param main,xlim,ylim plotting options
 #' @param ... other plotting options
 #' @return Numeric vector.
 #' @examples
@@ -154,8 +155,9 @@ getSmoothContour = function(anchors=data.frame(time=c(0,1), ampl=c(0,1)), len=NU
 #' A discrete version of \code{\link{getSmoothContour}} with modified plotting. Intended for plotting variation in parameters across syllables.
 #' @param len the number of syllables (equivalently, the length of generated contour)
 #' @inheritParams getSmoothContour
+#' @param ylim ylim for plotting
 #' @return Numeric vector.
-#' @example
+#' @examples
 #' # for a bout consisting of 10 syllables
 #' getDiscreteContour (len=10, method='spline', plot=T, ylab='Semitones',
 #'   anchors=data.frame(time=c(0,.2,.6,1),ampl=c(0,-3,1,0)))

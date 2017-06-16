@@ -16,6 +16,8 @@ generateSyllable(pitch, attackLen = 50, noiseAmount = 0,
   pitch_ceiling = 3500, pitchSamplingRate = 3500)
 }
 \arguments{
+\item{pitch}{a contour of fundamental frequency (numeric vector). NB: for computational efficiency, provide the pitch contour at a reduced sampling rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be upsampled before synthesis.}
+
 \item{attackLen}{duration of fade-in/ fade-out at each end of syllable and breathing noise (ms)}
 
 \item{noiseAmount}{hyperparameter for regulating the (approximate) proportion of sound with different noise regimes (none / subharmonics only / subharmonics and jitter), 0 to 100\%. 0\% = no noise; 100\% = the entire sound has jitter + subharmonics. Ignored if temperature=0}
@@ -77,6 +79,8 @@ narrow sidebands, high values produce uniformly strong subharmonics}
 \item{overlap}{Fourier window overlap (points)}
 
 \item{windowLength_points}{Fourier window length (points)}
+
+\item{samplingRate}{sampling frequency (Hz)}
 
 \item{pitch_floor}{lower/upper bounds of fundamental frequency}
 

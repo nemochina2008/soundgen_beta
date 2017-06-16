@@ -3,6 +3,9 @@
 #' Convert Hz to semitones
 #'
 #' Internal soundgen function.
+#'
+#' Converts from Hz to semitones above C0 (~16.4 Hz).
+#' @param h vector of frequencies (Hz)
 HzToSemitones = function(h){
   return (sapply(h, function(x)log2(x/16.3516)*12)) # this is also the index of the note name in our dictionary notes_dict, so we can simply look it up :))
 }
@@ -10,6 +13,9 @@ HzToSemitones = function(h){
 #' Convert semitones to Hz
 #'
 #' Internal soundgen function.
+#'
+#' Converts from semitones above C0 (~16.4 Hz) to Hz
+#' @param s vector of frequencies (semitones above C0)
 semitonesToHz = function(s){
   return (sapply(s, function(x)16.3516*2^(x/12)))
 }
@@ -19,6 +25,7 @@ semitonesToHz = function(s){
 #' Internal soundgen function.
 #'
 #' Helper function that converts a list of exact formants into a human-readable string, which can then be modified and evaluated to reproduce a list of the original structure. Note: dput() and dump() can pickle & reproduce any object, but I can't figure out how to make the interim string human-readable and modifiable
+#' @param l a list of exact formants
 pickle = function(l){
   if (is.null(l) | length(l)<1) {
     return (NA)

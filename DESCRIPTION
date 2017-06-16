@@ -14,9 +14,13 @@ Description: Tools for acoustic analysis and parametric synthesis of harmonic so
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-Imports: tuneR,
+Imports: stats,
+    graphics,
+    utils,
+    tuneR,
     seewave,
     zoo,
     shiny,
     shinyBS
+Depends: R (>= 2.10)
 RoxygenNote: 6.0.1

@@ -1,11 +1,28 @@
 # Top-level functions for generating sounds
+#' soundgen: A package for parametric synthesis of voice and acoustic analysis.
+#'
+#' The soundgen package provides ? categories of important functions:
+#' generateBout, bla-bla and bla-bla.
+#'
+#' @section Functions for voice synthesis
+#' The function called generateBout ...
+#'
+#' @docType package
+#' @name soundgen
+#' @importFrom graphics abline axis layout lines par points rect text
+#' @importFrom stats approx dgamma dnorm fft loess median na.omit predict quantile rbinom rgamma rnorm runif spline var
+#' @importFrom utils head tail
+#' @importFrom grDevices gray
+NULL
+
+
 
 #' Generate a continuous tonal sound
 #'
 #' Internal soundgen function.
 #'
 #' Returns one continuous, unfiltered, voiced syllable consisting of several sine waves.
-#' @pitch a contour of fundamental frequency (numeric vector). NB: for computational efficiency, provide the pitch contour at a reduced sampling rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be upsampled before synthesis.
+#' @param pitch a contour of fundamental frequency (numeric vector). NB: for computational efficiency, provide the pitch contour at a reduced sampling rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be upsampled before synthesis.
 #' @inheritParams generateBout
 #' @examples
 #' pitch=getSmoothContour(len=3500, anchors=data.frame('time'=c(0,1), 'ampl'=c(200,300)))
@@ -226,7 +243,7 @@ generateSyllable = function(pitch, attackLen=50, noiseAmount=0, noiseIntensity=0
 #' @param mouthAnchors dataframe specifying the time (ms) and size (0 to 1) of mouth-opening anchors
 #' @param amplAnchors dataframe specifying the time (ms) and amplitude (0 to 1) of amplitude anchors
 #' @param amplAnchors_global dataframe specifying the time (ms) and amplitude (0 to 1) of global amplitude anchors, i.e. spanning multiple syllables
-#' @param samplingRatesampling frequency (Hz)
+#' @param samplingRate sampling frequency (Hz)
 #' @param windowLength_points Fourier window length (points)
 #' @param overlap Fourier window overlap (points)
 #' @param addSilence silence before and after the bout (ms)
@@ -506,7 +523,7 @@ generateBout = function(repeatBout=1, nSyl=1, sylDur_mean=300, pauseDur_mean=200
     playme (bout, samplingRate=samplingRate) # spectro_denoised (sound_filtered, samplingRate=samplingRate, osc=T)
   }
   if (!is.na(savePath)){
-    saveme(bout, filename = savePath, samplingRate = samplingRate)
+    seewave::savewav(bout, filename = savePath, f = samplingRate)
   }
   if (plotSpectro){
     spectro_denoised (bout, samplingRate = samplingRate)

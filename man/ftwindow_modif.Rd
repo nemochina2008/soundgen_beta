@@ -15,5 +15,6 @@ ftwindow_modif(wl, wn = "gaussian")
 Internal soundgen function
 }
 \details{
-Generates different Fourier Transform windows. Just like \code{\link[seewave]{ftwindow}}, but with the addition of a gaussian window.
+Generates different Fourier Transform windows. Just like
+\code{\link[seewave]{ftwindow}}, but with the addition of a gaussian window.
 }

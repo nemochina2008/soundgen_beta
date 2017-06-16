@@ -10,7 +10,9 @@ getEntropy(x)
 \item{x}{vector of non-negative floats}
 }
 \value{
-Returns entropy of a vector on a scale 0 to 1 (i.e., normalized so that entropy does not depend on the length of input vector). Zeroes are transformed into 1e-10, negative values produce NaN.
+Returns entropy of a vector on a scale 0 to 1 (i.e., normalized so
+  that entropy does not depend on the length of input vector). Zeroes are
+  transformed into 1e-10, negative values produce NaN.
 }
 \description{
 Internal soundgen function.

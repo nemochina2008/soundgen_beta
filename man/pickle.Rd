@@ -6,6 +6,9 @@
 \usage{
 pickle(l)
 }
+\arguments{
+\item{l}{a list of exact formants}
+}
 \description{
 Internal soundgen function.
 }

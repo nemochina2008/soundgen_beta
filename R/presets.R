@@ -36,7 +36,20 @@ noiseThresholds_dict$q2 = 100 / (1 + exp(-slope_q2*(noiseThresholds_dict$noiseAm
 
 
 
-# defaults and ranges of key variables. Adjust as needed, eg specify a lower pitch floor for doing whale sounds, etc
+#' Defaults and ranges
+#'
+#' A dataset containing defaults and ranges of key variables in the Shiny app.
+#' Adjust as needed.
+#'
+#' @format A matrix with 58 rows and 4 variables:
+#' \describe{
+#'   \item{default}{default value}
+#'   \item{low}{lowest permitted value}
+#'   \item{high}{highest permitted value}
+#'   \item{step}{increment for adjustment}
+#'   ...
+#' }
+"permittedValues"
 permittedValues = matrix ( c (
   # sliderInput's to be reset for each callType
   'nSyl', 1, 1, 10, 1, # default, low, high, step
@@ -108,6 +121,12 @@ rownames(permittedValues) = temp
 # -------------------------------------------------------------
 # a library of presets for easy generation of a few nice sounds
 # -------------------------------------------------------------
+#' Presets
+#'
+#' A library of presets for easy generation of a few nice sounds.
+#'
+#' @format A list of length 4.
+"presets"
 presets = list(
   M1 = list(
     'Vowel' = c(

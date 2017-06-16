@@ -8,7 +8,7 @@ crossFade(ampl1, ampl2, length_ms = 15, samplingRate = 44100,
   length_points = NULL)
 }
 \arguments{
-\item{ampl1, amp2}{two numeric vectors (waveforms) to be joined}
+\item{ampl1, ampl2}{two numeric vectors (waveforms) to be joined}
 
 \item{length_ms}{the length of overlap, in ms (doesn't need to be specified
 if length_points is not NULL)}

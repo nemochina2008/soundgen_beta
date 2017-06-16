@@ -10,13 +10,16 @@ rnorm_bounded(n = 1, mean = 0, sd = 1, low = NULL, high = NULL,
 \arguments{
 \item{n}{the number of values to return}
 
-\item{mean}{the mean of the normal distribution from which values are generated (vector of length 1 or n)}
+\item{mean}{the mean of the normal distribution from which values are
+generated (vector of length 1 or n)}
 
-\item{sd}{the standard deviation of the normal distribution from which values are generated (vector of length 1 or n)}
+\item{sd}{the standard deviation of the normal distribution from which values
+are generated (vector of length 1 or n)}
 
 \item{low, high}{exclusive lower and upper bounds ((vectors of length 1 or n))}
 
-\item{roundToInteger}{boolean vector of length 1 or n. If TRUE, the corresponding value is rounded to the nearest integer.}
+\item{roundToInteger}{boolean vector of length 1 or n. If TRUE, the
+corresponding value is rounded to the nearest integer.}
 }
 \value{
 A vector of length n.

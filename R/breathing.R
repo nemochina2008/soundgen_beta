@@ -28,6 +28,7 @@
 #'   we can provide the exact filter - a vector of length windowLength_points/2
 #'   or, if we want moving formants, a matrix with windowLength_points/2 rows
 #'   and an arbitrary number of columns
+#' @param samplingRate sampling frequency (Hz)
 #' @examples
 #' # 1 s of white noise
 #' samplingRate = 16000
@@ -38,8 +39,8 @@
 #'
 #' # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 #' windowLength_points = 1024
-#' filter_breathing = getSpectralEnvelope(nr=windowLength_points/2, nc=1,
-#'   exactFormants=list('f1'=data.frame(time=0, freq=7000, amp=50, width=2000)), samplingRate=samplingRate)
+#' filter_breathing = getSpectralEnvelope(nr=windowLength_points/2, nc=1, samplingRate=samplingRate,
+#'   exactFormants=list('f1'=data.frame(time=0, freq=7000, amp=50, width=2000)))
 #' noise = getBreathing(len = samplingRate, rolloff_breathing = -12,
 #'   samplingRate = samplingRate, filter_breathing=filter_breathing)
 #' # plot (filter_breathing, type='l')

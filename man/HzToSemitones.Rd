@@ -6,6 +6,12 @@
 \usage{
 HzToSemitones(h)
 }
+\arguments{
+\item{h}{vector of frequencies (Hz)}
+}
 \description{
 Internal soundgen function.
+}
+\details{
+Converts from Hz to semitones above C0 (~16.4 Hz).
 }

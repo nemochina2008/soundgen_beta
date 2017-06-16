@@ -10,17 +10,17 @@
 #' @param wn window type (defaults to gaussian)
 ftwindow_modif = function (wl, wn = "gaussian"){
   if (wn == "bartlett")
-    w <- bartlett.w(wl)
+    w <- seewave::bartlett.w(wl)
   if (wn == "blackman")
-    w <- blackman.w(wl)
+    w <- seewave::blackman.w(wl)
   if (wn == "flattop")
-    w <- flattop.w(wl)
+    w <- seewave::flattop.w(wl)
   if (wn == "hamming")
-    w <- hamming.w(wl)
+    w <- seewave::hamming.w(wl)
   if (wn == "hanning")
-    w <- hanning.w(wl)
+    w <- seewave::hanning.w(wl)
   if (wn == "rectangle")
-    w <- rectangle.w(wl)
+    w <- seewave::rectangle.w(wl)
   if (wn == "gaussian")
     w <- gaussian.w(wl)
   return(w)
@@ -43,7 +43,7 @@ gaussian.w = function (n){
 #'
 #' Internal soundgen function.
 #'
-#' A subroutine of \code{\link{spectro_denoised} that saves windowed (and
+#' A subroutine of \code{\link{spectro_denoised}} that saves windowed (and
 #' optionally zero-padded) frames, i.e. chunks of the sound file of the right
 #' size and spacing. Handy for further processing.
 #' @param sound numeric vector
@@ -93,7 +93,7 @@ getEntropy = function(x) {
 #' Spectrogram
 #'
 #' Produces a spectrogram of a sound using short-term Fourier transform. This is
-#' a simplified version of \code{\link[seewave]{seewave::spectro}} with fewer
+#' a simplified version of \code{\link[seewave]{spectro}} with fewer
 #' plotting options, but with added routines for noise reduction, smoothing in
 #' time and frequency domains, and controlling contrast and brightness.
 #' @param soundfile path to a .wav file or a vector of amplitudes with specified
@@ -132,7 +132,8 @@ getEntropy = function(x) {
 #' @param osc should an oscillogram be shown under the spectrogram? TRUE / FALSE
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),
 #'   or another color theme (e.g. 'heat.colors')
-#' @param ... other graphical parameters such as xlab, ylab, etc
+#' @param xlab label for x-axis
+#' @param ... other graphical parameters
 #' @export
 #' @return Returns nothing (if output = 'none'), raw spectrum (if output =
 #'   'original'), denoised and/or smoothed spectrum (if output = 'processed'),

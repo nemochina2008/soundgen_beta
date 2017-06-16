@@ -23,10 +23,16 @@ getFrameBank(sound, samplingRate, windowLength_points, wn, step, zp,
 \item{filter}{fft window filter (defaults to NULL)}
 }
 \value{
-A matrix with \code{nrow = windowLength_points/2} and \code{ncol} depending on \code{length(sound)} and \code{step}
+A matrix with \code{nrow = windowLength_points/2} and \code{ncol}
+  depending on \code{length(sound)} and \code{step}
 }
 \description{
 Internal soundgen function.
+}
+\details{
+A subroutine of \code{\link{spectro_denoised}} that saves windowed (and
+optionally zero-padded) frames, i.e. chunks of the sound file of the right
+size and spacing. Handy for further processing.
 }
 \examples{
 a = getFrameBank(sin(1:1000), 16000, 512, 'gaussian', 15, 0)

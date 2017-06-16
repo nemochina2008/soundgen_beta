@@ -10,52 +10,88 @@ getSpectralEnvelope(nr, nc, exactFormants = NA, formantStrength = 1,
   extraFormants_ampl = 30, smoothLinear_factor = 1, samplingRate = 44100)
 }
 \arguments{
-\item{nr}{the number of frequency bins = windowLength_points/2, where windowLength_points is the size of window for Fourier transform}
+\item{nr}{the number of frequency bins = windowLength_points/2, where
+windowLength_points is the size of window for Fourier transform}
 
 \item{nc}{the number of time steps for Fourier transform}
 
-\item{exactFormants}{either a character string like "aaui" referring to default presets for speaker "M1" or a list of formant frequencies, amplitude, and bandwidth (see ex. below). exactFormants=NA defaults to schwa. Time stamps for exactFormants and mouthOpening can be specified in ms, percent of duration, or whatever - the scale doesn't matter, since duration is determined by length(ampl). See details below.}
+\item{exactFormants}{either a character string like "aaui" referring to
+default presets for speaker "M1" or a list of formant frequencies,
+amplitude, and bandwidth (see ex. below). exactFormants=NA defaults to
+schwa. Time stamps for exactFormants and mouthOpening can be specified in
+ms, percent of duration, or whatever - the scale doesn't matter, since
+duration is determined by length(ampl). See details below.}
 
 \item{formantStrength}{scale factor of formant amplitude}
 
-\item{rolloff_lip}{adds this many dB per octave (high-frequency boost) when the mouth is open}
+\item{rolloff_lip}{adds this many dB per octave (high-frequency boost) when
+the mouth is open}
 
-\item{mouthAnchors}{specify when the mouth is open. Example: mouthAnchors = data.frame('time' = seq(0, 1000, length.out = 5), 'ampl'=c(0, .2, 1, .2, 0))}
+\item{mouthAnchors}{specify when the mouth is open. Example: mouthAnchors =
+data.frame('time' = seq(0, 1000, length.out = 5), 'ampl'=c(0, .2, 1, .2,
+0))}
 
-\item{mouthOpening_threshold}{count the mouth as open when its opening degree is >threshold}
+\item{mouthOpening_threshold}{count the mouth as open when its opening degree
+is >threshold}
 
-\item{amplBoost_openMouth_dB}{amplify the voice when the mouth is open by \code{amplBoost_openMouth_dB} dB}
+\item{amplBoost_openMouth_dB}{amplify the voice when the mouth is open by
+\code{amplBoost_openMouth_dB} dB}
 
-\item{vocalTract_length}{used for calculating formant dispersion and formant transitions as the mouth opens and closes (specified in cm)}
+\item{vocalTract_length}{used for calculating formant dispersion and formant
+transitions as the mouth opens and closes (specified in cm)}
 
-\item{temperature}{regulates the amount of stochasticity in the algorithm. If temperature == 0, the spectrum is exactly the same every time \code{getSpectralEnvelope} is called with the same pars. If temperature > 0, input parameters are "wiggled" and extra formants are added above the highest specified formant}
+\item{temperature}{regulates the amount of stochasticity in the algorithm. If
+temperature == 0, the spectrum is exactly the same every time
+\code{getSpectralEnvelope} is called with the same pars. If temperature >
+0, input parameters are "wiggled" and extra formants are added above the
+highest specified formant}
 
-\item{extraFormants_ampl}{the amplitude of additional formants added above the highest specified formant (only if temperature > 0)}
+\item{extraFormants_ampl}{the amplitude of additional formants added above
+the highest specified formant (only if temperature > 0)}
 
-\item{smoothLinear_factor}{regulates smoothing of formant anchors (0 to +Inf) as they are upsampled to the number of fft steps \code{nc}. This is necessary because the input \code{exactFormants} normally contains fewer sets of formant values than the number of fft steps. \code{smoothLinear_factor} = 0: close to default spline; >3: approaches linear extrapolation}
+\item{smoothLinear_factor}{regulates smoothing of formant anchors (0 to +Inf)
+as they are upsampled to the number of fft steps \code{nc}. This is
+necessary because the input \code{exactFormants} normally contains fewer
+sets of formant values than the number of fft steps.
+\code{smoothLinear_factor} = 0: close to default spline; >3: approaches
+linear extrapolation}
+
+\item{samplingRate}{sampling rate (Hz)}
 }
 \value{
-Returns a spectral filter (matrix nr x nc, where nr is the number of frequency bins = windowLength_points/2 and nc is the number of time steps)
+Returns a spectral filter (matrix nr x nc, where nr is the number of
+  frequency bins = windowLength_points/2 and nc is the number of time steps)
 }
 \description{
 Internal soundgen function.
 }
 \details{
-Prepares a spectral envelope for filtering a sound to add formants, lip radiation, and some stochastic component regulated by temperature.
-exactFormants is specified as a list containing time, frequency, amplitude, and width values for each formant (see examples). NB: each formant is generated as a gamma distribution with mean = freq and SD = width. Formant bandwidths in soundgen are therefore NOT compatible with formant bandwidths used in Klatt synthesizer and other algorithms that rely on FIR instead of FFT.
+Prepares a spectral envelope for filtering a sound to add formants, lip
+radiation, and some stochastic component regulated by temperature.
+exactFormants is specified as a list containing time, frequency, amplitude,
+and width values for each formant (see examples). NB: each formant is
+generated as a gamma distribution with mean = freq and SD = width. Formant
+bandwidths in soundgen are therefore NOT compatible with formant bandwidths
+used in Klatt synthesizer and other algorithms that rely on FIR instead of
+FFT.
 }
 \examples{
+# [a] with F1-F4 visible
 image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=convertStringToFormants('a'),
-  temperature=0, samplingRate=16000))) # [a] with F1-F4 visible
+  temperature=0, samplingRate=16000)))
+# some "wiggling" of specified formants plus extra formants on top
 image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=convertStringToFormants('a'),
-  temperature=0.1, extraFormants_ampl=10, samplingRate=16000))) # some "wiggling" of specified formants plus extra formants on top
+  temperature=0.1, extraFormants_ampl=10, samplingRate=16000)))
+# stronger extra formants
 image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=convertStringToFormants('a'),
-  temperature=0.1, extraFormants_ampl=30, samplingRate=16000))) # stronger extra formants
+  temperature=0.1, extraFormants_ampl=30, samplingRate=16000)))
+# a schwa based on the length of vocal tract = 15.5 cm
 image(t(getSpectralEnvelope(nr=512, nc=50, exactFormants=NA,
-  temperature=.1, vocalTract_length=15.5, samplingRate=16000))) # a schwa based on the length of vocal tract = 15.5 cm
-image(t(getSpectralEnvelope(nr=512, nc=50,
-  exactFormants=list('f1' = data.frame('time' = c(0), 'freq'=c(900), 'amp'=c(30), 'width'=c(120)),
-                     'f2' = data.frame('time' = c(0), 'freq'=c(1300), 'amp'=c(30), 'width'=c(120)),
-                     'f3' = data.frame('time' = c(0), 'freq'=c(3200), 'amp'=c(20), 'width'=c(200))),
-  samplingRate=16000))) # manual specification of formants
+  temperature=.1, vocalTract_length=15.5, samplingRate=16000)))
+
+# manual specification of formants
+image(t(getSpectralEnvelope(nr=512, nc=50, samplingRate=16000,
+  exactFormants=list('f1' = data.frame('time'=0, 'freq'=900, 'amp'=30, 'width'=120),
+                     'f2' = data.frame('time'=0, 'freq'=1300, 'amp'=30, 'width'=120),
+                     'f3' = data.frame('time'=0, 'freq'=3200, 'amp'=20, 'width'=200)))))
 }

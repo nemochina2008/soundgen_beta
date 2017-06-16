@@ -12,23 +12,43 @@ getBreathing(len, breathingAnchors = data.frame(time = c(0, 300), ampl =
 \arguments{
 \item{len}{length of output}
 
-\item{breathingAnchors}{a dataframe specifying the amplitude envelope of output. $time: timing of aspiration noise, ms c(start,finish) relative to voiced part, eg c(-100,500) means breathing starts 100 ms before the voiced part and lasts until 500 ms into the voiced part (eg total duration of breathing = 500 - (-100) = 600 ms). breathingAnchors$ampl: the amount of aspiration noise at the given time anchors (to be smoothed). throwaway_dB = no breathing, 0 = as strong as the voiced (harmonic) part}
+\item{breathingAnchors}{a dataframe specifying the amplitude envelope of
+output. $time: timing of aspiration noise, ms c(start,finish) relative to
+voiced part, eg c(-100,500) means breathing starts 100 ms before the voiced
+part and lasts until 500 ms into the voiced part (eg total duration of
+breathing = 500 - (-100) = 600 ms). breathingAnchors$ampl: the amount of
+aspiration noise at the given time anchors (to be smoothed). throwaway_dB =
+no breathing, 0 = as strong as the voiced (harmonic) part}
 
-\item{rolloff_breathing}{desired spectral slope of white noise (exponential decay analogous to \code{rolloff_exp} in \code{\link{getRolloff}})}
+\item{rolloff_breathing}{desired spectral slope of white noise (exponential
+decay analogous to \code{rolloff_exp} in \code{\link{getRolloff}})}
 
-\item{attackLen}{duration of fade-in and fade-out at the beginning and end of output, ms}
+\item{attackLen}{duration of fade-in and fade-out at the beginning and end of
+output, ms}
 
 \item{windowLength_points}{fft window length, points}
 
+\item{samplingRate}{sampling frequency (Hz)}
+
 \item{overlap}{overlap of fft windows}
 
-\item{filter_breathing}{(optional): in addition to using rolloff_breathing, we can provide the exact filter - a vector of length windowLength_points/2 or, if we want moving formants, a matrix with windowLength_points/2 rows and an arbitrary number of columns}
+\item{filter_breathing}{(optional): in addition to using rolloff_breathing,
+we can provide the exact filter - a vector of length windowLength_points/2
+or, if we want moving formants, a matrix with windowLength_points/2 rows
+and an arbitrary number of columns}
 }
 \description{
 Internal soundgen function.
 }
 \details{
-Generates white noise of length \code{len} and with spectrum defined by exponential decay \code{rolloff_breathing} and/or a specified filter \code{filter_breathing}. Algorithm: paints a spectrum with desired characteristics, sets phase to zero, and generates a time sequence via inverse FFT. Soundgen generates aspiration noise (breathing) using this function. Noise can then be used as an additional source to be added to the glottal source AFTER the glottal source has been formant-filtered, or BEFORE formant-filtering for glottal breathing noise.
+Generates white noise of length \code{len} and with spectrum defined by
+exponential decay \code{rolloff_breathing} and/or a specified filter
+\code{filter_breathing}. Algorithm: paints a spectrum with desired
+characteristics, sets phase to zero, and generates a time sequence via
+inverse FFT. Soundgen generates aspiration noise (breathing) using this
+function. Noise can then be used as an additional source to be added to the
+glottal source AFTER the glottal source has been formant-filtered, or BEFORE
+formant-filtering for glottal breathing noise.
 }
 \examples{
 # 1 s of white noise
@@ -40,8 +60,8 @@ noise = getBreathing(len = samplingRate, rolloff_breathing = -6, samplingRate = 
 
 # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 windowLength_points = 1024
-filter_breathing = getSpectralEnvelope(nr=windowLength_points/2, nc=1,
-  exactFormants=list('f1'=data.frame(time=0, freq=7000, amp=50, width=2000)), samplingRate=samplingRate)
+filter_breathing = getSpectralEnvelope(nr=windowLength_points/2, nc=1, samplingRate=samplingRate,
+  exactFormants=list('f1'=data.frame(time=0, freq=7000, amp=50, width=2000)))
 noise = getBreathing(len = samplingRate, rolloff_breathing = -12,
   samplingRate = samplingRate, filter_breathing=filter_breathing)
 # plot (filter_breathing, type='l')

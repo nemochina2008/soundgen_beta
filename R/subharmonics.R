@@ -83,8 +83,12 @@ getVocalFry_per_epoch = function(rolloff, pitch_per_gc, nSubharm, sideband_width
 #' @examples
 #' pitch_per_gc = c(400, 500, 600, 700)
 #' rolloff = getRolloff(pitch_per_gc, rolloff_exp = -30)
-#' rolloff_subh = getVocalFry(rolloff, pitch_per_gc, g0=200, sideband_width_hz=150, min_epoch_length_ms=100) # one epoch, two subharmonics
-#' rolloff_subh = getVocalFry(rolloff, pitch_per_gc, g0=200, sideband_width_hz=150, min_epoch_length_ms=0) # three epochs with 2/3/4 subharmonics
+#' # one epoch, two subharmonics
+#' rolloff_subh = getVocalFry(rolloff, pitch_per_gc,
+#'   g0=200, sideband_width_hz=150, min_epoch_length_ms=100)
+#' # three epochs with 2/3/4 subharmonics
+#' rolloff_subh = getVocalFry(rolloff, pitch_per_gc,
+#'   g0=200, sideband_width_hz=150, min_epoch_length_ms=0)
 getVocalFry = function(rolloff, pitch_per_gc, g0=100, sideband_width_hz=100, throwaway_dB=-120, min_epoch_length_ms=300){
   # force g0 to be a multiple of f0 at each point
   nSubharm = round(pitch_per_gc/g0, 0)-1

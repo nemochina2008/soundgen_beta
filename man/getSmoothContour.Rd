@@ -32,7 +32,9 @@ only a few anchors}
 
 \item{plot}{(boolean) produce a plot?}
 
-\item{samplingRate}{sampling rate used to convert time values to points}
+\item{main, xlim, ylim}{plotting options}
+
+\item{samplingRate}{sampling rate used to convert time values to points (Hz)}
 
 \item{voiced, contourLabel}{graphical pars for plotting breathing contours
 (see examples below)}

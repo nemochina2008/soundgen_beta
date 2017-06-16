@@ -49,6 +49,8 @@ dB) to save computational resources}
 
 \item{samplingRate}{sampling rate (needed to stop at Nyquist frequency and
 for plotting purposes)}
+
+\item{plot}{if TRUE, produces a plot}
 }
 \value{
 Returns a matrix of amplitude multiplication factors for adjusting
@@ -81,18 +83,25 @@ rolloff = getRolloff (pitch_per_gc=c(150,800,3000), rolloff_exp_delta=0, plot=T)
 # without the correction for f0 (adjust_rolloff_per_kHz),
 # high-pitched sounds have the same rolloff as low-pitched sounds,
 # producing unnaturally strong high-frequency harmonics
-rolloff = getRolloff (pitch_per_gc=c(150,800,3000), rolloff_exp_delta=0, adjust_rolloff_per_kHz=0, plot=T)
+rolloff = getRolloff (pitch_per_gc=c(150,800,3000), rolloff_exp_delta=0,
+  adjust_rolloff_per_kHz=0, plot=T)
 
 # parabolic adjustment of lower harmonics
-rolloff = getRolloff (pitch_per_gc=350, quadratic_delta=0, quadratic_nHarm=2, samplingRate=16000, plot=T)
+rolloff = getRolloff (pitch_per_gc=350, quadratic_delta=0, quadratic_nHarm=2,
+  samplingRate=16000, plot=T)
 # quadratic_nHarm=1 affects only f0
-rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=30, quadratic_nHarm=1, samplingRate=16000, plot=T)
+rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=30, quadratic_nHarm=1,
+  samplingRate=16000, plot=T)
 # quadratic_nHarm=2 or 3 affects only h1
-rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=30, quadratic_nHarm=2, samplingRate=16000, plot=T)
+rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=30, quadratic_nHarm=2,
+  samplingRate=16000, plot=T)
 # quadratic_nHarm=4 affects h1 and h2, etc
-rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=30, quadratic_nHarm=4, samplingRate=16000, plot=T)
+rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=30, quadratic_nHarm=4,
+  samplingRate=16000, plot=T)
 # negative quadratic_delta weakens lower harmonics
-rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=-20, quadratic_nHarm=7, samplingRate=16000, plot=T)
+rolloff = getRolloff (pitch_per_gc=150, quadratic_delta=-20, quadratic_nHarm=7,
+  samplingRate=16000, plot=T)
 # only harmonics below 2000 Hz are affected
-rolloff = getRolloff (pitch_per_gc=c(150,600), quadratic_delta=-20, quadratic_ceiling=2000, samplingRate=16000, plot=T)
+rolloff = getRolloff (pitch_per_gc=c(150,600), quadratic_delta=-20, quadratic_ceiling=2000,
+  samplingRate=16000, plot=T)
 }

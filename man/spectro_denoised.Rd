@@ -14,11 +14,14 @@ spectro_denoised(soundfile, frameBank = NULL, samplingRate = NULL,
   "...")[1], xlab = "", ...)
 }
 \arguments{
-\item{soundfile}{path to a .wav file or a vector of amplitudes with specified samplingRate}
+\item{soundfile}{path to a .wav file or a vector of amplitudes with specified
+samplingRate}
 
-\item{frameBank}{(alternative to \code{soundfile}) a previously saved bank of individual frames as produced by function \code{\link{getFrameBank}}}
+\item{frameBank}{(alternative to \code{soundfile}) a previously saved bank of
+individual frames as produced by function \code{\link{getFrameBank}}}
 
-\item{samplingRate}{sampling rate of \code{soundfile} (only needed if \code{soundfile} is a numeric vector, rather than a .wav file)}
+\item{samplingRate}{sampling rate of \code{soundfile} (only needed if
+\code{soundfile} is a numeric vector, rather than a .wav file)}
 
 \item{windowLength}{length of fft window, ms}
 
@@ -28,21 +31,36 @@ spectro_denoised(soundfile, frameBank = NULL, samplingRate = NULL,
 
 \item{zp}{zero padding, points}
 
-\item{median_smoothing_freq, median_smoothing_time}{length of the window, in data points (0 to +inf), for calculating a rolling median. Applies median smoothing to spectrogram in frequency and time domains, respectively}
+\item{median_smoothing_freq, median_smoothing_time}{length of the window, in
+data points (0 to +inf), for calculating a rolling median. Applies median
+smoothing to spectrogram in frequency and time domains, respectively}
 
-\item{denoise_median_time}{the quantile to be subtracted for each frequency bin. For ex., if denoise_median_time = 0.5, the median of each frequency bin (over the entire sound duration) will be calculated and subtracted from each frame (see examples)}
+\item{denoise_median_time}{the quantile to be subtracted for each frequency
+bin. For ex., if denoise_median_time = 0.5, the median of each frequency
+bin (over the entire sound duration) will be calculated and subtracted from
+each frame (see examples)}
 
-\item{percentNoise}{proportion of frames (0 to 1) used for calculating noise spectrum}
+\item{percentNoise}{proportion of frames (0 to 1) used for calculating noise
+spectrum}
 
-\item{noiseReduction}{how much noise to remove (0 to +inf, recommended 0 to 2). 0 = no noise reduction, 2 = strong noise reduction: \eqn{spectrum - (noiseReduction * noiseSpectrum)}, where noiseSpectrum is the average spectrum of frames with entropy exceeding the quantile set by \code{percentNoise}}
+\item{noiseReduction}{how much noise to remove (0 to +inf, recommended 0 to
+2). 0 = no noise reduction, 2 = strong noise reduction: \eqn{spectrum -
+(noiseReduction * noiseSpectrum)}, where noiseSpectrum is the average
+spectrum of frames with entropy exceeding the quantile set by
+\code{percentNoise}}
 
-\item{contrast}{spectrum is exponentiated by contrast (-inf to +inf, recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases harpness}
+\item{contrast}{spectrum is exponentiated by contrast (-inf to +inf,
+recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases
+harpness}
 
 \item{brightness}{how much to "lighten" the image (>0 = lighter, <0 = darker)}
 
-\item{method}{plot spectrum ('spectrum') or the first time derivative of the spectrum ('spectralDerivative')}
+\item{method}{plot spectrum ('spectrum') or the first time derivative of the
+spectrum ('spectralDerivative')}
 
-\item{output}{specifies what to return: nothing ('none'), unmodified spectrogram ('original'), or denoised and/or smoothed spectrogram ('processed')}
+\item{output}{specifies what to return: nothing ('none'), unmodified
+spectrogram ('original'), or denoised and/or smoothed spectrogram
+('processed')}
 
 \item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
 
@@ -50,15 +68,24 @@ spectro_denoised(soundfile, frameBank = NULL, samplingRate = NULL,
 
 \item{osc}{should an oscillogram be shown under the spectrogram? TRUE / FALSE}
 
-\item{colorTheme}{black and white ('bw'), as in seewave package ('seewave'), or another color theme (e.g. 'heat.colors')}
+\item{colorTheme}{black and white ('bw'), as in seewave package ('seewave'),
+or another color theme (e.g. 'heat.colors')}
 
-\item{...}{other graphical parameters such as xlab, ylab, etc}
+\item{xlab}{label for x-axis}
+
+\item{...}{other graphical parameters}
 }
 \value{
-Returns nothing (if output = 'none'), raw spectrum (if output = 'original'), denoised and/or smoothed spectrum (if output = 'processed'), or spectral derivatives (if method = 'spectralDerivative') as a matrix of real numbers.
+Returns nothing (if output = 'none'), raw spectrum (if output =
+  'original'), denoised and/or smoothed spectrum (if output = 'processed'),
+  or spectral derivatives (if method = 'spectralDerivative') as a matrix of
+  real numbers.
 }
 \description{
-Produces a spectrogram of a sound using short-term Fourier transform. This is a simplified version of \code{\link[seewave]{seewave::spectro}} with fewer plotting options, but with added routines for noise reduction, smoothing in time and frequency domains, and controlling contrast and brightness.
+Produces a spectrogram of a sound using short-term Fourier transform. This is
+a simplified version of \code{\link[seewave]{spectro}} with fewer
+plotting options, but with added routines for noise reduction, smoothing in
+time and frequency domains, and controlling contrast and brightness.
 }
 \examples{
 # synthesize a sound 1 s long, with a gradually increasing breathing noise

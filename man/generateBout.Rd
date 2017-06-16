@@ -2,7 +2,7 @@
 % Please edit documentation in R/soundgen.R
 \name{generateBout}
 \alias{generateBout}
-\title{Generate a bout}
+\title{Generate a sound}
 \usage{
 generateBout(repeatBout = 1, nSyl = 1, sylDur_mean = 300,
   pauseDur_mean = 200, pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
@@ -115,6 +115,8 @@ subharmonics regime, in ms}
 
 \item{amplAnchors_global}{dataframe specifying the time (ms) and amplitude (0 to 1) of global amplitude anchors, i.e. spanning multiple syllables}
 
+\item{samplingRate}{sampling frequency (Hz)}
+
 \item{windowLength_points}{Fourier window length (points)}
 
 \item{overlap}{Fourier window overlap (points)}
@@ -131,8 +133,42 @@ subharmonics regime, in ms}
 
 \item{savePath}{full path for saving the output, e.g. '~/Downloads/temp.wav'. If NA (default), doesn't save anything}
 
-\item{samplingRatesampling}{frequency (Hz)}
+\item{...}{other plotting parameters}
+}
+\value{
+Returns the synthesized waveform as a numeric vector.
 }
 \description{
-Generate a bout of one or more syllables with pauses between them.
+Generates a bout of one or more syllables with pauses between them. Two basic components are synthesized: the harmonic component (the sum of sine waves with frequencies that are multiples of the fundamental frequency) and the noise component. Both components can be filtered with independently specified formants. Intonation and amplitude contours can be applied both within each syllable and across multiple syllables. Suggested application: synthesis of animal or human non-linguistic vocalizations. For more information, see \url{http://cogsci.se/soundgen.html}
+}
+\details{
+Details: put some parts of the manual here.
+}
+\examples{
+sound = generateBout(playSound = T)
+spectro_denoised (sound, samplingRate=16000, osc=T)
+# unless temperature is 0, the sound is different every time
+for (i in 1:3) sound = generateBout(playSound = T, temperature = .2)
+
+# Bouts versus syllables. Compare:
+sound = generateBout (exactFormants='uai', repeatBout=3, playSound=T)
+sound = generateBout (exactFormants='uai', nSyl=3, playSound=T)
+
+# Intonation contours per syllable and globally:
+sound = generateBout (nSyl=5, sylDur_mean=200, pauseDur_mean=140, playSound=T,
+  pitchAnchors=data.frame(time=c(0,0.65,1), ampl=c(977,1540,826)),
+  pitchAnchors_global=data.frame(time=c(0,.5,1),ampl=c(-6,7,0)))
+
+# Subharmonics in sidebands (noisy scream, chimpanzee-like)
+sound = generateBout (noiseAmount=100, g0=75, sideband_width_hz=130,
+  pitchAnchors=data.frame(time=c(0,.3,.9,1), ampl=c(1200,1547,1487,1154)),
+  sylDur_mean=800, samplingRate=16000,
+  playSound=T, plotSpectro=T)
+
+# Jitter and mouth opening (bark, dog-like)
+sound = generateBout (repeatBout=2, sylDur_mean=160, pauseDur_mean=100,
+  noiseAmount=100, g0=100, sideband_width_hz=60, jitterDep=1,
+  pitchAnchors=data.frame(time=c(0,0.52,1), ampl=c(559,785,557)),
+  mouthAnchors=data.frame(time=c(0,0.5,1), ampl=c(0,0.5,0)),
+  vocalTract_length=5, samplingRate=16000, playSound=T)
 }

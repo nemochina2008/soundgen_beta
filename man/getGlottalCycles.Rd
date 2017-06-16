@@ -21,5 +21,6 @@ sounds) and that maximum amplitude gives us the center of a glottal cycle.
 The first index is always 1.
 }
 \examples{
-getGlottalCycles (seq(150, 200, length.out=350), samplingRate = 3500) # 100 ms of audio with f0 steadily increasing from 150 to 200 Hz
+# 100 ms of audio with f0 steadily increasing from 150 to 200 Hz
+getGlottalCycles (seq(150, 200, length.out=350), samplingRate = 3500)
 }

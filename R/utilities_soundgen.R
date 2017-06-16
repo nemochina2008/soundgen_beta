@@ -24,26 +24,6 @@ playme = function(sound, samplingRate=44100){
   tuneR::play (soundWave, 'play')
 }
 
-#' Save wave file
-#'
-#' Internal soundgen function.
-#'
-#' Saves a numeric vector as a .wav file. This is a simple wrapper for the
-#' functionality provided by tuneR package.
-#' @param sound numeric vector on any scale
-#' @param filename path to target .wav file
-#' @param samplingRate sampling rate of target .wav file
-#' @export
-#' @examples
-#' \dontrun{saveme(sin(2*pi*f0_Hz*(1:16000)/16000), '~/Downloads/temp.wav', samplingRate=16000)}
-saveme = function(sound, filename, samplingRate=44100){
-  # input: numeric vector
-  soundWave = tuneR::Wave(left=sound, samp.rate=samplingRate, bit=16, pcm=TRUE)
-  soundWave = tuneR::normalize (soundWave, unit='32') # / 2
-  tuneR::writeWave (soundWave,filename)
-}
-
-
 #' Prepare a list of formants
 #'
 #' Internal soundgen function.
@@ -245,7 +225,7 @@ findZeroCrossing = function(ampl, location){
 #' concatenated at zero crossings instead of cross-fading. Soundgen uses
 #' \code{crossFade} for gluing together epochs in generateSyllable()
 #'
-#' @param ampl1,amp2 two numeric vectors (waveforms) to be joined
+#' @param ampl1,ampl2 two numeric vectors (waveforms) to be joined
 #' @param length_ms the length of overlap, in ms (doesn't need to be specified
 #'   if length_points is not NULL)
 #' @param length_points (optional) the length of overlap, in points (defaults to
@@ -539,13 +519,15 @@ matchLengths = function(myseq, len, padDir=c('left', 'right', 'central')[3], pad
 #' are converted to 0.
 #' @param v1,v2 numeric vectors
 #' @param insertionPoint the index of element in vector 1 at which vector 2 will
-#'   be pasted (any integer, can also be negative)
+#'   be insterted (any integer, can also be negative)
 #' @examples
 #' v1 = 1:6
 #' v2 = rep(100, 3)
 #' addVectors(v1, v2, insertionPoint = 5)
 #' addVectors(v1, v2, insertionPoint = -4)
-#' addVectors(v2, v1, insertionPoint = -4) # note the asymmetry: insertionPoint refers to the first arg
+#' # note the asymmetry: insertionPoint refers to the first arg
+#' addVectors(v2, v1, insertionPoint = -4)
+#'
 #' v3 = rep(100, 15)
 #' addVectors(v1, v3, insertionPoint = -4)
 #' addVectors(v2, v3, insertionPoint = 7)
@@ -594,7 +576,9 @@ addVectors = function(v1, v2, insertionPoint){
 #' ampl = sin(1:1000)
 #' plot(fadeInOut(ampl, length_fade=100), type='l')
 #' plot(fadeInOut(ampl, length_fade=300, do_fadeOut=F), type='l')
-#' plot(fadeInOut(ampl, length_fade=700), type='l') # if the vector is shorter than twice the specified length_fade, fade-in/out regions overlap
+#' # if the vector is shorter than twice the specified length_fade,
+#' # fade-in/out regions overlap
+#' plot(fadeInOut(ampl, length_fade=700), type='l')
 fadeInOut = function(ampl, do_fadeIn=T, do_fadeOut=T, length_fade=1000){
   if ((!do_fadeIn & !do_fadeOut) | length_fade<2) return(ampl)
 
@@ -624,7 +608,8 @@ fadeInOut = function(ampl, do_fadeIn=T, do_fadeOut=T, length_fade=1000){
 #' @param pitch a vector of fundamental frequency values
 #' @param samplingRate sampling rate at which f0 values are provided
 #' @examples
-#' getGlottalCycles (seq(150, 200, length.out=350), samplingRate = 3500) # 100 ms of audio with f0 steadily increasing from 150 to 200 Hz
+#' # 100 ms of audio with f0 steadily increasing from 150 to 200 Hz
+#' getGlottalCycles (seq(150, 200, length.out=350), samplingRate = 3500)
 getGlottalCycles = function (pitch, samplingRate=44100){
   glottalCycles = numeric()
   i = 1 # the first border is the first time point
