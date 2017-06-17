@@ -99,9 +99,9 @@ Returns one continuous, unfiltered, voiced syllable consisting of several
 sine waves.
 }
 \examples{
-pitch=soundgen:::getSmoothContour(len=3500,
-  anchors=data.frame('time'=c(0,1), 'ampl'=c(200,300)))
+pitch=soundgen:::getSmoothContour(len = 3500,
+  anchors = data.frame('time' = c(0, 1), 'ampl' = c(200, 300)))
 plot(pitch)
-sound = soundgen:::generateHarmonics(pitch, samplingRate=16000)
-# playme(sound, samplingRate=16000) # no formants yet
+sound = soundgen:::generateHarmonics(pitch, samplingRate = 16000)
+# playme(sound, samplingRate = 16000) # no formants yet
 }

@@ -6,8 +6,9 @@
 #'
 #' Converts from Hz to semitones above C0 (~16.4 Hz).
 #' @param h vector of frequencies (Hz)
-HzToSemitones = function(h){
-  out = sapply(h, function(x)log2(x / 16.3516) * 12)
+HzToSemitones = function(h) {
+  out = sapply(h, function(x)
+    log2(x / 16.3516) * 12)
   # this is also the index of the note name in our dictionary notes_dict,
   # so we can simply look it up :))
   return (out)
@@ -19,8 +20,9 @@ HzToSemitones = function(h){
 #'
 #' Converts from semitones above C0 (~16.4 Hz) to Hz
 #' @param s vector of frequencies (semitones above C0)
-semitonesToHz = function(s){
-  out = sapply(s, function(x)16.3516 * 2 ^ (x / 12))
+semitonesToHz = function(s) {
+  out = sapply(s, function(x)
+    16.3516 * 2 ^ (x / 12))
   return (out)
 }
 
@@ -34,34 +36,45 @@ semitonesToHz = function(s){
 #' object, but I can't figure out how to make the interim string human-readable
 #' and modifiable
 #' @param l a list of exact formants
-pickle = function(l){
+pickle = function(l) {
   if (is.null(l) | length(l) < 1) {
     return (NA)
-  } else if (sum(is.na(l)) > 0){
+  } else if (sum(is.na(l)) > 0) {
     return (NA)
   }
 
   temp = try(expr = {
     out = 'list(\n'
-    for (i in 1:length(l)){
+    for (i in 1:length(l)) {
       len = nrow(l[[i]])
       freq = ifelse(len == 1 | var(l[[i]]$freq) == 0,
-                     l[[i]]$freq[1],
-                     paste0(l[[i]]$freq, collapse = ","))
+                    l[[i]]$freq[1],
+                    paste0(l[[i]]$freq, collapse = ","))
       amp = ifelse(len == 1 | var(l[[i]]$amp) == 0,
-                    l[[i]]$amp[1],
-                    paste0(l[[i]]$amp, collapse = ","))
-      width = ifelse(len==1 | var(l[[i]]$width)==0,
-                      l[[i]]$width[1],
-                      paste0(l[[i]]$width, collapse = ","))
-      out = paste0(out, names(l)[i], '=data.frame( time=c(',
-                   paste0(round(l[[i]]$time,2),collapse=","), '),
-                   freq=c(', freq, '), amp=c(', amp, '), width=c(', width, ')),\n')
+                   l[[i]]$amp[1],
+                   paste0(l[[i]]$amp, collapse = ","))
+      width = ifelse(len == 1 | var(l[[i]]$width) == 0,
+                     l[[i]]$width[1],
+                     paste0(l[[i]]$width, collapse = ","))
+      out = paste0(
+        out,
+        names(l)[i],
+        '=data.frame( time=c(',
+        paste0(round(l[[i]]$time, 2), collapse = ","),
+        '),
+        freq=c(',
+        freq,
+        '), amp=c(',
+        amp,
+        '), width=c(',
+        width,
+        ')),\n'
+        )
     }
-    substr(out, nchar(out)-1, nchar(out)) = ')'  #  replace the last comma with )
-  }, silent=TRUE)
-  if (class(temp)=='try-error') return(NA)
+    substr(out, nchar(out) - 1, nchar(out)) = ')'  #  replace the last comma with )
+  }, silent = TRUE)
+  if (class(temp) == 'try-error')
+    return(NA)
   return(out)
   # NB: to go back to the list structure, use eval(parse(text = out))
 }
-

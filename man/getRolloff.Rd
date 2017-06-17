@@ -71,37 +71,42 @@ vignette to get a feel for how to use \code{\link{getRolloff}} effectively.
 }
 \examples{
 # steady exponential rolloff of -12 dB per octave
-rolloff = soundgen:::getRolloff(pitch_per_gc=150, rolloff_exp=-12, rolloff_exp_delta=0, plot=TRUE)
+rolloff = soundgen:::getRolloff(pitch_per_gc = 150, rolloff_exp = -12,
+  rolloff_exp_delta = 0, plot = TRUE)
 # the rate of rolloff slows down with each octave
-rolloff = soundgen:::getRolloff(pitch_per_gc=150, rolloff_exp=-12, rolloff_exp_delta=2, plot=TRUE)
+rolloff = soundgen:::getRolloff(pitch_per_gc = 150, rolloff_exp = -12,
+  rolloff_exp_delta = 2, plot = TRUE)
 # the rate of rolloff increases with each octave
-rolloff = soundgen:::getRolloff(pitch_per_gc=150, rolloff_exp=-12, rolloff_exp_delta=-2, plot=TRUE)
+rolloff = soundgen:::getRolloff(pitch_per_gc = 150, rolloff_exp = -12,
+  rolloff_exp_delta = -2, plot = TRUE)
 
 # variable f0
 # the lower f0, the more harmonics are non-zero
-rolloff = soundgen:::getRolloff(pitch_per_gc=c(150,800,3000), rolloff_exp_delta=0, plot=TRUE)
+rolloff = soundgen:::getRolloff(pitch_per_gc = c(150, 800, 3000),
+  rolloff_exp_delta = 0, plot = TRUE)
 # without the correction for f0 (adjust_rolloff_per_kHz),
 # high-pitched sounds have the same rolloff as low-pitched sounds,
 # producing unnaturally strong high-frequency harmonics
-rolloff = soundgen:::getRolloff(pitch_per_gc=c(150,800,3000), rolloff_exp_delta=0,
-  adjust_rolloff_per_kHz=0, plot=TRUE)
+rolloff = soundgen:::getRolloff(pitch_per_gc = c(150, 800, 3000),
+  rolloff_exp_delta = 0, adjust_rolloff_per_kHz = 0, plot = TRUE)
 
 # parabolic adjustment of lower harmonics
-rolloff = soundgen:::getRolloff(pitch_per_gc=350, quadratic_delta=0,
-  quadratic_nHarm=2, samplingRate=16000, plot=TRUE)
-# quadratic_nHarm=1 affects only f0
-rolloff = soundgen:::getRolloff(pitch_per_gc=150, quadratic_delta=30,
-  quadratic_nHarm=1, samplingRate=16000, plot=TRUE)
+rolloff = soundgen:::getRolloff(pitch_per_gc = 350, quadratic_delta = 0,
+  quadratic_nHarm = 2, samplingRate = 16000, plot = TRUE)
+# quadratic_nHarm = 1 affects only f0
+rolloff = soundgen:::getRolloff(pitch_per_gc = 150, quadratic_delta = 30,
+  quadratic_nHarm = 1, samplingRate = 16000, plot = TRUE)
 # quadratic_nHarm=2 or 3 affects only h1
-rolloff = soundgen:::getRolloff(pitch_per_gc=150, quadratic_delta=30,
-  quadratic_nHarm=2, samplingRate=16000, plot=TRUE)
-# quadratic_nHarm=4 affects h1 and h2, etc
-rolloff = soundgen:::getRolloff(pitch_per_gc=150, quadratic_delta=30,
-  quadratic_nHarm=4, samplingRate=16000, plot=TRUE)
+rolloff = soundgen:::getRolloff(pitch_per_gc = 150, quadratic_delta = 30,
+  quadratic_nHarm = 2, samplingRate = 16000, plot = TRUE)
+# quadratic_nHarm = 4 affects h1 and h2, etc
+rolloff = soundgen:::getRolloff(pitch_per_gc = 150, quadratic_delta = 30,
+  quadratic_nHarm = 4, samplingRate = 16000, plot = TRUE)
 # negative quadratic_delta weakens lower harmonics
-rolloff = soundgen:::getRolloff(pitch_per_gc=150, quadratic_delta=-20,
-  quadratic_nHarm=7, samplingRate=16000, plot=TRUE)
+rolloff = soundgen:::getRolloff(pitch_per_gc = 150, quadratic_delta = -20,
+  quadratic_nHarm = 7, samplingRate = 16000, plot = TRUE)
 # only harmonics below 2000 Hz are affected
-rolloff = soundgen:::getRolloff(pitch_per_gc=c(150,600),
-  quadratic_delta=-20, quadratic_ceiling=2000, samplingRate=16000, plot=TRUE)
+rolloff = soundgen:::getRolloff(pitch_per_gc = c(150, 600),
+  quadratic_delta = -20, quadratic_ceiling = 2000, samplingRate = 16000,
+  plot = TRUE)
 }

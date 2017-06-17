@@ -24,5 +24,5 @@ Upsamples a pitch contour to samplingRate through linear interpolation
 between successive glottal cycles.
 }
 \examples{
-soundgen:::upsample(c(100,150,130), samplingRate=16000)
+soundgen:::upsample(c(100, 150, 130), samplingRate = 16000)
 }

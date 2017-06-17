@@ -62,18 +62,20 @@ noise = soundgen:::generateNoise(len = samplingRate,
 
 # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 windowLength_points = 1024
-filter_breathing = soundgen:::getSpectralEnvelope(nr=windowLength_points/2,
-  nc=1, samplingRate=samplingRate,
-  exactFormants=list('f1'=data.frame(time=0, freq=7000, amp=50, width=2000)))
+filter_breathing = soundgen:::getSpectralEnvelope(
+  nr = windowLength_points / 2, nc = 1, samplingRate = samplingRate,
+ exactFormants = list('f1' = data.frame(time = 0, freq = 7000,
+                                        amp = 50, width = 2000)))
 noise = soundgen:::generateNoise(len = samplingRate, rolloff_breathing = -12,
-  samplingRate = samplingRate, filter_breathing=filter_breathing)
-# plot (filter_breathing, type='l')
+  samplingRate = samplingRate, filter_breathing = filter_breathing)
+# plot (filter_breathing, type = 'l')
 # playme (noise, samplingRate = samplingRate)
 
 # low-frequency, wind-like noise
-filter_breathing = soundgen:::getSpectralEnvelope(nr=windowLength_points/2,
-  nc=1, rolloff_lip=0, samplingRate=samplingRate,
-  exactFormants=list('f1'=data.frame(time=0, freq=150, amp=30, width=90)))
+filter_breathing = soundgen:::getSpectralEnvelope(
+  nr = windowLength_points / 2, nc = 1, rolloff_lip = 0,
+  samplingRate = samplingRate, exactFormants = list('f1' = data.frame(
+    time = 0, freq = 150, amp = 30, width = 90)))
 noise = soundgen:::generateNoise(len = samplingRate, rolloff_breathing = -12,
-  samplingRate = samplingRate, filter_breathing=filter_breathing)
+  samplingRate = samplingRate, filter_breathing = filter_breathing)
 }

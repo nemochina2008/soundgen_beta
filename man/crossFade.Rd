@@ -32,10 +32,12 @@ concatenated at zero crossings instead of cross-fading. Soundgen uses
 \code{crossFade} for gluing together epochs in generateSyllable()
 }
 \examples{
-sound1 = sin(1:100/9)
-sound2 = sin(7:107/3)
-plot(c(sound1, sound2), type='b') # an ugly discontinuity at 100 that will make an audible click
-sound = crossFade(sound1, sound2, length_points=5)
-plot(sound, type='b') # a nice, smooth transition
-length(sound) # but note that cross-fading costs us ~60 points because of trimming to zero crossings
+sound1 = sin(1:100 / 9)
+sound2 = sin(7:107 / 3)
+plot(c(sound1, sound2), type = 'b') # an ugly discontinuity
+#  at 100 that will make an audible click
+sound = crossFade(sound1, sound2, length_points = 5)
+plot(sound, type = 'b') # a nice, smooth transition
+length(sound) # but note that cross-fading costs us ~60 points
+#  because of trimming to zero crossings
 }

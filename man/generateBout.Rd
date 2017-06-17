@@ -18,13 +18,12 @@ generateBout(repeatBout = 1, nSyl = 1, sylDur_mean = 300,
   extraFormants_ampl = 30, vocalTract_length = 15.5, g0 = 100,
   sideband_width_hz = 0, min_epoch_length_ms = 300, trill_dep = 0,
   trill_freq = 30, breathingAnchors = data.frame(time = c(0, 300), ampl =
-  c(throwaway_dB, throwaway_dB)), exactFormants_unvoiced = NA,
-  rolloff_breathing = -6, mouthAnchors = data.frame(time = c(0, 1), ampl =
-  c(0.5, 0.5)), amplAnchors = NA, amplAnchors_global = NA,
-  samplingRate = 16000, windowLength_points = 2048, overlap = 75,
-  addSilence = 100, pitch_floor = 50, pitch_ceiling = 3500,
-  pitchSamplingRate = 3500, plotSpectro = FALSE, playSound = FALSE,
-  savePath = NA, ...)
+  c(-120, -120)), exactFormants_unvoiced = NA, rolloff_breathing = -6,
+  mouthAnchors = data.frame(time = c(0, 1), ampl = c(0.5, 0.5)),
+  amplAnchors = NA, amplAnchors_global = NA, samplingRate = 16000,
+  windowLength_points = 2048, overlap = 75, addSilence = 100,
+  pitch_floor = 50, pitch_ceiling = 3500, pitchSamplingRate = 3500,
+  plotSpectro = FALSE, playSound = FALSE, savePath = NA, ...)
 }
 \arguments{
 \item{repeatBout}{the number of times the bout should be repeated}
@@ -146,29 +145,31 @@ Details: put some parts of the manual here.
 }
 \examples{
 sound = generateBout(playSound = TRUE)
-spectro_denoised (sound, samplingRate=16000, osc=TRUE)
+spectro_denoised (sound, samplingRate = 16000, osc = TRUE)
 # unless temperature is 0, the sound is different every time
 for (i in 1:3) sound = generateBout(playSound = TRUE, temperature = .2)
 
 # Bouts versus syllables. Compare:
-sound = generateBout (exactFormants='uai', repeatBout=3, playSound=TRUE)
-sound = generateBout (exactFormants='uai', nSyl=3, playSound=TRUE)
+sound = generateBout (exactFormants = 'uai', repeatBout = 3, playSound = TRUE)
+sound = generateBout (exactFormants = 'uai', nSyl = 3, playSound = TRUE)
 
 # Intonation contours per syllable and globally:
-sound = generateBout (nSyl=5, sylDur_mean=200, pauseDur_mean=140, playSound=TRUE,
-  pitchAnchors=data.frame(time=c(0,0.65,1), ampl=c(977,1540,826)),
-  pitchAnchors_global=data.frame(time=c(0,.5,1),ampl=c(-6,7,0)))
+sound = generateBout (nSyl = 5, sylDur_mean = 200, pauseDur_mean = 140,
+  playSound = TRUE, pitchAnchors = data.frame(
+    time = c(0, 0.65, 1), ampl = c(977, 1540, 826)),
+  pitchAnchors_global = data.frame(time = c(0, .5, 1), ampl = c(-6, 7, 0)))
 
 # Subharmonics in sidebands (noisy scream, chimpanzee-like)
-sound = generateBout (noiseAmount=100, g0=75, sideband_width_hz=130,
-  pitchAnchors=data.frame(time=c(0,.3,.9,1), ampl=c(1200,1547,1487,1154)),
-  sylDur_mean=800, samplingRate=16000,
-  playSound=TRUE, plotSpectro=TRUE)
+sound = generateBout (noiseAmount = 100, g0 = 75, sideband_width_hz = 130,
+  pitchAnchors = data.frame(
+    time = c(0, .3, .9, 1), ampl = c(1200, 1547, 1487, 1154)),
+  sylDur_mean = 800, samplingRate = 16000,
+  playSound = TRUE, plotSpectro = TRUE)
 
 # Jitter and mouth opening (bark, dog-like)
-sound = generateBout (repeatBout=2, sylDur_mean=160, pauseDur_mean=100,
-  noiseAmount=100, g0=100, sideband_width_hz=60, jitterDep=1,
-  pitchAnchors=data.frame(time=c(0,0.52,1), ampl=c(559,785,557)),
-  mouthAnchors=data.frame(time=c(0,0.5,1), ampl=c(0,0.5,0)),
-  vocalTract_length=5, samplingRate=16000, playSound=TRUE)
+sound = generateBout (repeatBout = 2, sylDur_mean = 160, pauseDur_mean = 100,
+  noiseAmount = 100, g0 = 100, sideband_width_hz = 60, jitterDep = 1,
+  pitchAnchors = data.frame(time = c(0, 0.52, 1), ampl = c(559, 785, 557)),
+  mouthAnchors = data.frame(time = c(0, 0.5, 1), ampl = c(0, 0.5, 0)),
+  vocalTract_length = 5, samplingRate = 16000, playSound = TRUE)
 }

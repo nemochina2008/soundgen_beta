@@ -40,8 +40,8 @@ pauses between syllables. Total bout duration will also vary, unless
 temperature is zero.
 }
 \examples{
-soundgen:::divideIntoSyllables (nSyl=5, sylDur_mean=180,
-  pauseDur_mean=55, temperature=0.2, plot=TRUE)
-soundgen:::divideIntoSyllables (nSyl=5, sylDur_mean=180,
-  pauseDur_mean=55, temperature=0, plot=TRUE)
+soundgen:::divideIntoSyllables (nSyl = 5, sylDur_mean = 180,
+  pauseDur_mean = 55, temperature = 0.2, plot = TRUE)
+soundgen:::divideIntoSyllables (nSyl = 5, sylDur_mean = 180,
+  pauseDur_mean = 55, temperature = 0, plot = TRUE)
 }

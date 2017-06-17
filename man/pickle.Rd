@@ -13,5 +13,9 @@ pickle(l)
 Internal soundgen function.
 }
 \details{
-Helper function that converts a list of exact formants into a human-readable string, which can then be modified and evaluated to reproduce a list of the original structure. Note: dput() and dump() can pickle & reproduce any object, but I can't figure out how to make the interim string human-readable and modifiable
+Helper function that converts a list of exact formants into a human-readable
+string, which can then be modified and evaluated to reproduce a list of the
+original structure. Note: dput() and dump() can pickle & reproduce any
+object, but I can't figure out how to make the interim string human-readable
+and modifiable
 }

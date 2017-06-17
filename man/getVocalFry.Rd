@@ -44,8 +44,8 @@ pitch_per_gc = c(400, 500, 600, 700)
 rolloff = soundgen:::getRolloff(pitch_per_gc, rolloff_exp = -30)
 # one epoch, two subharmonics
 rolloff_subh = soundgen:::getVocalFry(rolloff, pitch_per_gc,
-  g0=200, sideband_width_hz=150, min_epoch_length_ms=100)
+  g0 = 200, sideband_width_hz = 150, min_epoch_length_ms = 100)
 # three epochs with 2/3/4 subharmonics
 rolloff_subh = soundgen:::getVocalFry(rolloff, pitch_per_gc,
-  g0=200, sideband_width_hz=150, min_epoch_length_ms=0)
+  g0 = 200, sideband_width_hz = 150, min_epoch_length_ms = 0)
 }

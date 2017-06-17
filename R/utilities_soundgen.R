@@ -13,13 +13,17 @@
 #' \dontrun{playme('~/myfile.wav')}
 #' f0_Hz = 440
 #' playme(sin(2*pi*f0_Hz*(1:16000)/16000), samplingRate=16000)
-playme = function(sound, samplingRate = 44100){
+playme = function(sound, samplingRate = 44100) {
   # input: a vector of numbers on any scale or a path to a .wav file
-  if (class(sound) == 'character'){
+  if (class(sound) == 'character') {
     soundWave = tuneR::readWave(sound)
-  } else if (class(sound) == 'numeric' | class(sound) == 'integer'){
-    soundWave = tuneR::Wave(left = sound, samp.rate = samplingRate,
-                            bit = 16, pcm = TRUE)
+  } else if (class(sound) == 'numeric' | class(sound) == 'integer') {
+    soundWave = tuneR::Wave(
+      left = sound,
+      samp.rate = samplingRate,
+      bit = 16,
+      pcm = TRUE
+    )
     soundWave = tuneR::normalize(soundWave, unit = '32') # / 2
   }
   tuneR::play(soundWave, 'play')
@@ -40,18 +44,19 @@ playme = function(sound, samplingRate = 44100){
 #' @examples
 #' exactFormants = soundgen:::convertStringToFormants(
 #'   phonemeString = 'aaeuiiiii', speaker = 'M1')
-convertStringToFormants = function(phonemeString, speaker = 'M1'){
+convertStringToFormants = function(phonemeString, speaker = 'M1') {
   availablePresets = names(presets[[speaker]]$Formants)
   input_phonemes = strsplit(phonemeString, "")[[1]]
   valid_phonemes = input_phonemes[input_phonemes %in% availablePresets]
   unique_phonemes = unique(valid_phonemes)
-  if(length(valid_phonemes) < 1) return(list())
+  if (length(valid_phonemes) < 1)
+    return(list())
 
   # for each input vowel, look up the corresponding formant values
   # in the presets dictionary and append to exactFormants
   vowels = list()
   formantNames = character()
-  for (v in 1:length(unique_phonemes)){
+  for (v in 1:length(unique_phonemes)) {
     vowels[[v]] = presets[[speaker]]$Formants[unique_phonemes[v]][[1]]
     formantNames = c(formantNames, names(vowels[[v]]))
   }
@@ -59,20 +64,25 @@ convertStringToFormants = function(phonemeString, speaker = 'M1'){
   names(vowels) = unique_phonemes
 
   # make sure we have filled in info on all formants from the entire sequence of vowels for each individual vowel
-  for (v in 1:length(vowels)){
+  for (v in 1:length(vowels)) {
     absentFormants = formantNames[!formantNames %in% names(vowels[[v]])]
-    for (f in absentFormants){
-      closestFreq = unlist(sapply(vowels, function(x)x[f]))
+    for (f in absentFormants) {
+      closestFreq = unlist(sapply(vowels, function(x) x[f]))
       names_stripped = substr(names(closestFreq),
-                              nchar(names(closestFreq))-3, nchar(names(closestFreq)))
+                              nchar(names(closestFreq)) - 3,
+                              nchar(names(closestFreq)))
       closestFreq = closestFreq[which(names_stripped == 'freq')]
       closestFreq = as.numeric(na.omit(closestFreq))[1]
       # NB: instead of the last [1], ideally we should specify some intelligent
       # way to pick up the closest vowel with this missing formant, not just the
       # first one, but that's only a problem in long sequences of vowels with
       # really different numbers of formants (nasalization)
-      vowels[[v]] [[f]] = data.frame('time' = 0, 'freq' = closestFreq,
-                                     'amp' = 0, 'width' = 100)
+      vowels[[v]] [[f]] = data.frame(
+        'time' = 0,
+        'freq' = closestFreq,
+        'amp' = 0,
+        'width' = 100
+      )
       # NB: width must be positive, otherwise dgamma crashes in
       # getSpectralEnvelope()
     }
@@ -80,35 +90,39 @@ convertStringToFormants = function(phonemeString, speaker = 'M1'){
 
   # initialize a common list of exact formants
   exactFormants = list()
-  for (f in 1:length(formantNames)){
-    exactFormants[[f]] = data.frame('time' = vector(),'freq' = vector(),
-                                    'amp' = vector(), 'width' = vector())
+  for (f in 1:length(formantNames)) {
+    exactFormants[[f]] = data.frame(
+      'time' = vector(),
+      'freq' = vector(),
+      'amp' = vector(),
+      'width' = vector()
+    )
   }
   names(exactFormants) = formantNames
 
   # for each vowel, append its formants to the common list
-  for (v in 1:length(valid_phonemes)){
+  for (v in 1:length(valid_phonemes)) {
     vowel = vowels[[valid_phonemes[v]]]
-    for (f in 1:length(vowel)){
+    for (f in 1:length(vowel)) {
       formantName = names(vowel)[f]
-      exactFormants[[formantName]] = rbind(exactFormants[[formantName]], vowel[[f]])
+      exactFormants[[formantName]] = rbind(exactFormants[[formantName]],
+                                           vowel[[f]])
     }
   }
 
   # specify time stamps by dividing the sound equally into vowels in valid_phonemes
   time_stamps = seq(0, 1, length.out = length(valid_phonemes))
-  for (f in 1:length(exactFormants)){
+  for (f in 1:length(exactFormants)) {
     if (nrow(exactFormants[[f]]) > 0) {
       exactFormants[[f]]$time = time_stamps
     }
   }
 
   # remove formants with amplitude 0 at all time points
-  all_zeroes = sapply(exactFormants, function(f){
+  all_zeroes = sapply(exactFormants, function(f) {
     sum(f$amp == 0) == length(f) # all values are 0
-    })
+  })
   exactFormants = exactFormants [which(!all_zeroes), drop = FALSE]
-
   return (exactFormants)
 }
 
@@ -131,12 +145,16 @@ convertStringToFormants = function(phonemeString, speaker = 'M1'){
 #'   corresponding value is rounded to the nearest integer.
 #' @return A vector of length n.
 #' @examples
-#' soundgen:::rnorm_bounded (n=3, mean=10, sd=5, low=7, high=NULL,
-#'   roundToInteger=c(TRUE,FALSE,FALSE))
-#' soundgen:::rnorm_bounded (n=3, mean=c(10, 50, 100), sd=c(5, 0, 20),
-#'   roundToInteger=TRUE) # vectorized
-rnorm_bounded = function(n = 1, mean = 0, sd = 1,
-                         low = NULL, high = NULL, roundToInteger = FALSE){
+#' soundgen:::rnorm_bounded (n = 3, mean = 10, sd = 5, low = 7, high = NULL,
+#'   roundToInteger = c(TRUE, FALSE, FALSE))
+#' soundgen:::rnorm_bounded (n = 3, mean = c(10, 50, 100), sd = c(5, 0, 20),
+#'   roundToInteger = TRUE) # vectorized
+rnorm_bounded = function(n = 1,
+                         mean = 0,
+                         sd = 1,
+                         low = NULL,
+                         high = NULL,
+                         roundToInteger = FALSE) {
   if (sum(sd != 0) == 0) {
     out = rep(mean, n)
     out[roundToInteger] = round (out[roundToInteger], 0)
@@ -146,7 +164,7 @@ rnorm_bounded = function(n = 1, mean = 0, sd = 1,
   if (length(mean) < n) mean = rep(mean[1], n)
   if (length(sd) < n) sd = rep(sd[1], n)
 
-  if (is.null(low) & is.null(high)){
+  if (is.null(low) & is.null(high)) {
     out = rnorm(n, mean, sd)
     out[roundToInteger] = round (out[roundToInteger], 0)
     return (out)
@@ -159,8 +177,8 @@ rnorm_bounded = function(n = 1, mean = 0, sd = 1,
 
   out = rnorm(n, mean, sd)
   out[roundToInteger] = round (out[roundToInteger], 0)
-  for (i in 1:n){
-    while (out[i] < low[i] | out[i] > high[i]){
+  for (i in 1:n) {
+    while (out[i] < low[i] | out[i] > high[i]) {
       out[i] = rnorm(1, mean[i], sd[i]) # repeat until a suitable value is generated
       out[roundToInteger] = round (out[roundToInteger], 0)
     }
@@ -185,29 +203,31 @@ rnorm_bounded = function(n = 1, mean = 0, sd = 1,
 #'   closest to specified location.
 #' @examples
 #' ampl = sin(1:100/2)
-#' plot(ampl, type='b')
-#' lines(1:100, rep(0,100), lty=2)
+#' plot(ampl, type = 'b')
+#' lines(1:100, rep(0,100), lty = 2)
 #' zc = vector()
 #' for (i in 1:length(ampl)){
 #'   zc[i] = soundgen:::findZeroCrossing (ampl, i)
 #'   # find zc closest to each of 100 points
 #' }
 #' for (z in unique(zc)){
-#'   points(z, ampl[z], col='red', pch=17)
+#'   points(z, ampl[z], col = 'red', pch = 17)
 #'   # only on upward segments
 #' }
 #' zc # see which zc is closest to each point
-findZeroCrossing = function(ampl, location){
+findZeroCrossing = function(ampl, location) {
   len = length(ampl)
-  if (len < 1 | location < 1 | location > len) return (NA)
-  if (len == 1 & location == 1) return(location)
+  if (len < 1 | location < 1 | location > len)
+    return (NA)
+  if (len == 1 & location == 1)
+    return(location)
   zc_left = zc_right = NA
 
   # left of location
-  if (location > 1){
+  if (location > 1) {
     i = location
-    while (i > 1){
-      if (ampl[i] > 0 && ampl[i - 1] < 0){
+    while (i > 1) {
+      if (ampl[i] > 0 && ampl[i - 1] < 0) {
         zc_left = i - 1
         break
       }
@@ -218,8 +238,8 @@ findZeroCrossing = function(ampl, location){
   # right of location
   if (location < len)
     i = location
-  while (i < (len - 1)){
-    if (ampl[i + 1] > 0 && ampl[i] < 0){
+  while (i < (len - 1)) {
+    if (ampl[i + 1] > 0 && ampl[i] < 0) {
       zc_right = i
       break
     }
@@ -227,13 +247,13 @@ findZeroCrossing = function(ampl, location){
   }
 
   if (is.na(zc_left) & is.na(zc_right)) return (NA)
-  zc_nearest = which.min(c(abs(zc_left - location), abs(zc_right - location)) )
-  if (zc_nearest == 1){
+  zc_nearest = which.min(c(abs(zc_left - location), abs(zc_right - location)))
+  if (zc_nearest == 1) {
     return (zc_left)
-  } else if (zc_nearest == 2){
+  } else if (zc_nearest == 2) {
     return (zc_right)
-  } else { # not found
-    return (NA)
+  } else {
+    return (NA) # zc not found
   }
 }
 
@@ -266,16 +286,19 @@ findZeroCrossing = function(ampl, location){
 #' plot(sound, type = 'b') # a nice, smooth transition
 #' length(sound) # but note that cross-fading costs us ~60 points
 #' #  because of trimming to zero crossings
-crossFade = function (ampl1, ampl2, length_ms = 15,
-                      samplingRate = 44100, length_points = NULL){
+crossFade = function (ampl1,
+                      ampl2,
+                      length_ms = 15,
+                      samplingRate = 44100,
+                      length_points = NULL) {
   # cut to the nearest zero crossings
   zc1 = findZeroCrossing(ampl1, location = length(ampl1))
   if (!is.na(zc1)) {
     ampl1 = c (ampl1[1:zc1], 0) # up to the last point before the last zero-crossing in sound 1 on the upward curve + one extra zero (to have a nice, smooth transition line: last negative in s1 - zero - first positive in s2)
   }
   zc2 = findZeroCrossing(ampl2, location = 1)
-  if (!is.na(zc2)){
-    ampl2 = ampl2[(zc2 + 1) : length(ampl2)]
+  if (!is.na(zc2)) {
+    ampl2 = ampl2[(zc2 + 1):length(ampl2)]
     # from the first positive point on the upward curve. Note the +1 - next
     # point after the first zero crossing in s2
   }
@@ -285,26 +308,27 @@ crossFade = function (ampl1, ampl2, length_ms = 15,
   # nearest zero crossing
   if (is.null(length_points)) {
     length_points = min(floor(length_ms * samplingRate / 1000),
-                        length(ampl1) - 1, length(ampl2) - 1)
+                        length(ampl1) - 1,
+                        length(ampl2) - 1)
   } else {
-    length_points = min(length_points,
-                        length(ampl1) - 1, length(ampl2) - 1)
+    length_points = min(length_points, length(ampl1) - 1, length(ampl2) - 1)
   }
 
   # concatenate or cross-fade
-  if (length_points < 2) { # for segments that are too short,
+  if (length_points < 2) {
+    # for segments that are too short,
     # just concatenate from zero crossing to zero crossing
     ampl = c(ampl1, ampl2)
-  } else { # for segments that are long enough, cross-fade properly
+  } else {
+    # for segments that are long enough, cross-fade properly
     multipl = seq(0, 1, length.out = length_points)
     idx1 = length(ampl1) - length_points
     cross = rev(multipl) * ampl1[(idx1 + 1):length(ampl1)] +
-      multipl * ampl2[1:length_points]
+            multipl * ampl2[1:length_points]
     ampl = c(ampl1[1:idx1],
              cross,
-             ampl2[(length_points + 1):length(ampl2)] )
+             ampl2[(length_points + 1):length(ampl2)])
   }
-
   return (ampl)
 }
 
@@ -334,22 +358,21 @@ crossFade = function (ampl1, ampl2, length_ms = 15,
 #' soundgen:::clumper(s, 3)
 #' soundgen:::clumper(s, seq(1, 3, length.out = length(s)))
 #' soundgen:::clumper(c('a','a','a','b','b','c','c','c','a','c'), 4)
-clumper = function(s, minLength){
+clumper = function(s, minLength) {
   if (max(minLength) < 2) return(s)
+  minLength = round(minLength) # just in case it's not all integers
   if (length(unique(s)) < 2 |
       (length(minLength) == 1 && length(s) < minLength) |
       length(s) < minLength[1]) {
     return(rep(round(median(s)), length(s)))
   }
-  if (length(minLength) > 1 | length(minLength) != length(s)) {
-    stop('minLength must be either of length 1 or
-         of the same length as s')
+  if (length(minLength)==1 |length(minLength)!=length(s)) {
+    minLength = rep(minLength, length(s)) # upsample minLength
   }
-  if (!is.integer(minLength)) {minLength = round(minLength)}
 
   c = 0
-  for (i in 2:length(s)){
-    if (s[i-1] == s[i]) {
+  for (i in 2:length(s)) {
+    if (s[i - 1] == s[i]) {
       c = c + 1
     } else {
       if (c < minLength[i]) {
@@ -364,20 +387,23 @@ clumper = function(s, minLength){
   # make sure the last epoch is also long enough
   idx_min = max((length(s) - tail(minLength, 1) + 1), 2):length(s)
   # these elements have to be homogeneous
-  if (sum(s[idx_min] == tail(s, 1)) < tail(minLength, 1)){ # if they are not...
+  if (sum(s[idx_min] == tail(s, 1)) < tail(minLength, 1)) {
+    # if they are not...
     idx = rev(idx_min)
     c = 1
     i = 2
-    while (s[idx[i]] == s[idx[i] - 1] & i < length(idx)){ # count the number of repetitions for the last element
+    while (s[idx[i]] == s[idx[i] - 1] & i < length(idx)) {
+      # count the number of repetitions for the last element
       c = c + 1
       i = i + 1
     }
-    if (c < tail(minLength, 1)){ # if this number is insufficient,...
+    if (c < tail(minLength, 1)) {
+      # if this number is insufficient,...
       s[idx] = s[min(idx_min)] # ...pool the final segment and the previous one
     }
   } # plot (s)
   return(s)
-}
+  }
 
 
 #' Random walk
@@ -412,13 +438,17 @@ clumper = function(s, minLength){
 #'   rw_smoothing = .2, trend = c(.5, -.5)))
 #' plot(soundgen:::getRandomWalk(len = 1000, rw_range = 15,
 #'   rw_smoothing = .2, trend = c(15, -1)))
-  getRandomWalk = function(len, rw_range = 1, rw_smoothing = .2,
-                           method = c('linear', 'spline')[2], trend = 0){
-  if (len < 2) return (rgamma(1, 1 / rw_range^2, 1 / rw_range^2))
+getRandomWalk = function(len,
+                         rw_range = 1,
+                         rw_smoothing = .2,
+                         method = c('linear', 'spline')[2],
+                         trend = 0) {
+  if (len < 2)
+    return (rgamma(1, 1 / rw_range ^ 2, 1 / rw_range ^ 2))
 
   # generate a random walk (rw) of length depending on rw_smoothing, then linear extrapolation to len
-  n = floor(max(2, 2^(1 / rw_smoothing)) )
-  if (length(trend) > 1){
+  n = floor(max(2, 2 ^ (1 / rw_smoothing)))
+  if (length(trend) > 1) {
     n = round(n / 2, 0) * 2 # force to be even
     trend_short = rep(trend, each = n / length(trend))
     # for this to work, length(trend) must be a multiple of n.
@@ -427,14 +457,14 @@ clumper = function(s, minLength){
     trend_short = trend
   }
 
-  if (n > len){
+  if (n > len) {
     rw_long = cumsum(rnorm(len, trend_short)) # just a rw of length /len/
   } else {
     # get a shorter sequence and extrapolate, thus achieving more or less smoothing
     rw_short = cumsum(rnorm(n, trend_short)) # plot(rw_short, type = 'l')
-    if (method == 'linear'){
+    if (method == 'linear') {
       rw_long = approx(rw_short, n = len)$y
-    } else if (method == 'spline'){
+    } else if (method == 'spline') {
       rw_long = spline(rw_short, n = len)$y
     }
   } # plot (rw_long, type = 'l')
@@ -466,7 +496,9 @@ clumper = function(s, minLength){
 #' plot (rw, type = 'l')
 #' plot (soundgen:::getBinaryRandomWalk(rw, noiseAmount = 75, minLength = 10))
 #' plot (soundgen:::getBinaryRandomWalk(rw, noiseAmount = 5, minLength = 10))
-getBinaryRandomWalk = function(rw, noiseAmount = 50, minLength = 50){
+getBinaryRandomWalk = function(rw,
+                               noiseAmount = 50,
+                               minLength = 50) {
   len = length(rw)
   if (noiseAmount == 0) return(rep(0, len))
   if (noiseAmount == 100) return(rep(2, len))
@@ -501,18 +533,20 @@ getBinaryRandomWalk = function(rw, noiseAmount = 50, minLength = 50){
 #'   upsampled scale)
 #' @examples
 #' soundgen:::upsample(c(100, 150, 130), samplingRate = 16000)
-upsample = function(pitch_per_gc, samplingRate = 44100){
+upsample = function(pitch_per_gc, samplingRate = 44100) {
   gcLength_points = round (samplingRate / pitch_per_gc)
   gc_upsampled = c(1, cumsum(gcLength_points))
   pitch_upsampled = vector()
 
   # fill in the missing values in between points through linear interpolation
-  for (i in 1:(length(pitch_per_gc) - 1)){
-    pitch_upsampled = c(pitch_upsampled, seq(
-      pitch_per_gc[i], pitch_per_gc[i + 1], length.out = gcLength_points[i]))
+  for (i in 1:(length(pitch_per_gc) - 1)) {
+    pitch_upsampled = c(
+      pitch_upsampled,
+      seq(pitch_per_gc[i], pitch_per_gc[i + 1], length.out = gcLength_points[i])
+    )
   }
-  pitch_upsampled = c(pitch_upsampled, rep(
-    tail(pitch_per_gc, 1), tail(gcLength_points, 1)))
+  pitch_upsampled = c(pitch_upsampled,
+                      rep(tail(pitch_per_gc, 1), tail(gcLength_points, 1)))
   # plot(pitch_upsampled, type = 'l')
 
   return (list(pitch = pitch_upsampled, gc = gc_upsampled))
@@ -540,12 +574,14 @@ upsample = function(pitch_per_gc, samplingRate = 44100){
 #' soundgen:::matchLengths (3:7, len = 3, padDir = 'left')
 #' # padded with zeroes on the left
 #' soundgen:::matchLengths (3:7, len = 30, padDir = 'left')
-matchLengths = function(myseq, len,
-                        padDir = c('left', 'right', 'central')[3], padWith = 0){
+matchLengths = function(myseq,
+                        len,
+                        padDir = c('left', 'right', 'central')[3],
+                        padWith = 0) {
   #  padDir specifies where to cut/add zeros ('left' / 'right' / 'central')
   if (length(myseq) == len) return (myseq)
 
-  if (padDir == 'central'){
+  if (padDir == 'central') {
     if (length(myseq) < len) {
       myseq = c(rep(padWith, len), myseq, rep(padWith, len))
       # for padding, first add a whole lot of zeros and then trim using the same
@@ -555,13 +591,13 @@ matchLengths = function(myseq, len,
     center = (1 + length(myseq)) / 2
     start = ceiling(center - halflen)
     myseq = myseq[start:(start + len - 1)]
-  } else if (padDir == 'left'){
+  } else if (padDir == 'left') {
     if (length(myseq) > len) {
       myseq = myseq [(length(myseq) - len + 1):length(myseq)]
     } else {
       myseq = c(rep(padWith, (len - length(myseq))), myseq)
     }
-  } else if (padDir == 'right'){
+  } else if (padDir == 'right') {
     if (length(myseq) > len) {
       myseq = myseq [1:(length(myseq) - len)]
     } else {
@@ -594,17 +630,17 @@ matchLengths = function(myseq, len,
 #' v3 = rep(100, 15)
 #' soundgen:::addVectors(v1, v3, insertionPoint = -4)
 #' soundgen:::addVectors(v2, v3, insertionPoint = 7)
-addVectors = function(v1, v2, insertionPoint){
+addVectors = function(v1, v2, insertionPoint) {
   if (!is.numeric(v1)) stop(paste('Non-numeric v1:', head(v1)))
   if (!is.numeric(v2)) stop(paste('Non-numeric v2:', head(v2)))
   v1[is.na(v1)] = 0
   v2[is.na(v2)] = 0
 
   # align left ends
-  if (insertionPoint > 1){
+  if (insertionPoint > 1) {
     pad_left = insertionPoint - 1
     v2 = c(rep(0, insertionPoint), v2)
-  } else if (insertionPoint < 1){
+  } else if (insertionPoint < 1) {
     pad_left = 1 - insertionPoint
     v1 = c(rep(0, pad_left), v1)
   }
@@ -613,9 +649,9 @@ addVectors = function(v1, v2, insertionPoint){
   l1 = length(v1)
   l2 = length(v2)
   len_dif = l2 - l1
-  if (len_dif > 0){
+  if (len_dif > 0) {
     v1 = c(v1, rep(0, len_dif))
-  } else if (len_dif < 0){
+  } else if (len_dif < 0) {
     v2 = c(v2, rep(0, -len_dif))
   }
 
@@ -643,8 +679,10 @@ addVectors = function(v1, v2, insertionPoint){
 #' # if the vector is shorter than twice the specified length_fade,
 #' # fade-in/out regions overlap
 #' plot(soundgen:::fadeInOut(ampl, length_fade = 700), type = 'l')
-fadeInOut = function(ampl, do_fadeIn = TRUE, do_fadeOut = TRUE,
-                     length_fade = 1000){
+fadeInOut = function(ampl,
+                     do_fadeIn = TRUE,
+                     do_fadeOut = TRUE,
+                     length_fade = 1000) {
   if ((!do_fadeIn & !do_fadeOut) | length_fade < 2) return(ampl)
 
   length_fade = min(length_fade, length(ampl))
@@ -655,7 +693,7 @@ fadeInOut = function(ampl, do_fadeIn = TRUE, do_fadeOut = TRUE,
 
   if (do_fadeOut) {
     fadeOut = rev(fadeIn)
-    ampl[(length(ampl) - length_fade+1):length(ampl)] =
+    ampl[(length(ampl) - length_fade + 1):length(ampl)] =
       ampl[(length(ampl) - length_fade + 1):length(ampl)] * fadeOut
   }
 
@@ -677,12 +715,13 @@ fadeInOut = function(ampl, do_fadeIn = TRUE, do_fadeOut = TRUE,
 #' # 100 ms of audio with f0 steadily increasing from 150 to 200 Hz
 #' soundgen:::getGlottalCycles (seq(150, 200, length.out = 350),
 #'   samplingRate = 3500)
-getGlottalCycles = function (pitch, samplingRate = 44100){
+getGlottalCycles = function (pitch, samplingRate = 44100) {
   glottalCycles = numeric()
   i = 1 # the first border is the first time point
-  while (i < length(pitch)){
+  while (i < length(pitch)) {
     glottalCycles = c(glottalCycles, i)
-    i = i + max(2, floor(samplingRate / pitch[i])) # take steps proportionate to the current F0
+    # take steps proportionate to the current F0
+    i = i + max(2, floor(samplingRate / pitch[i]))
   }
   return (glottalCycles)
 }
@@ -713,24 +752,37 @@ getGlottalCycles = function (pitch, samplingRate = 44100){
 #'   pauseDur_mean = 55, temperature = 0.2, plot = TRUE)
 #' soundgen:::divideIntoSyllables (nSyl = 5, sylDur_mean = 180,
 #'   pauseDur_mean = 55, temperature = 0, plot = TRUE)
-divideIntoSyllables = function (nSyl, sylDur_mean, pauseDur_mean,
-                                sylDur_min = 20, sylDur_max = 10000,
-                                pauseDur_min = 20, pauseDur_max = 1000,
-                                temperature = 0.025, plot = FALSE){
+divideIntoSyllables = function (nSyl,
+                                sylDur_mean,
+                                pauseDur_mean,
+                                sylDur_min = 20,
+                                sylDur_max = 10000,
+                                pauseDur_min = 20,
+                                pauseDur_max = 1000,
+                                temperature = 0.025,
+                                plot = FALSE) {
   out = matrix(ncol = 2, nrow = 0)
-  colnames(out) = c('start','end')
-  if (nSyl == 1){
+  colnames(out) = c('start', 'end')
+  if (nSyl == 1) {
     out = rbind (out, c(0, sylDur_mean))
   } else {
     # generate random lengths while respecting the constraints
     c = 0
-    while (nrow(out) < nSyl){
-      duration_ms_loop = rnorm_bounded (n = 1, mean = sylDur_mean,
-                                        low = sylDur_min, high = sylDur_max,
-                                        sd = sylDur_mean * temperature)
-      pause_ms_loop = rnorm_bounded (n = 1, mean = pauseDur_mean,
-                                     low = pauseDur_min, high = pauseDur_max,
-                                     sd = pauseDur_mean * temperature)
+    while (nrow(out) < nSyl) {
+      duration_ms_loop = rnorm_bounded (
+        n = 1,
+        mean = sylDur_mean,
+        low = sylDur_min,
+        high = sylDur_max,
+        sd = sylDur_mean * temperature
+      )
+      pause_ms_loop = rnorm_bounded (
+        n = 1,
+        mean = pauseDur_mean,
+        low = pauseDur_min,
+        high = pauseDur_max,
+        sd = pauseDur_mean * temperature
+      )
       start = 1 + c # start time of syllable, in ms
       end = start + duration_ms_loop # end time of syllable, in ms
       out = rbind (out, c(start, end))
@@ -738,15 +790,16 @@ divideIntoSyllables = function (nSyl, sylDur_mean, pauseDur_mean,
     }
   }
 
-  if (plot){ # for the UI
+  if (plot) {
+    # for the UI
     t = 1:max(out)
     plot(t, rep(1, length(t)), type = 'n', xlab = 'Time, ms', ylab = '',
-         bty = 'n', yaxt = 'n', ylim = c(0.8, 1.2) )
-    for (i in 1:nrow(out)){
-      rect(xleft = out[i,1], xright = out[i,2],
-           ybottom = .9, ytop = 1.1, col = 'blue')
-      text(x = mean(c(out[i, 2], out[i, 1])),
-           y = 1, col = 'yellow', cex = 5, labels = i)
+         bty = 'n', yaxt = 'n', ylim = c(0.8, 1.2))
+    for (i in 1:nrow(out)) {
+      rect(xleft = out[i, 1], xright = out[i, 2], ybottom = .9, ytop = 1.1,
+           col = 'blue')
+      text(x = mean(c(out[i, 2], out[i, 1])), y = 1,
+        col = 'yellow', cex = 5, labels = i)
     }
   }
   return(out)

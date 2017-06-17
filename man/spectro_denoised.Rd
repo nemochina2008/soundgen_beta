@@ -89,30 +89,36 @@ time and frequency domains, and controlling contrast and brightness.
 }
 \examples{
 # synthesize a sound 1 s long, with a gradually increasing breathing noise
-sound = generateBout(sylDur_mean=1000, samplingRate=16000,
-  breathingAnchors=data.frame(time=c(0,1200), ampl=c(-120,-10)))
-# playme(sound, samplingRate=16000)
+sound = generateBout(sylDur_mean = 1000, samplingRate = 16000,
+  breathingAnchors = data.frame(time = c(0, 1200), ampl = c(-120, -10)))
+# playme(sound, samplingRate = 16000)
 
 # basic spectrogram
-spectro_denoised(sound, samplingRate=16000)
+spectro_denoised(sound, samplingRate = 16000)
 # add an oscillogram
-spectro_denoised(sound, samplingRate=16000, osc=TRUE)
+spectro_denoised(sound, samplingRate = 16000, osc = TRUE)
 # broad-band instead of narrow-band
-spectro_denoised(sound, samplingRate=16000, windowLength=5)
+spectro_denoised(sound, samplingRate = 16000, windowLength = 5)
 # spectral derivatives
-spectro_denoised(sound, samplingRate=16000, method='spectralDerivative')
+spectro_denoised(sound, samplingRate = 16000, method = 'spectralDerivative')
 
 # focus only on values in the upper 5\% for each frequency bin
-spectro_denoised(sound, samplingRate=16000, denoise_median_time=0.95)
+spectro_denoised(sound, samplingRate = 16000, denoise_median_time = 0.95)
+
 # detect 10\% of the noisiest frames based on entropy and remove the pattern
 # found in those frames (in this cases, breathing)
-spectro_denoised(sound, samplingRate=16000, percentNoise=0.1, noiseReduction=4)
+spectro_denoised(sound, samplingRate = 16000, percentNoise = 0.1,
+  noiseReduction = 1.2, brightness = -2) # breathing almost gone
+
 # apply median smoothing in both time and frequency domains
-spectro_denoised(sound, samplingRate=16000, median_smoothing_freq=5, median_smoothing_time=5)
+spectro_denoised(sound, samplingRate = 16000, median_smoothing_freq = 5,
+  median_smoothing_time = 5)
+
 # increase contrast, reduce brightness
-spectro_denoised(sound, samplingRate=16000, contrast=1, brightness=-1)
+spectro_denoised(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 
 # add bells and whistles
-spectro_denoised(sound, samplingRate=16000, osc=TRUE, contrast=1, brightness=-1,
-  colorTheme='heat.colors', xlab = 'Time, ms', ylab = 'Frequency, kHz', ylim=c(0,5))
+spectro_denoised(sound, samplingRate = 16000, osc = TRUE, contrast = 1,
+  brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
+  ylab = 'Frequency, kHz', ylim = c(0,5))
 }

@@ -42,7 +42,10 @@ taking a cumulative sum of the generated values. Smoothness is controlled by
 initially generating a shorter random walk and upsampling.
 }
 \examples{
-plot(soundgen:::getRandomWalk(len=1000, rw_range=5, rw_smoothing=.2))
-plot(soundgen:::getRandomWalk(len=1000, rw_range=15, rw_smoothing=.2, trend=c(.5, -.5)))
-plot(soundgen:::getRandomWalk(len=1000, rw_range=15, rw_smoothing=.2, trend=c(15, -1)))
+plot(soundgen:::getRandomWalk(len = 1000, rw_range = 5,
+  rw_smoothing = .2))
+plot(soundgen:::getRandomWalk(len = 1000, rw_range = 15,
+  rw_smoothing = .2, trend = c(.5, -.5)))
+plot(soundgen:::getRandomWalk(len = 1000, rw_range = 15,
+  rw_smoothing = .2, trend = c(15, -1)))
 }

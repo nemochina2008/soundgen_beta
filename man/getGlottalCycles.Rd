@@ -22,5 +22,6 @@ The first index is always 1.
 }
 \examples{
 # 100 ms of audio with f0 steadily increasing from 150 to 200 Hz
-soundgen:::getGlottalCycles (seq(150, 200, length.out=350), samplingRate = 3500)
+soundgen:::getGlottalCycles (seq(150, 200, length.out = 350),
+  samplingRate = 3500)
 }

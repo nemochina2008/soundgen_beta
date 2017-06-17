@@ -85,71 +85,109 @@ NULL
 #' @return Returns the synthesized waveform as a numeric vector.
 #' @examples
 #' sound = generateBout(playSound = TRUE)
-#' spectro_denoised (sound, samplingRate=16000, osc=TRUE)
-#  # playme(sound, samplingRate=16000)
+#' spectro_denoised (sound, samplingRate = 16000, osc = TRUE)
+#  # playme(sound, samplingRate = 16000)
 
 #' # unless temperature is 0, the sound is different every time
 #' for (i in 1:3) sound = generateBout(playSound = TRUE, temperature = .2)
 #'
 #' # Bouts versus syllables. Compare:
-#' sound = generateBout (exactFormants='uai', repeatBout=3, playSound=TRUE)
-#' sound = generateBout (exactFormants='uai', nSyl=3, playSound=TRUE)
+#' sound = generateBout (exactFormants = 'uai', repeatBout = 3, playSound = TRUE)
+#' sound = generateBout (exactFormants = 'uai', nSyl = 3, playSound = TRUE)
 #'
 #' # Intonation contours per syllable and globally:
-#' sound = generateBout (nSyl=5, sylDur_mean=200, pauseDur_mean=140, playSound=TRUE,
-#'   pitchAnchors=data.frame(time=c(0,0.65,1), ampl=c(977,1540,826)),
-#'   pitchAnchors_global=data.frame(time=c(0,.5,1),ampl=c(-6,7,0)))
+#' sound = generateBout (nSyl = 5, sylDur_mean = 200, pauseDur_mean = 140,
+#'   playSound = TRUE, pitchAnchors = data.frame(
+#'     time = c(0, 0.65, 1), ampl = c(977, 1540, 826)),
+#'   pitchAnchors_global = data.frame(time = c(0, .5, 1), ampl = c(-6, 7, 0)))
 #'
 #' # Subharmonics in sidebands (noisy scream, chimpanzee-like)
-#' sound = generateBout (noiseAmount=100, g0=75, sideband_width_hz=130,
-#'   pitchAnchors=data.frame(time=c(0,.3,.9,1), ampl=c(1200,1547,1487,1154)),
-#'   sylDur_mean=800, samplingRate=16000,
-#'   playSound=TRUE, plotSpectro=TRUE)
+#' sound = generateBout (noiseAmount = 100, g0 = 75, sideband_width_hz = 130,
+#'   pitchAnchors = data.frame(
+#'     time = c(0, .3, .9, 1), ampl = c(1200, 1547, 1487, 1154)),
+#'   sylDur_mean = 800, samplingRate = 16000,
+#'   playSound = TRUE, plotSpectro = TRUE)
 #'
 #' # Jitter and mouth opening (bark, dog-like)
-#' sound = generateBout (repeatBout=2, sylDur_mean=160, pauseDur_mean=100,
-#'   noiseAmount=100, g0=100, sideband_width_hz=60, jitterDep=1,
-#'   pitchAnchors=data.frame(time=c(0,0.52,1), ampl=c(559,785,557)),
-#'   mouthAnchors=data.frame(time=c(0,0.5,1), ampl=c(0,0.5,0)),
-#'   vocalTract_length=5, samplingRate=16000, playSound=TRUE)
-generateBout = function(repeatBout = 1, nSyl = 1,
-                        sylDur_mean = 300, pauseDur_mean = 200,
+#' sound = generateBout (repeatBout = 2, sylDur_mean = 160, pauseDur_mean = 100,
+#'   noiseAmount = 100, g0 = 100, sideband_width_hz = 60, jitterDep = 1,
+#'   pitchAnchors = data.frame(time = c(0, 0.52, 1), ampl = c(559, 785, 557)),
+#'   mouthAnchors = data.frame(time = c(0, 0.5, 1), ampl = c(0, 0.5, 0)),
+#'   vocalTract_length = 5, samplingRate = 16000, playSound = TRUE)
+generateBout = function(repeatBout = 1,
+                        nSyl = 1,
+                        sylDur_mean = 300,
+                        pauseDur_mean = 200,
                         pitchAnchors = data.frame(time = c(0, .1, .9, 1),
-                                                ampl = c(100, 150, 135, 100)),
+                                                  ampl = c(100, 150, 135, 100)),
                         pitchAnchors_global = NA,
-                        temperature = 0.025, maleFemale = 0, creakyBreathy = 0,
-                        noiseAmount = 0, noiseIntensity = 50,
-                        jitterDep = 0, jitterLength_ms = 1,
-                        vibratoFreq = 5, vibratoDep = 0,
-                        shimmerDep = 0, attackLen = 50,
-                        rolloff_exp = -12, rolloff_exp_delta = -12,
-                        quadratic_delta = 0, quadratic_nHarm = 3,
-                        adjust_rolloff_per_kHz = -6, rolloff_lip = 6,
+                        temperature = 0.025,
+                        maleFemale = 0,
+                        creakyBreathy = 0,
+                        noiseAmount = 0,
+                        noiseIntensity = 50,
+                        jitterDep = 0,
+                        jitterLength_ms = 1,
+                        vibratoFreq = 5,
+                        vibratoDep = 0,
+                        shimmerDep = 0,
+                        attackLen = 50,
+                        rolloff_exp = -12,
+                        rolloff_exp_delta = -12,
+                        quadratic_delta = 0,
+                        quadratic_nHarm = 3,
+                        adjust_rolloff_per_kHz = -6,
+                        rolloff_lip = 6,
                         exactFormants = list(
-                          f1 = data.frame(time = c(0), freq = c(860), amp = c(30), width = c(120)),
-                          f2 = data.frame( time = c(0), freq = c(1280), amp = c(40), width = c(120))),
-                        formantStrength = 1, extraFormants_ampl = 30,
-                        vocalTract_length = 15.5, g0 = 100,
-                        sideband_width_hz = 0, min_epoch_length_ms = 300,
-                        trill_dep = 0, trill_freq = 30,
+                          f1 = data.frame(
+                            time = c(0),
+                            freq = c(860),
+                            amp = c(30),
+                            width = c(120)
+                          ),
+                          f2 = data.frame(
+                            time = c(0),
+                            freq = c(1280),
+                            amp = c(40),
+                            width = c(120)
+                          )
+                        ),
+                        formantStrength = 1,
+                        extraFormants_ampl = 30,
+                        vocalTract_length = 15.5,
+                        g0 = 100,
+                        sideband_width_hz = 0,
+                        min_epoch_length_ms = 300,
+                        trill_dep = 0,
+                        trill_freq = 30,
                         breathingAnchors = data.frame(time = c(0, 300),
-                                                      ampl = c(-120, -120)),
-                        exactFormants_unvoiced = NA, rolloff_breathing = -6,
-                        mouthAnchors = data.frame(time = c(0,1), ampl = c(.5, .5)),
+                                                      ampl = c(-120,-120)),
+                        exactFormants_unvoiced = NA,
+                        rolloff_breathing = -6,
+                        mouthAnchors = data.frame(time = c(0, 1),
+                                                  ampl = c(.5, .5)),
                         amplAnchors = NA,
                         amplAnchors_global = NA,
-                        samplingRate = 16000, windowLength_points = 2048,
-                        overlap = 75, addSilence = 100,
-                        pitch_floor = 50, pitch_ceiling = 3500,
-                        pitchSamplingRate = 3500, plotSpectro = FALSE,
-                        playSound = FALSE, savePath = NA, ...) {
+                        samplingRate = 16000,
+                        windowLength_points = 2048,
+                        overlap = 75,
+                        addSilence = 100,
+                        pitch_floor = 50,
+                        pitch_ceiling = 3500,
+                        pitchSamplingRate = 3500,
+                        plotSpectro = FALSE,
+                        playSound = FALSE,
+                        savePath = NA,
+                        ...) {
   # adjust parameters according to the specified hyperparameters
-  if (creakyBreathy<0) { # for creaky voice
+  if (creakyBreathy < 0) {
+    # for creaky voice
     noiseAmount = min(100, noiseAmount - creakyBreathy * 50)
     jitterDep = max(0, jitterDep - creakyBreathy / 2)
     shimmerDep = max(0, shimmerDep - creakyBreathy * 5)
-    sideband_width_hz = sideband_width_hz * 2^(-creakyBreathy)
-  } else if (creakyBreathy > 0) { # for breathy voice, add breathing
+    sideband_width_hz = sideband_width_hz * 2 ^ (-creakyBreathy)
+  } else if (creakyBreathy > 0) {
+    # for breathy voice, add breathing
     breathingAnchors$ampl = breathingAnchors$ampl + creakyBreathy * 120
   }
   # adjust rolloff for both creaky and breathy voices
@@ -164,24 +202,25 @@ generateBout = function(repeatBout = 1, nSyl = 1,
   # Illustration: jitterDep = 1.5; noiseIntensity = 0:100;
   # plot(noiseIntensity, 2 * jitterDep / (1 + exp(.1 * (50 - noiseIntensity))),
   #   type = 'l')
-  if (maleFemale != 0) { # adjust pitch and formants along the male-female dimension
+  if (maleFemale != 0) {
+    # adjust pitch and formants along the male-female dimension
     # pitch varies by 1 octave up or down
-    pitchAnchors$ampl = pitchAnchors$ampl * 2^maleFemale
+    pitchAnchors$ampl = pitchAnchors$ampl * 2 ^ maleFemale
     if (!is.null(exactFormants) && !is.na(exactFormants)) {
       for (f in 1:length(exactFormants)) {
         # formants vary by 25% up or down:
         #   see http://www.santiagobarreda.com/vignettes/v1/v1.html)
-        exactFormants[[f]]$freq = exactFormants[[f]]$freq * 1.25^maleFemale
+        exactFormants[[f]]$freq = exactFormants[[f]]$freq * 1.25 ^ maleFemale
       }
     }
     # vocalTract_length varies by ±25% from the average
-    vocalTract_length = vocalTract_length *(1 - .25 * maleFemale)
+    vocalTract_length = vocalTract_length * (1 - .25 * maleFemale)
   }
 
   # generateBout() normally expects a list of formant values,
   # but a string is also ok for demonstration purposes
   # (dictionary for caller 1 is used to interpret)
-  if (class(exactFormants) == 'character'){
+  if (class(exactFormants) == 'character') {
     exactFormants = convertStringToFormants(exactFormants)
   }
 
@@ -193,41 +232,64 @@ generateBout = function(repeatBout = 1, nSyl = 1,
   }
   if (!is.integer(repeatBout)) {
     repeatBout = floor(repeatBout) +
-      rbinom(1, 1, repeatBout - floor(repeatBout))
+                 rbinom(1, 1, repeatBout - floor(repeatBout))
   }
 
   # prepare a list of pars for calling generateHarmonics()
-  pars_to_vary = c('noiseIntensity', 'attackLen', 'jitterDep', 'shimmerDep',
-                   'rolloff_exp', 'rolloff_exp_delta', 'formantStrength',
-                   'min_epoch_length_ms', 'g0', 'sideband_width_hz')
+  pars_to_vary = c(
+    'noiseIntensity',
+    'attackLen',
+    'jitterDep',
+    'shimmerDep',
+    'rolloff_exp',
+    'rolloff_exp_delta',
+    'formantStrength',
+    'min_epoch_length_ms',
+    'g0',
+    'sideband_width_hz'
+  )
   # don't add noiseAmount, otherwise there is no simple way to remove noise at temp>0
   pars_to_round = c('attackLen', 'g0', 'sideband_width_hz')
-  pars_list = list('attackLen' = attackLen, 'jitterDep' = jitterDep,
-                   'jitterLength_ms' = jitterLength_ms,
-                   'vibratoFreq' = vibratoFreq, 'vibratoDep' = vibratoDep,
-                   'shimmerDep' = shimmerDep, 'creakyBreathy' = creakyBreathy,
-                   'rolloff_exp' = rolloff_exp,
-                   'rolloff_exp_delta' = rolloff_exp_delta,
-                   'adjust_rolloff_per_kHz' = adjust_rolloff_per_kHz,
-                   'quadratic_delta' = quadratic_delta,
-                   'quadratic_nHarm' = quadratic_nHarm,
-                   'temperature' = temperature,
-                   'formantStrength' = formantStrength,
-                   'min_epoch_length_ms' = min_epoch_length_ms, 'g0' = g0,
-                   'sideband_width_hz' = sideband_width_hz,
-                   'rolloff_lip' = rolloff_lip,
-                   'trill_dep' = trill_dep, 'trill_freq' = trill_freq,
-                   'noiseAmount' = noiseAmount,
-                   'noiseIntensity' = noiseIntensity,
-                   'pitch_floor' = pitch_floor, 'pitch_ceiling' = pitch_ceiling,
-                   'pitchSamplingRate' = pitchSamplingRate,
-                   'samplingRate' = samplingRate,
-                   'windowLength_points' = windowLength_points,
-                   'overlap' = overlap)
+  pars_list = list(
+    'attackLen' = attackLen,
+    'jitterDep' = jitterDep,
+    'jitterLength_ms' = jitterLength_ms,
+    'vibratoFreq' = vibratoFreq,
+    'vibratoDep' = vibratoDep,
+    'shimmerDep' = shimmerDep,
+    'creakyBreathy' = creakyBreathy,
+    'rolloff_exp' = rolloff_exp,
+    'rolloff_exp_delta' = rolloff_exp_delta,
+    'adjust_rolloff_per_kHz' = adjust_rolloff_per_kHz,
+    'quadratic_delta' = quadratic_delta,
+    'quadratic_nHarm' = quadratic_nHarm,
+    'temperature' = temperature,
+    'formantStrength' = formantStrength,
+    'min_epoch_length_ms' = min_epoch_length_ms,
+    'g0' = g0,
+    'sideband_width_hz' = sideband_width_hz,
+    'rolloff_lip' = rolloff_lip,
+    'trill_dep' = trill_dep,
+    'trill_freq' = trill_freq,
+    'noiseAmount' = noiseAmount,
+    'noiseIntensity' = noiseIntensity,
+    'pitch_floor' = pitch_floor,
+    'pitch_ceiling' = pitch_ceiling,
+    'pitchSamplingRate' = pitchSamplingRate,
+    'samplingRate' = samplingRate,
+    'windowLength_points' = windowLength_points,
+    'overlap' = overlap
+  )
   pars_syllable = pars_list
-  if (sum(!is.na(pitchAnchors_global)) > 0 && nSyl > 1){
-    pitchDeltas = 2^(getDiscreteContour(len = nSyl,
-      anchors = pitchAnchors_global, method = 'spline', plot = FALSE) / 12)
+  if (sum(!is.na(pitchAnchors_global)) > 0 && nSyl > 1) {
+    pitchDeltas = 2 ^ (
+      getDiscreteContour(
+        len = nSyl,
+        anchors = pitchAnchors_global,
+        method = 'spline',
+        plot = FALSE
+      ) / 12
+    )
   } else {
     pitchDeltas = rep(1, nSyl)
   }
@@ -235,39 +297,49 @@ generateBout = function(repeatBout = 1, nSyl = 1,
   pitchAnchors$time = pitchAnchors$time / max(pitchAnchors$time) # 0 to 1
   wiggleBreathing = temperature > 0 && !is.na(breathingAnchors) &&
     sum(breathingAnchors$ampl > throwaway_dB) > 0
-  wiggleAmpl_per_syl = temperature>0 && !is.na(amplAnchors) &&
-    sum(amplAnchors$ampl < -throwaway_dB) > 0
+  wiggleAmpl_per_syl = temperature > 0 &&
+                       !is.na(amplAnchors) &&
+                       sum(amplAnchors$ampl < -throwaway_dB) > 0
 
   # START OF BOUT GENERATION
   for (b in 1:repeatBout) {
     # syllable segmentation
-    sylDur_s = rnorm_bounded(n = 1, mean = sylDur_mean,
+    sylDur_s = rnorm_bounded(
+      n = 1,
+      mean = sylDur_mean,
       low = permittedValues['sylDur_mean', 'low'],
       high = permittedValues['sylDur_mean', 'high'],
       sd = (permittedValues['sylDur_mean', 'high'] -
-            permittedValues['sylDur_mean', 'low']) * temperature / 50,
-      roundToInteger = FALSE)
-    pauseDur_s = rnorm_bounded(n = 1, mean = pauseDur_mean,
+           permittedValues['sylDur_mean', 'low']) * temperature / 50,
+      roundToInteger = FALSE
+    )
+    pauseDur_s = rnorm_bounded(
+      n = 1,
+      mean = pauseDur_mean,
       low = permittedValues['pauseDur_mean', 'low'],
       high = permittedValues['pauseDur_mean', 'high'],
       sd = (permittedValues['pauseDur_mean', 'high'] -
-            permittedValues['pauseDur_mean', 'low']) * temperature / 50,
-      roundToInteger = FALSE)
+           permittedValues['pauseDur_mean', 'low']) * temperature / 50,
+      roundToInteger = FALSE
+    )
     syllables = divideIntoSyllables (
-      sylDur_mean = sylDur_s,  nSyl = nSyl, pauseDur_mean = pauseDur_s,
+      sylDur_mean = sylDur_s,
+      nSyl = nSyl,
+      pauseDur_mean = pauseDur_s,
       sylDur_min = permittedValues['sylDur_mean', 'low'],
       sylDur_max = permittedValues['sylDur_mean', 'high'],
       pauseDur_min = permittedValues['pauseDur_mean', 'low'],
       pauseDur_max = permittedValues['pauseDur_mean', 'high'],
-      temperature = temperature)
-    syllableStartIdx = round(syllables[,'start'] * samplingRate / 1000)
+      temperature = temperature
+    )
+    syllableStartIdx = round(syllables[, 'start'] * samplingRate / 1000)
     syllableStartIdx[1] = 1
     # if noise is added before the voiced part of each syllable
     #   (negative time anchors) or starts later than the voiced part,
     #   we need to shift noise insertion points
-    if (!is.na(breathingAnchors) && breathingAnchors$time[1] != 0){
+    if (!is.na(breathingAnchors) && breathingAnchors$time[1] != 0) {
       shift = -round(breathingAnchors$time[1] * samplingRate / 1000)
-      if (breathingAnchors$time[1] < 0){
+      if (breathingAnchors$time[1] < 0) {
         # only the first syllableStartIdx is shifted, because that changes
         # the sound length and the remaining syllableStartIdx, if any,
         # are already shifted appropriately
@@ -289,55 +361,73 @@ generateBout = function(repeatBout = 1, nSyl = 1,
       pitchAnchors_per_syl = pitchAnchors
       amplAnchors_per_syl = amplAnchors
 
-      if (temperature > 0) { # OR if (temperature>0 & nrow(syllables)>1)
+      if (temperature > 0) {
+        # OR if (temperature>0 & nrow(syllables)>1)
         # if you don't want to mess with single-syllable vocalizations
         for (p in 1:length(pars_to_vary)) {
           l = permittedValues[pars_to_vary[p], 'low']
           h = permittedValues[pars_to_vary[p], 'high']
-          pars_syllable[pars_to_vary[p]] = rnorm_bounded(n = 1,
-            mean = as.numeric(pars_list[pars_to_vary[p]]), low = l, high = h,
+          pars_syllable[pars_to_vary[p]] = rnorm_bounded(
+            n = 1,
+            mean = as.numeric(pars_list[pars_to_vary[p]]),
+            low = l,
+            high = h,
             sd = (h - l) * temperature / 10,
-            roundToInteger = (pars_to_vary[p] %in% pars_to_round))
+            roundToInteger = (pars_to_vary[p] %in% pars_to_round)
+          )
           # /10 to have less variation in the spectral pars vs.
           # duration of separate syllables
         }
-        pitchAnchors_per_syl = wiggleAnchors(df = pitchAnchors_per_syl,
+        pitchAnchors_per_syl = wiggleAnchors(
+          df = pitchAnchors_per_syl,
           temperature = temperature,
           low = c(0, permittedValues['pitch', 'low']),
           high = c(1, permittedValues['pitch', 'high']),
-          temp_coef = pitchAnchorsWiggle_per_temp)
+          temp_coef = pitchAnchorsWiggle_per_temp
+        )
         if (wiggleBreathing) {
-          breathingAnchors_syl[[s]] = wiggleAnchors(df = breathingAnchors,
+          breathingAnchors_syl[[s]] = wiggleAnchors(
+            df = breathingAnchors,
             temperature = temperature,
             low = c(-Inf, permittedValues['breathing_ampl', 'low']),
             high = c(+Inf, permittedValues['breathing_ampl', 'high']),
-            wiggleAllRows = TRUE, temp_coef = breathingAnchorsWiggle_per_temp)
+            wiggleAllRows = TRUE,
+            temp_coef = breathingAnchorsWiggle_per_temp
+          )
         }
         if (wiggleAmpl_per_syl) {
-          amplAnchors_per_syl = wiggleAnchors(df = amplAnchors_per_syl,
-            temperature = temperature, low = c(0,0),
-            high = c(1, -throwaway_dB), temp_coef = amplAnchorsWiggle_per_temp)
+          amplAnchors_per_syl = wiggleAnchors(
+            df = amplAnchors_per_syl,
+            temperature = temperature,
+            low = c(0, 0),
+            high = c(1,-throwaway_dB),
+            temp_coef = amplAnchorsWiggle_per_temp
+          )
         }
       }
 
       # generate smooth pitch contour for this particular syllable
       dur_syl = as.numeric(syllables[s, 'end'] - syllables[s, 'start'])
-      pitchContour_syl = getSmoothContour(anchors = pitchAnchors_per_syl,
+      pitchContour_syl = getSmoothContour(
+        anchors = pitchAnchors_per_syl,
         len = round(dur_syl * pitchSamplingRate / 1000),
-        samplingRate = pitchSamplingRate, ampl_floor = pitch_floor,
-        ampl_ceiling = pitch_ceiling, thisIsPitch = TRUE) * pitchDeltas[s]
+        samplingRate = pitchSamplingRate,
+        ampl_floor = pitch_floor,
+        ampl_ceiling = pitch_ceiling,
+        thisIsPitch = TRUE
+      ) * pitchDeltas[s]
       # plot(pitchContour_syl, type = 'l')
 
       # generate the voiced part
       if (dur_syl < permittedValues['sylDur_mean', 'low'] |
-          (!is.na(breathingAnchors) && min(breathingAnchors$ampl) >= 40) ) {
+          (!is.na(breathingAnchors) && min(breathingAnchors$ampl) >= 40)) {
         # only synthesize voiced part if breathing is weaker than 40 dB
         #   and the voiced part is long enough to bother synthesizing it
         syllable = rep(0, round(dur_syl * samplingRate / 1000))
       } else {
-        syllable = try(do.call(generateHarmonics,
-          c(list(pitch = pitchContour_syl, amplAnchors = amplAnchors_per_syl),
-            pars_syllable)))  # the actual synthesis is here
+        syllable = try(do.call(generateHarmonics,  c(pars_syllable,
+          list(pitch = pitchContour_syl, amplAnchors = amplAnchors_per_syl))))
+        # the actual synthesis is here
       }
       # spectro_denoised (syllable, samplingRate = samplingRate)
       # playme(syllable, samplingRate = samplingRate)
@@ -351,7 +441,7 @@ generateBout = function(repeatBout = 1, nSyl = 1,
       # generate pause for all but the last syllable
       if (s < nrow(syllables)) {
         pause = rep(0, floor((syllables[s + 1, 1] - syllables[s, 2]) *
-                               samplingRate / 1000 ))
+                               samplingRate / 1000))
       } else {
         pause = numeric()
       }
@@ -373,7 +463,7 @@ generateBout = function(repeatBout = 1, nSyl = 1,
         # syllable duration re the average expected duration (which the user
         # sees in the UI when choosing time anchors)
         unvoicedDur_syl = round(diff(range(breathingAnchors_syl[[s]]$time)) *
-                                  samplingRate / 1000 )
+                            samplingRate / 1000)
 
         # calculate noise spectrum
         if (is.na(exactFormants_unvoiced[1])) {
@@ -382,27 +472,35 @@ generateBout = function(repeatBout = 1, nSyl = 1,
           movingFormants = max(unlist(lapply(exactFormants_unvoiced, nrow))) > 1 |
             sum(mouthAnchors$ampl != .5) > 0 # are noise formants moving, as opposed to constant?
           nInt = ifelse (movingFormants,
-                         round(diff(range(breathingAnchors_syl[[s]]$time)) / 10),
-                         1) # the number of different noise spectra,
+                    round(diff(range(breathingAnchors_syl[[s]]$time)) / 10),
+                    1) # the number of different noise spectra,
           # allowing one column (noise spectrum) per 10 ms of audio
           spectralEnvelope_unvoiced = getSpectralEnvelope(
-            nr = windowLength_points / 2, nc = nInt,
+            nr = windowLength_points / 2,
+            nc = nInt,
             exactFormants = exactFormants_unvoiced,
             formantStrength = formantStrength,
             extraFormants_ampl = extraFormants_ampl,
-            rolloff_lip = rolloff_lip, mouthAnchors = mouthAnchors,
-            temperature = temperature, samplingRate = samplingRate,
-            vocalTract_length = vocalTract_length)
+            rolloff_lip = rolloff_lip,
+            mouthAnchors = mouthAnchors,
+            temperature = temperature,
+            samplingRate = samplingRate,
+            vocalTract_length = vocalTract_length
+          )
           # image(t(spectralEnvelope_unvoiced))
         }
 
         # synthesize the unvoiced part
         unvoiced[[s]] = generateNoise (
-          len = unvoicedDur_syl, breathingAnchors = breathingAnchors_syl[[s]],
-          rolloff_breathing = rolloff_breathing, attackLen = attackLen,
+          len = unvoicedDur_syl,
+          breathingAnchors = breathingAnchors_syl[[s]],
+          rolloff_breathing = rolloff_breathing,
+          attackLen = attackLen,
           samplingRate = samplingRate,
-          windowLength_points = windowLength_points, overlap = overlap,
-          filter_breathing = spectralEnvelope_unvoiced)
+          windowLength_points = windowLength_points,
+          overlap = overlap,
+          filter_breathing = spectralEnvelope_unvoiced
+        )
         # plot(unvoiced[[s]], type = 'l')
       }
     }
@@ -430,11 +528,14 @@ generateBout = function(repeatBout = 1, nSyl = 1,
     if (!is.na(amplAnchors_global) &&
         length(which(amplAnchors_global$ampl < -throwaway_dB)) > 0) {
       # convert from dB to linear multiplier
-      amplAnchors_global$ampl = 2^(amplAnchors_global$ampl / 10)
+      amplAnchors_global$ampl = 2 ^ (amplAnchors_global$ampl / 10)
       amplEnvelope = getSmoothContour(
-        anchors = amplAnchors_global, len = length(sound),
-        ampl_floor = 0, ampl_ceiling = -throwaway_dB,
-        samplingRate = samplingRate) # plot(amplEnvelope)
+        anchors = amplAnchors_global,
+        len = length(sound),
+        ampl_floor = 0,
+        ampl_ceiling = -throwaway_dB,
+        samplingRate = samplingRate
+      ) # plot(amplEnvelope)
       sound = sound * amplEnvelope
     }
 
@@ -447,7 +548,8 @@ generateBout = function(repeatBout = 1, nSyl = 1,
       # for very short sounds, make sure the analysis window is no more
       #   than half the sound's length
       windowLength_points = min(windowLength_points, floor(length(sound) / 2))
-      step = seq(1, max(1, (length(sound) - windowLength_points)),
+      step = seq(1,
+                 max(1, (length(sound) - windowLength_points)),
                  windowLength_points - (overlap * windowLength_points / 100))
       nc = length(step) # number of windows for fft
       nr = windowLength_points / 2 # number of frequency bins for fft
@@ -455,28 +557,48 @@ generateBout = function(repeatBout = 1, nSyl = 1,
         sum(mouthAnchors$ampl != .5) > 0 # are formants moving or constant?
       nInt = ifelse (movingFormants, nc, 1)
       spectralEnvelope = getSpectralEnvelope(
-        nr = nr, nc = nInt, exactFormants = exactFormants,
+        nr = nr,
+        nc = nInt,
+        exactFormants = exactFormants,
         formantStrength = formantStrength,
-        extraFormants_ampl = extraFormants_ampl, rolloff_lip = rolloff_lip,
-        mouthAnchors = mouthAnchors, temperature = temperature,
-        samplingRate = samplingRate, vocalTract_length = vocalTract_length)
+        extraFormants_ampl = extraFormants_ampl,
+        rolloff_lip = rolloff_lip,
+        mouthAnchors = mouthAnchors,
+        temperature = temperature,
+        samplingRate = samplingRate,
+        vocalTract_length = vocalTract_length
+      )
       # image(t(spectralEnvelope))
 
       # fft and filtering
       z <- seewave::stft(
-        wave = as.matrix(sound), f = samplingRate, wl = windowLength_points,
-        zp = 0, step = step, wn = 'hamming', fftw = FALSE, scale = TRUE,
-        complex = TRUE)
-      if (movingFormants){
+        wave = as.matrix(sound),
+        f = samplingRate,
+        wl = windowLength_points,
+        zp = 0,
+        step = step,
+        wn = 'hamming',
+        fftw = FALSE,
+        scale = TRUE,
+        complex = TRUE
+      )
+      if (movingFormants) {
         z = z * spectralEnvelope
       } else {
-        z = apply (z, 2, function(x) x * spectralEnvelope)
+        z = apply (z, 2, function(x)
+          x * spectralEnvelope)
       }
 
       # inverse fft
-      sound_filtered = as.numeric(seewave::istft(
-        z, f = samplingRate, ovlp = overlap,
-        wl = windowLength_points, output = "matrix"))
+      sound_filtered = as.numeric(
+        seewave::istft(
+          z,
+          f = samplingRate,
+          ovlp = overlap,
+          wl = windowLength_points,
+          output = "matrix"
+        )
+      )
       sound_filtered = sound_filtered / max(sound_filtered) # normalize
     }
     # spectro_denoised (sound_filtered, samplingRate = samplingRate)
@@ -491,9 +613,9 @@ generateBout = function(repeatBout = 1, nSyl = 1,
     } # plot(sound_filtered, type = 'l')
 
     # trill - rapid regular amplitude modulation
-    if (trill_dep > 0){
+    if (trill_dep > 0) {
       trill = 1 - sin (2 * pi * (1:length(sound_filtered)) /
-                         samplingRate * trill_freq) * trill_dep / 2
+              samplingRate * trill_freq) * trill_dep / 2
       # plot (trill, type='l')
     } else {
       trill = 1
@@ -523,9 +645,8 @@ generateBout = function(repeatBout = 1, nSyl = 1,
   if (!is.na(savePath)) {
     seewave::savewav(bout, filename = savePath, f = samplingRate)
   }
-  if (plotSpectro){
+  if (plotSpectro) {
     spectro_denoised (bout, samplingRate = samplingRate)
   }
   return (bout)
 }
-

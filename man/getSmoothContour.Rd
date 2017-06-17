@@ -56,15 +56,22 @@ with musical notes rather than frequencies in Hz). Pitch plots have two Y
 axes: one showing Hz and the other showing musical notation.
 }
 \examples{
-a=soundgen:::getSmoothContour (anchors=data.frame(time=c(50,137,300), ampl=c(0.03, 0.78, 0.5)),
-  voiced=200, ampl_floor=0, plot=TRUE, main='', samplingRate=16000) # breathing
-a=soundgen:::getSmoothContour (anchors=data.frame(time=c(0,.1), ampl=c(350, 800)),
-  len=5500, thisIsPitch=TRUE, plot=TRUE, samplingRate=3500) # pitch
+a = soundgen:::getSmoothContour (anchors = data.frame(
+  time = c(50, 137, 300), ampl = c(0.03, 0.78, 0.5)),
+  voiced = 200, ampl_floor = 0, plot = TRUE, main = '',
+  samplingRate = 16000) # breathing
 
-# a single anchor = constant pitch
-a=soundgen:::getSmoothContour (anchors=data.frame(time=0, ampl=800),
-  len=500, thisIsPitch=TRUE, plot=TRUE, samplingRate=500)
-# two anchors = loglinear pitch change
-a=soundgen:::getSmoothContour (anchors=data.frame(time=c(0,1), ampl=c(220,440)),
-  len=500, thisIsPitch=TRUE, plot=TRUE, samplingRate=500)
+a = soundgen:::getSmoothContour (anchors = data.frame(
+  time = c(0, .1), ampl = c(350, 800)),
+  len = 5500, thisIsPitch = TRUE, plot = TRUE,
+  samplingRate = 3500) # pitch
+
+# a single anchor gives constant pitch
+a = soundgen:::getSmoothContour (anchors = data.frame(time = 0, ampl = 800),
+  len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
+
+# two anchors give loglinear pitch change
+a = soundgen:::getSmoothContour (anchors = data.frame(
+  time = c(0, 1), ampl = c(220, 440)),
+  len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/spectrogram.R
 \name{getEntropy}
 \alias{getEntropy}
-\title{Normalized entropy}
+\title{Shannon entropy}
 \usage{
 getEntropy(x)
 }
@@ -10,10 +10,12 @@ getEntropy(x)
 \item{x}{vector of non-negative floats}
 }
 \value{
-Returns entropy of a vector on a scale 0 to 1 (i.e., normalized so
-  that entropy does not depend on the length of input vector). Zeroes are
-  transformed into 1e-10, negative values produce NaN.
+Float or NA
 }
 \description{
 Internal soundgen function.
+}
+\details{
+Returns Shannon entropy of a vector. Zeroes are dealt with by adding 1 to all
+elements. If all elements are zero, returns NA.
 }
