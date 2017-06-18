@@ -59,7 +59,7 @@ pickle = function(l) {
       out = paste0(
         out,
         names(l)[i],
-        '=data.frame( time=c(',
+        ' = data.frame(time=c(',
         paste0(round(l[[i]]$time, 2), collapse = ","),
         '),
         freq=c(',

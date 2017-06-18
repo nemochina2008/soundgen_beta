@@ -9,9 +9,9 @@
 #' @docType package
 #' @name soundgen
 #' @importFrom graphics abline axis layout lines par points rect text
-#' @importFrom stats approx dgamma dnorm fft loess median na.omit predict quantile rbinom rgamma rnorm runif spline var
+#' @importFrom stats approx dgamma dnorm fft loess median na.omit predict quantile rbinom rgamma rnorm runif spline var dist
 #' @importFrom utils head tail
-#' @importFrom grDevices gray
+#' @importFrom grDevices gray rainbow
 NULL
 
 
