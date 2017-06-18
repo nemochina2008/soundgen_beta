@@ -36,6 +36,12 @@ semitonesToHz = function(s) {
 #' object, but I can't figure out how to make the interim string human-readable
 #' and modifiable
 #' @param l a list of exact formants
+#' @examples
+#' exactFormants=list(f1 = data.frame(time = c(0), freq = c(860),
+#'                                    amp = c(30), width = c(120)),
+#'                            f2 = data.frame(time = c(0), freq = c(1280),
+#'                                 amp = c(40), width = c(120)))
+#' pickle (exactFormants)
 pickle = function(l) {
   if (is.null(l) | length(l) < 1) {
     return (NA)
@@ -44,31 +50,24 @@ pickle = function(l) {
   }
 
   temp = try(expr = {
-    out = 'list(\n'
+    out = 'list('
     for (i in 1:length(l)) {
       len = nrow(l[[i]])
       freq = ifelse(len == 1 | var(l[[i]]$freq) == 0,
                     l[[i]]$freq[1],
-                    paste0(l[[i]]$freq, collapse = ","))
+                    paste0(l[[i]]$freq, collapse = ", "))
       amp = ifelse(len == 1 | var(l[[i]]$amp) == 0,
                    l[[i]]$amp[1],
-                   paste0(l[[i]]$amp, collapse = ","))
+                   paste0(l[[i]]$amp, collapse = ", "))
       width = ifelse(len == 1 | var(l[[i]]$width) == 0,
                      l[[i]]$width[1],
-                     paste0(l[[i]]$width, collapse = ","))
+                     paste0(l[[i]]$width, collapse = ", "))
       out = paste0(
         out,
         names(l)[i],
-        ' = data.frame(time=c(',
-        paste0(round(l[[i]]$time, 2), collapse = ","),
-        '),
-        freq=c(',
-        freq,
-        '), amp=c(',
-        amp,
-        '), width=c(',
-        width,
-        ')),\n'
+        ' = data.frame(time = c(',
+        paste0(round(l[[i]]$time, 2), collapse = ", "),
+        '), freq=c(', freq, '), amp = c(', amp, '), width = c(', width, ')), '
         )
     }
     substr(out, nchar(out) - 1, nchar(out)) = ')'  #  replace the last comma with )
