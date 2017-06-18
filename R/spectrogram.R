@@ -351,7 +351,7 @@ spectro_denoised = function (soundfile,
   }
 
   if (plot) {
-    op = par(no.readonly = TRUE) # save user's original pars
+    op = par(c('mar', 'xaxt', 'yaxt', 'mfrow')) # save user's original pars
     if (osc) {
       layout(matrix(c(2, 1), nrow = 2, byrow = TRUE), heights = c(3, 1))
       par(mar = c(5.1, 4.1, 0, 2.1), xaxt = 's', yaxt = 'n')
@@ -362,11 +362,9 @@ spectro_denoised = function (soundfile,
       par(mar = c(0, 4.1, 2.1, 2.1), xaxt = 'n', yaxt = 's')
       xlab = ''
     }
-    seewave::filled.contour.modif2 (
-      x = X, y = Y, z = Z1, levels = seq(0, 1, length = 30),
-      color.palette = color.palette, ylim = ylim, ...)
-    on.exit(par(op))  # restore original pars
-    layout(matrix(c(1, 1)))
+    seewave::filled.contour.modif2 (x = X, y = Y, z = Z1, levels = seq(0, 1, length = 30),
+                                     color.palette = color.palette, ylim = ylim, ...)
+    par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)  # restore original pars
   }
 
   if (output == 'original') {

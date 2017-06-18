@@ -1,4 +1,4 @@
-server <- function(input, output, session) {
+server = function(input, output, session) {
   # clean-up of www/ folder: remove all files except temp.wav
   files = list.files('www/')
   files = files[files != 'temp.wav']
@@ -7,7 +7,7 @@ server <- function(input, output, session) {
   }
 
   ## S E T U P
-  myPars <- reactiveValues('myfile'=NULL,
+  myPars = reactiveValues('myfile'=NULL,
                            'sound'=as.numeric(tuneR::readWave('www/temp.wav')@left), # w/o as.numeric we get integers and spectro_denoised complains
                            'pitchAnchors' = data.frame('time'= c(0,.1,.9,1),
                                                        'ampl'=c(100,150,135,100)),

@@ -148,7 +148,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), ampl = c(0, 1))
   # plot (smoothContour, type='l')
 
   if (plot) {
-    op = par(no.readonly = TRUE)
+    op = par("mar") # save user's original margin settings
     idx = seq(1, len, length.out = min(len, 100))
     # for plotting, shorten smoothContour to max 100 points
     # to reduce processing load
@@ -175,8 +175,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), ampl = c(0, 1))
       par(mar = c(5, 4, 4, 3)) # c(bottom, left, top, right)
       plot(time[idx] / samplingRate * 1000, smoothContour_downsampled,
            type = 'l', yaxt = "n", ylab = 'Frequency, Hz', xlab = 'Time, ms',
-          main = 'Pitch contour', ylim = ylim, ...)
-      # ylim = c(25, max(73, max(pitch_semitones) * 1.1))
+           main = 'Pitch contour', ylim = ylim, ...)
       axis(2, at = lbls_semitones, labels = lbls_Hz, las = 1)
       axis(4, at = lbls_semitones, labels = lbls_notes, las = 1)
       points(anchors$time * duration_ms, anchors$ampl, col = 'blue', cex = 3)
@@ -208,7 +207,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), ampl = c(0, 1))
             adj = 1, labels = contourLabel, col = 'red')
       }
     }
-    on.exit(par(op))  # restore original par
+    par("mar" = op)  # restore original margin settings
   }
   # NA's may arise if the first anchor time > 0
   smoothContour[is.na(smoothContour)] = 0
