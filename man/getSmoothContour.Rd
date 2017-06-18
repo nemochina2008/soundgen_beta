@@ -4,9 +4,9 @@
 \alias{getSmoothContour}
 \title{Smooth contour from anchors}
 \usage{
-getSmoothContour(anchors = data.frame(time = c(0, 1), ampl = c(0, 1)),
+getSmoothContour(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
   len = NULL, thisIsPitch = FALSE, method = c("spline", "loess")[2],
-  ampl_floor = NULL, ampl_ceiling = NULL, plot = FALSE, main = "",
+  value_floor = NULL, value_ceiling = NULL, plot = FALSE, main = "",
   xlim = NULL, ylim = NULL, samplingRate = 44100, voiced = NULL,
   contourLabel = NULL, ...)
 }
@@ -15,7 +15,7 @@ getSmoothContour(anchors = data.frame(time = c(0, 1), ampl = c(0, 1)),
 \code{achors$time} can be in ms (with len=NULL) or in arbitrary units, eg 0
 to 1 (with duration determined by len, which must then be provided in ms).
 So anchors$time is assumed to be in ms if len=NULL and relative if len is
-specified. \code{anchors$ampl} can be on any scale.}
+specified. \code{anchors$value} can be on any scale.}
 
 \item{len}{the required length of the output contour. If NULL, it will be
 calculated based on the maximum time value (in ms) and \code{samplingRate}}
@@ -28,7 +28,7 @@ before smoothing and plots in both Hz and musical notation}
 much faster than 'loess', but it may produce weird results when there are
 only a few anchors}
 
-\item{ampl_floor, ampl_ceiling}{lower/upper bounds for the contour}
+\item{value_floor, value_ceiling}{lower/upper bounds for the contour}
 
 \item{plot}{(boolean) produce a plot?}
 
@@ -57,21 +57,21 @@ axes: one showing Hz and the other showing musical notation.
 }
 \examples{
 a = soundgen:::getSmoothContour (anchors = data.frame(
-  time = c(50, 137, 300), ampl = c(0.03, 0.78, 0.5)),
-  voiced = 200, ampl_floor = 0, plot = TRUE, main = '',
+  time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
+  voiced = 200, value_floor = 0, plot = TRUE, main = '',
   samplingRate = 16000) # breathing
 
 a = soundgen:::getSmoothContour (anchors = data.frame(
-  time = c(0, .1), ampl = c(350, 800)),
+  time = c(0, .1), value = c(350, 800)),
   len = 5500, thisIsPitch = TRUE, plot = TRUE,
   samplingRate = 3500) # pitch
 
 # a single anchor gives constant pitch
-a = soundgen:::getSmoothContour (anchors = data.frame(time = 0, ampl = 800),
+a = soundgen:::getSmoothContour (anchors = data.frame(time = 0, value = 800),
   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 
 # two anchors give loglinear pitch change
 a = soundgen:::getSmoothContour (anchors = data.frame(
-  time = c(0, 1), ampl = c(220, 440)),
+  time = c(0, 1), value = c(220, 440)),
   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 }

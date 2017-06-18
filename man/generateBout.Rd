@@ -6,7 +6,7 @@
 \usage{
 generateBout(repeatBout = 1, nSyl = 1, sylDur_mean = 300,
   pauseDur_mean = 200, pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
-  ampl = c(100, 150, 135, 100)), pitchAnchors_global = NA,
+  value = c(100, 150, 135, 100)), pitchAnchors_global = NA,
   temperature = 0.025, maleFemale = 0, creakyBreathy = 0,
   noiseAmount = 0, noiseIntensity = 50, jitterDep = 0,
   jitterLength_ms = 1, vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0,
@@ -17,9 +17,9 @@ generateBout(repeatBout = 1, nSyl = 1, sylDur_mean = 300,
   c(1280), amp = c(40), width = c(120))), formantStrength = 1,
   extraFormants_ampl = 30, vocalTract_length = 15.5, g0 = 100,
   sideband_width_hz = 0, min_epoch_length_ms = 300, trill_dep = 0,
-  trill_freq = 30, breathingAnchors = data.frame(time = c(0, 300), ampl =
+  trill_freq = 30, breathingAnchors = data.frame(time = c(0, 300), value =
   c(-120, -120)), exactFormants_unvoiced = NA, rolloff_breathing = -6,
-  mouthAnchors = data.frame(time = c(0, 1), ampl = c(0.5, 0.5)),
+  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
   amplAnchors = NA, amplAnchors_global = NA, samplingRate = 16000,
   windowLength_points = 2048, overlap = 75, addSilence = 100,
   pitch_floor = 50, pitch_ceiling = 3500, pitchSamplingRate = 3500,
@@ -34,7 +34,7 @@ generateBout(repeatBout = 1, nSyl = 1, sylDur_mean = 300,
 
 \item{pauseDur_mean}{average duration of pauses between syllables, ms}
 
-\item{pitchAnchors}{dataframe specifying the time (ms) and frequency (Hz) of pitch anchors. These anchors are used to create a smooth contour of fundamental frequency f0 (pitch) within one syllable (see Details)}
+\item{pitchAnchors}{dataframe specifying the time (ms) and value (Hz) of pitch anchors. These anchors are used to create a smooth contour of fundamental frequency f0 (pitch) within one syllable (see Details)}
 
 \item{pitchAnchors_global}{unlike \code{pitchAnchors}, this dataframe is used to create a smooth contour of average f0 across multiple syllables}
 
@@ -108,11 +108,11 @@ subharmonics regime, in ms}
 
 \item{rolloff_breathing}{rolloff of breathing noise, dB/octave. It is analogous to \code{rolloff_exp}, but while \code{rolloff_exp} applies to the harmonic component, \code{rolloff_breathing} applies to the noise component}
 
-\item{mouthAnchors}{dataframe specifying the time (ms) and size (0 to 1) of mouth-opening anchors}
+\item{mouthAnchors}{dataframe specifying the time (ms) and value (0 to 1) of mouth-opening anchors}
 
-\item{amplAnchors}{dataframe specifying the time (ms) and amplitude (0 to 1) of amplitude anchors}
+\item{amplAnchors}{dataframe specifying the time (ms) and value (0 to 1) of amplitude anchors}
 
-\item{amplAnchors_global}{dataframe specifying the time (ms) and amplitude (0 to 1) of global amplitude anchors, i.e. spanning multiple syllables}
+\item{amplAnchors_global}{dataframe specifying the time (ms) and value (0 to 1) of global amplitude anchors, i.e. spanning multiple syllables}
 
 \item{samplingRate}{sampling frequency (Hz)}
 
@@ -156,20 +156,20 @@ sound = generateBout (exactFormants = 'uai', nSyl = 3, playSound = TRUE)
 # Intonation contours per syllable and globally:
 sound = generateBout (nSyl = 5, sylDur_mean = 200, pauseDur_mean = 140,
   playSound = TRUE, pitchAnchors = data.frame(
-    time = c(0, 0.65, 1), ampl = c(977, 1540, 826)),
-  pitchAnchors_global = data.frame(time = c(0, .5, 1), ampl = c(-6, 7, 0)))
+    time = c(0, 0.65, 1), value = c(977, 1540, 826)),
+  pitchAnchors_global = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 
 # Subharmonics in sidebands (noisy scream, chimpanzee-like)
 sound = generateBout (noiseAmount = 100, g0 = 75, sideband_width_hz = 130,
   pitchAnchors = data.frame(
-    time = c(0, .3, .9, 1), ampl = c(1200, 1547, 1487, 1154)),
+    time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
   sylDur_mean = 800, samplingRate = 16000,
   playSound = TRUE, plotSpectro = TRUE)
 
 # Jitter and mouth opening (bark, dog-like)
 sound = generateBout (repeatBout = 2, sylDur_mean = 160, pauseDur_mean = 100,
   noiseAmount = 100, g0 = 100, sideband_width_hz = 60, jitterDep = 1,
-  pitchAnchors = data.frame(time = c(0, 0.52, 1), ampl = c(559, 785, 557)),
-  mouthAnchors = data.frame(time = c(0, 0.5, 1), ampl = c(0, 0.5, 0)),
+  pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
+  mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
   vocalTract_length = 5, samplingRate = 16000, playSound = TRUE)
 }

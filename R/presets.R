@@ -132,7 +132,7 @@ presets = list(
     'Vowel' = c(
       as.list (permittedValues[1 : which(rownames(permittedValues)=='rolloff_breathing'),'default']),
       'vowelString'='a',
-      list('pitchAnchors' = data.frame('time'=c(0,.1,.9,1), 'ampl'=c(100,150,135,100)))
+      list('pitchAnchors' = data.frame('time'=c(0,.1,.9,1), 'value'=c(100,150,135,100)))
     ), # these are basically just the global defaults
 
     'Gasp' = c(
@@ -142,9 +142,9 @@ presets = list(
       'temperature' = .05,
       'sideband_width_hz'=0,
       'rolloff_breathing'=-5,
-      list('pitchAnchors' = data.frame('time'=c(0,.7,1), 'ampl'=c(402,556,490))),
-      list('breathingAnchors'=data.frame('time'=c(1,234,408), 'ampl'=c(-120,-32,-120))),
-      list('mouthAnchors'=data.frame('time'=c(0,.3,1), 'ampl'=c(0.32,0.88,0.42))),
+      list('pitchAnchors' = data.frame('time'=c(0,.7,1), 'value'=c(402,556,490))),
+      list('breathingAnchors'=data.frame('time'=c(1,234,408), 'value'=c(-120,-32,-120))),
+      list('mouthAnchors'=data.frame('time'=c(0,.3,1), 'value'=c(0.32,0.88,0.42))),
       list('exactFormants_unvoiced'=list( # [h] preset
         f1=data.frame( time=c(0), freq=c(420), amp=c(20), width=c(150)),
         f2=data.frame( time=c(0), freq=c(1200), amp=c(50), width=c(250)),
@@ -166,8 +166,8 @@ presets = list(
       'min_epoch_length_ms'=300,
       'g0'=100,
       'sideband_width_hz'=40,
-      list('pitchAnchors' = data.frame('time'=c(0,.14,.88,1), 'ampl'=c(174,200,191,131))),
-      list('mouthAnchors' = data.frame('time'=c(0,.14,.88,1), 'ampl'=c(0.4,0.59,0.61,0.45))),
+      list('pitchAnchors' = data.frame('time'=c(0,.14,.88,1), 'value'=c(174,200,191,131))),
+      list('mouthAnchors' = data.frame('time'=c(0,.14,.88,1), 'value'=c(0.4,0.59,0.61,0.45))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0), freq=c(620), amp=c(40), width=c(80)),
         f2=data.frame( time=c(0), freq=c(1000), amp=c(50), width=c(80)),
@@ -183,9 +183,9 @@ presets = list(
       'attackLen' = 100,
       'temperature' = .025,
       'rolloff_breathing' = -10,
-      list('pitchAnchors' = data.frame('time'=c(0,1), 'ampl'=c(202,144))),
-      list('breathingAnchors' = data.frame('time'=c(-7,268,590,869), 'ampl'=c(-67,-45,-24,-46))),
-      list('mouthAnchors' = data.frame('time'=c(0,.3,1), 'ampl'=c(0.24,0.41,0.19))),
+      list('pitchAnchors' = data.frame('time'=c(0,1), 'value'=c(202,144))),
+      list('breathingAnchors' = data.frame('time'=c(-7,268,590,869), 'value'=c(-67,-45,-24,-46))),
+      list('mouthAnchors' = data.frame('time'=c(0,.3,1), 'value'=c(0.24,0.41,0.19))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0), freq=c(980), amp=c(35), width=c(120)),
         f2=data.frame( time=c(0), freq=c(1400), amp=c(35), width=c(150)),
@@ -197,8 +197,8 @@ presets = list(
     'Sigh' = c(
       'sylDur_mean' = 50,
       temperature = .1,
-      list('pitchAnchors' = data.frame('time'=c(0,1), 'ampl'=c(202,144))),
-      list('breathingAnchors'=data.frame('time'=c(-20,104,756,1252), 'ampl'=c(26,40,23,-22))),
+      list('pitchAnchors' = data.frame('time'=c(0,1), 'value'=c(202,144))),
+      list('breathingAnchors'=data.frame('time'=c(-20,104,756,1252), 'value'=c(26,40,23,-22))),
       list(exactFormants=list(
         f1=data.frame( time=c(0), freq=c(800), amp=c(30), width=c(100)),
         f1.5=data.frame( time=c(0), freq=c(1200), amp=c(30), width=c(100)),
@@ -220,11 +220,11 @@ presets = list(
       'sideband_width_hz' = 0,
       'vowelString' = 'ae',
       'rolloff_breathing'=-5,
-      list('pitchAnchors' = data.frame('time'=c(0,1), 'ampl'=c(180,166))),
-      list('pitchAnchors_global' = data.frame('time'=c(0,.3,1), 'ampl'=c(1,2,0))),
-      list('breathingAnchors'=data.frame('time'=c(39,56,167), 'ampl'=c(-120,-44,-120))),
-      list('amplAnchors'=data.frame('time'=c(0,.4,1), 'ampl'=c(120,0,120))),
-      list('amplAnchors_global'=data.frame('time'=c(0,.55,1), 'ampl'=c(120,110,20))),
+      list('pitchAnchors' = data.frame('time'=c(0,1), 'value'=c(180,166))),
+      list('pitchAnchors_global' = data.frame('time'=c(0,.3,1), 'value'=c(1,2,0))),
+      list('breathingAnchors'=data.frame('time'=c(39,56,167), 'value'=c(-120,-44,-120))),
+      list('amplAnchors'=data.frame('time'=c(0,.4,1), 'value'=c(120,0,120))),
+      list('amplAnchors_global'=data.frame('time'=c(0,.55,1), 'value'=c(120,110,20))),
       list('exactFormants_unvoiced'=list(
         f1=data.frame( time=c(0), freq=c(420), amp=c(20), width=c(150)),
         f2=data.frame( time=c(0), freq=c(1200), amp=c(50), width=c(250)),
@@ -243,10 +243,10 @@ presets = list(
       'min_epoch_length_ms'=200,
       'g0'=100,
       'sideband_width_hz'=80,
-      list('pitchAnchors'=data.frame('time'=c(0,.15,.87,1), 'ampl'=c(175,199,188,140))),
-      list('breathingAnchors'=data.frame('time'=c(0,960), 'ampl'=c(-40,-40))),
-      list('mouthAnchors'=data.frame('time'=c(0,1), 'ampl'=c(0,0))),
-      list('amplAnchors_global'=data.frame('time'=c(0,1), 'ampl'=c(120,43))),
+      list('pitchAnchors'=data.frame('time'=c(0,.15,.87,1), 'value'=c(175,199,188,140))),
+      list('breathingAnchors'=data.frame('time'=c(0,960), 'value'=c(-40,-40))),
+      list('mouthAnchors'=data.frame('time'=c(0,1), 'value'=c(0,0))),
+      list('amplAnchors_global'=data.frame('time'=c(0,1), 'value'=c(120,43))),
       list('exactFormants_unvoiced'=list(
         f1=data.frame( time=c(0), freq=c(560), amp=c(30), width=c(120)),
         f2=data.frame( time=c(0), freq=c(1000), amp=c(40), width=c(120)),
@@ -331,7 +331,7 @@ presets = list(
     'Vowel' = c(
       'sylDur_mean' = 500,
       'vowelString'='a',
-      list('pitchAnchors' = data.frame('time'=c(0,0.558,1), 'ampl'=c(340,370,340)))
+      list('pitchAnchors' = data.frame('time'=c(0,0.558,1), 'value'=c(340,370,340)))
     ),
 
     'Scream' = c(
@@ -344,7 +344,7 @@ presets = list(
       'noiseIntensity' = 50,
       'g0'=400,
       'sideband_width_hz'=100,
-      list('pitchAnchors' = data.frame('time'=c(0,.1,.85,1), 'ampl'=c(900,1832,1618,1200)))
+      list('pitchAnchors' = data.frame('time'=c(0,.1,.85,1), 'value'=c(900,1832,1618,1200)))
     ),
 
     'Growl' = c(
@@ -358,9 +358,9 @@ presets = list(
       'trill_freq'=60,
       'temperature'=.1,
       'min_epoch_length_ms'=300,
-      list('pitchAnchors' = data.frame('time'=c(0,.1,.3,1), 'ampl'=c(238,251,449,205))),
-      list('amplAnchors_global' = data.frame('time'=c(0,.13,1), 'ampl'=c(101,120,26))),
-      list('mouthAnchors' = data.frame('time'=c(0,.13,.76,1), 'ampl'=c(0.4,0.59,0.61,0.45))),
+      list('pitchAnchors' = data.frame('time'=c(0,.1,.3,1), 'value'=c(238,251,449,205))),
+      list('amplAnchors_global' = data.frame('time'=c(0,.13,1), 'value'=c(101,120,26))),
+      list('mouthAnchors' = data.frame('time'=c(0,.13,.76,1), 'value'=c(0.4,0.59,0.61,0.45))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0), freq=c(800), amp=c(20), width=c(120)),
         f2=data.frame( time=c(0), freq=c(2150), amp=c(30), width=c(300)),
@@ -375,10 +375,10 @@ presets = list(
       'attackLen' = 100,
       'temperature' = .025,
       'vowelString' = 'aa0',
-      list('pitchAnchors' = data.frame('time'=c(0,1), 'ampl'=c(380,260))),
-      list('breathingAnchors' = data.frame('time'=c(0,417,508), 'ampl'=c(-63,-29,-120))),
-      list('mouthAnchors' = data.frame('time'=c(0,.14,1), 'ampl'=c(0.24,0.41,0.19))),
-      list('amplAnchors_global' = data.frame('time'=c(0,1), 'ampl'=c(120,18)))
+      list('pitchAnchors' = data.frame('time'=c(0,1), 'value'=c(380,260))),
+      list('breathingAnchors' = data.frame('time'=c(0,417,508), 'value'=c(-63,-29,-120))),
+      list('mouthAnchors' = data.frame('time'=c(0,.14,1), 'value'=c(0.24,0.41,0.19))),
+      list('amplAnchors_global' = data.frame('time'=c(0,1), 'value'=c(120,18)))
     ),
 
     'Laugh' = c(
@@ -389,9 +389,9 @@ presets = list(
       'attackLen' = 10,
       'vowelString' = '0',
       'rolloff_breathing'=-8,
-      list('pitchAnchors' = data.frame('time'=c(0,1), 'ampl'=c(368,284))),
-      list('breathingAnchors'=data.frame('time'=c(0,67,86,186), 'ampl'=c(-45,-47,-89,-120))),
-      list('amplAnchors_global'=data.frame('time'=c(0,1), 'ampl'=c(120,20)))
+      list('pitchAnchors' = data.frame('time'=c(0,1), 'value'=c(368,284))),
+      list('breathingAnchors'=data.frame('time'=c(0,67,86,186), 'value'=c(-45,-47,-89,-120))),
+      list('amplAnchors_global'=data.frame('time'=c(0,1), 'value'=c(120,20)))
     ),
 
     'Cry' = c(
@@ -404,9 +404,9 @@ presets = list(
       'sideband_width_hz' = 70,
       'rolloff_breathing' = 0,
       'vowelString'='0',
-      list('pitchAnchors'=data.frame('time'=c(0,1), 'ampl'=c(610,511))),
-      list('mouthAnchors'=data.frame('time'=c(0,1), 'ampl'=c(0,0))),
-      list('amplAnchors_global'=data.frame('time'=c(0,1), 'ampl'=c(120,60)))
+      list('pitchAnchors'=data.frame('time'=c(0,1), 'value'=c(610,511))),
+      list('mouthAnchors'=data.frame('time'=c(0,1), 'value'=c(0,0))),
+      list('amplAnchors_global'=data.frame('time'=c(0,1), 'value'=c(120,60)))
     ),
 
     'Formants' = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
@@ -494,8 +494,8 @@ presets = list(
       'temperature'=0.025,
       'g0'=125,
       'sideband_width_hz'=90,
-      list('pitchAnchors' = data.frame('time'=c(0,1), 'ampl'=c(232,185))),
-      list('breathingAnchors' = data.frame('time'=c(0,76,158,344), 'ampl'=c(-120,16,-21,-120))),
+      list('pitchAnchors' = data.frame('time'=c(0,1), 'value'=c(232,185))),
+      list('breathingAnchors' = data.frame('time'=c(0,76,158,344), 'value'=c(-120,16,-21,-120))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0), freq=c(415), amp=c(60), width=c(120)),
         f2=data.frame( time=c(0), freq=c(1000), amp=c(60), width=c(120)),
@@ -513,7 +513,7 @@ presets = list(
       'rolloff_exp_delta'=0,
       'temperature' = .05,
       'rolloff_breathing'=-12,
-      list('pitchAnchors' = data.frame('time'=c(0,.3,.9,1), 'ampl'=c(1200,1547,1487,1154))),
+      list('pitchAnchors' = data.frame('time'=c(0,.3,.9,1), 'value'=c(1200,1547,1487,1154))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0), freq=c(800), amp=c(30), width=c(80)),
         f2=data.frame( time=c(0), freq=c(1600), amp=c(30), width=c(160)),
@@ -530,9 +530,9 @@ presets = list(
       'rolloff_exp_delta'=-6,
       'temperature' = .05,
       'rolloff_breathing'=-12,
-      list('pitchAnchors' = data.frame('time'=c(0,1), 'ampl'=c(127,102))),
-      list('breathingAnchors'=data.frame('time'=c(0,83,205), 'ampl'=c(-120,-6,-120))),
-      list('amplAnchors_global'=data.frame('time'=c(0,.35,1), 'ampl'=c(89,120,31))),
+      list('pitchAnchors' = data.frame('time'=c(0,1), 'value'=c(127,102))),
+      list('breathingAnchors'=data.frame('time'=c(0,83,205), 'value'=c(-120,-6,-120))),
+      list('amplAnchors_global'=data.frame('time'=c(0,.35,1), 'value'=c(89,120,31))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0,1), freq=c(415,300), amp=c(60,60), width=c(120,120)),
         f2=data.frame( time=c(0,1), freq=c(1000,500), amp=c(60,60), width=c(120,120)),
@@ -547,8 +547,8 @@ presets = list(
       'rolloff_exp_delta'=0,
       'rolloff_breathing'=-13,
       'temperature'=0.025,
-      list('pitchAnchors' = data.frame('time'=c(0,.52,1), 'ampl'=c(440,405,440))),
-      list('breathingAnchors' = data.frame('time'=c(0,730), 'ampl'=c(-8,-8))),
+      list('pitchAnchors' = data.frame('time'=c(0,.52,1), 'value'=c(440,405,440))),
+      list('breathingAnchors' = data.frame('time'=c(0,730), 'value'=c(-8,-8))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0,0.4,1), freq=c(300,500,400), amp=c(30,30,30), width=c(80,80,80)),
         f2=data.frame( time=c(0,0.2,1), freq=c(500,1000,700), amp=c(30,30,30), width=c(120,120,120)),
@@ -567,8 +567,8 @@ presets = list(
       'quadratic_nHarm'=8,
       'temperature' = 0.025,
       'rolloff_breathing'=-16,
-      list('pitchAnchors' = data.frame('time'=c(0,.5,1), 'ampl'=c(134,144,117))),
-      list('breathingAnchors'=data.frame('time'=c(20,60,100), 'ampl'=c(-120,-19,-120))),
+      list('pitchAnchors' = data.frame('time'=c(0,.5,1), 'value'=c(134,144,117))),
+      list('breathingAnchors'=data.frame('time'=c(20,60,100), 'value'=c(-120,-19,-120))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0), freq=c(300), amp=c(30), width=c(80)),
         f2=data.frame( time=c(0), freq=c(950), amp=c(30), width=c(120)),
@@ -596,10 +596,10 @@ presets = list(
       'temperature'=0.05,
       'rolloff_breathing'=-17,
       'vocalTract_length'=8,
-      list('pitchAnchors' = data.frame('time'=c(0,0.25,1), 'ampl'=c(264,315,274))),
-      list('breathingAnchors' = data.frame(time=c(-44,1200,1389,1594), ampl=c(-55,-32,10,-78))),
-      list('mouthAnchors' = data.frame(time=c(0,0.14,0.84,1), ampl=c(0,0.51,0.38,0))),
-      list('amplAnchors' = data.frame(time=c(0,0.3,1), ampl=c(35,120,36))),
+      list('pitchAnchors' = data.frame('time'=c(0,0.25,1), 'value'=c(264,315,274))),
+      list('breathingAnchors' = data.frame(time=c(-44,1200,1389,1594), value=c(-55,-32,10,-78))),
+      list('mouthAnchors' = data.frame(time=c(0,0.14,0.84,1), value=c(0,0.51,0.38,0))),
+      list('amplAnchors' = data.frame(time=c(0,0.3,1), value=c(35,120,36))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0,.15,1), freq=c(1540,1900,1020), amp=c(20), width=c(200)),
         f2=data.frame( time=c(0,.15,1), freq=c(1800,2900,2800), amp=c(20), width=c(200)),
@@ -622,9 +622,9 @@ presets = list(
       'min_epoch_length_ms'=125,
       'g0'=100,
       'sideband_width_hz'=50,
-      list('pitchAnchors' = data.frame(time=c(0,0.61,0.85,1), ampl=c(71,104,200,197))),
-      list('breathingAnchors'=data.frame(time=c(-55,1404,1608,1846), ampl=c(-120,-120,3,-120))),
-      list('mouthAnchors'=data.frame(time=c(0,0.6,0.83,1), ampl=c(0,0,0.89,0.81))),
+      list('pitchAnchors' = data.frame(time=c(0,0.61,0.85,1), value=c(71,104,200,197))),
+      list('breathingAnchors'=data.frame(time=c(-55,1404,1608,1846), value=c(-120,-120,3,-120))),
+      list('mouthAnchors'=data.frame(time=c(0,0.6,0.83,1), value=c(0,0,0.89,0.81))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0,1), freq=c(300), amp=c(30), width=c(120)),
         f2=data.frame( time=c(0), freq=c(800), amp=c(40), width=c(120)),
@@ -645,9 +645,9 @@ presets = list(
       'g0'=100,
       'sideband_width_hz'=60,
       'vocalTract_length'=8,
-      list('pitchAnchors' = data.frame('time'=c(0,0.52,1), 'ampl'=c(559,785,557))),
-      list('breathingAnchors'=data.frame(time=c(0,80,160), ampl=c(-120,22,-120))),
-      list('mouthAnchors'=data.frame(time=c(0,0.5,1), ampl=c(0,0.5,0))),
+      list('pitchAnchors' = data.frame('time'=c(0,0.52,1), 'value'=c(559,785,557))),
+      list('breathingAnchors'=data.frame(time=c(0,80,160), value=c(-120,22,-120))),
+      list('mouthAnchors'=data.frame(time=c(0,0.5,1), value=c(0,0.5,0))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0,1), freq=c(1700), amp=c(40), width=c(400)),
         f2=data.frame( time=c(0), freq=c(3300), amp=c(50), width=c(400)),
@@ -662,9 +662,9 @@ presets = list(
       'rolloff_exp'=-12,
       'rolloff_exp_delta'=0,
       'temperature'=0.1,
-      list('pitchAnchors' = data.frame('time'=c(0,1), 'ampl'=c(119,110))),
-      list('breathingAnchors' = data.frame('time'=c(0,110), 'ampl'=c(0,0))),
-      list('mouthAnchors'=data.frame('time'=c(0,0.5,1), 'ampl'=c(0.3,0.5,0.3))),
+      list('pitchAnchors' = data.frame('time'=c(0,1), 'value'=c(119,110))),
+      list('breathingAnchors' = data.frame('time'=c(0,110), 'value'=c(0,0))),
+      list('mouthAnchors'=data.frame('time'=c(0,0.5,1), 'value'=c(0.3,0.5,0.3))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0), freq=c(1600), amp=c(40), width=c(250)),
         f2=data.frame( time=c(0), freq=c(2100), amp=c(40), width=c(250)),
@@ -684,8 +684,8 @@ presets = list(
       'g0'=75,
       'sideband_width_hz'=40,
       'vocalTract_length'=100,
-      list('pitchAnchors'=data.frame('time'=c(0,0.37,1), 'ampl'=c(436,452,328))),
-      list('amplAnchors'=data.frame('time'=c(0,0.53,1), 'ampl'=c(120,120,61))),
+      list('pitchAnchors'=data.frame('time'=c(0,0.37,1), 'value'=c(436,452,328))),
+      list('amplAnchors'=data.frame('time'=c(0,0.53,1), 'value'=c(120,120,61))),
       list('exactFormants'=NA)
     ),
 
@@ -700,9 +700,9 @@ presets = list(
     #   g0=25,
     #   sideband_width_hz=15,
     #   vocalTract_length=85,
-    #   list(pitchAnchors=data.frame(time=c(0,0.53,1), ampl=c(34,52,34))),
-    #   list(mouthAnchors=data.frame(time=c(0,0.26,1), ampl=c(0,0.57,0.1))),
-    #   list(amplAnchors=data.frame(time=c(0,.2,.7,1), ampl=c(0,120,120,0))),
+    #   list(pitchAnchors=data.frame(time=c(0,0.53,1), value=c(34,52,34))),
+    #   list(mouthAnchors=data.frame(time=c(0,0.26,1), value=c(0,0.57,0.1))),
+    #   list(amplAnchors=data.frame(time=c(0,.2,.7,1), value=c(0,120,120,0))),
     #   list(exactFormants=list(
     #     f1=data.frame( time=c(0), freq=c(170), amp=c(50), width=c(50)),
     #     f2=data.frame( time=c(0), freq=c(330), amp=c(40), width=c(50)),
@@ -728,8 +728,8 @@ presets = list(
       'sideband_width_hz'=220,
       'samplingRate'=24000,
       'vocalTract_length'=15,
-      list('pitchAnchors'=data.frame('time'=c(0,0.65,1), 'ampl'=c(977,1540,826))),
-      list('breathingAnchors'=data.frame('time'=c(-3,41,166,201), 'ampl'=c(-37,-120,-120,-45))),
+      list('pitchAnchors'=data.frame('time'=c(0,0.65,1), 'value'=c(977,1540,826))),
+      list('breathingAnchors'=data.frame('time'=c(-3,41,166,201), 'value'=c(-37,-120,-120,-45))),
       list('exactFormants'=list(
         f1=data.frame( time=c(0), freq=c(1000), amp=c(20), width=c(250)),
         f2=data.frame( time=c(0), freq=c(2200), amp=c(30), width=c(400)),

@@ -17,7 +17,7 @@
 #'   output. $time: timing of aspiration noise, ms c(start,finish) relative to
 #'   voiced part, eg c(-100,500) means breathing starts 100 ms before the voiced
 #'   part and lasts until 500 ms into the voiced part (eg total duration of
-#'   breathing = 500 - (-100) = 600 ms). breathingAnchors$ampl: the amount of
+#'   breathing = 500 - (-100) = 600 ms). breathingAnchors$value: the amount of
 #'   aspiration noise at the given time anchors (to be smoothed). throwaway_dB =
 #'   no breathing, 0 = as strong as the voiced (harmonic) part
 #' @param rolloff_breathing desired spectral slope of white noise (exponential
@@ -62,7 +62,7 @@
 generateNoise = function(len,
                          breathingAnchors = data.frame(
                            'time' = c(0, 300),
-                            'ampl' = c(throwaway_dB, throwaway_dB)
+                           'value' = c(throwaway_dB, throwaway_dB)
                          ),
                          rolloff_breathing = -6,
                          attackLen = 10,
@@ -71,14 +71,14 @@ generateNoise = function(len,
                          overlap = 75,
                          filter_breathing = NA) {
   # convert anchor amplitudes from dB to linear multipliers
-  breathingAnchors$ampl = 2 ^ (breathingAnchors$ampl / 10)
+  breathingAnchors$value = 2 ^ (breathingAnchors$value / 10)
 
   # convert anchors to a smooth contour of breathing amplitudes
   breathingStrength = getSmoothContour(
     len = len,
     anchors = breathingAnchors,
-    ampl_floor = permittedValues['breathing_ampl', 'low'],
-    ampl_ceiling = permittedValues['breathing_ampl', 'high'],
+    value_floor = permittedValues['breathing_ampl', 'low'],
+    value_ceiling = permittedValues['breathing_ampl', 'high'],
     samplingRate = samplingRate,
     plot = FALSE
   )
@@ -155,7 +155,7 @@ generateNoise = function(len,
 #' @inheritParams generateBout
 #' @examples
 #' pitch=soundgen:::getSmoothContour(len = 3500,
-#'   anchors = data.frame('time' = c(0, 1), 'ampl' = c(200, 300)))
+#'   anchors = data.frame('time' = c(0, 1), 'value' = c(200, 300)))
 #' plot(pitch)
 #' sound = soundgen:::generateHarmonics(pitch, samplingRate = 16000)
 #' # playme(sound, samplingRate = 16000) # no formants yet
@@ -205,12 +205,12 @@ generateHarmonics = function(pitch,
 
   # generate a short amplitude contour to adjust rolloff_exp per glottal cycle
   if (!is.na(amplAnchors) &&
-      length(which(amplAnchors$ampl < -throwaway_dB)) > 0) {
+      length(which(amplAnchors$value < -throwaway_dB)) > 0) {
     amplContour = getSmoothContour(
       anchors = amplAnchors,
       len = nGC,
-      ampl_floor = 0,
-      ampl_ceiling = -throwaway_dB,
+      value_floor = 0,
+      value_ceiling = -throwaway_dB,
       samplingRate = samplingRate
     )
     # plot (amplContour, type='l')
@@ -419,13 +419,13 @@ generateHarmonics = function(pitch,
   ## POST-SYNTHESIS EFFECTS
   # apply amplitude envelope and normalize to be on the same scale as breathing
   if (!is.na(amplAnchors) &&
-      length(which(amplAnchors$ampl < -throwaway_dB)) > 0) {
+      length(which(amplAnchors$value < -throwaway_dB)) > 0) {
     # convert from dB to linear multiplier
-    amplAnchors$ampl = 2 ^ (amplAnchors$ampl / 10)
+    amplAnchors$value = 2 ^ (amplAnchors$value / 10)
     amplEnvelope = getSmoothContour(
       anchors = amplAnchors,
       len = length(waveform),
-      ampl_floor = 0,
+      value_floor = 0,
       samplingRate = samplingRate
     )
     # plot (amplEnvelope, type = 'l')

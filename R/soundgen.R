@@ -25,7 +25,7 @@ NULL
 #' @param nSyl the number of syllables in the bout. Intonation, amplitude, and formants contours span multiple syllables, but not multiple bouts (see Details)
 #' @param sylDur_mean average duration of each syllable, ms
 #' @param pauseDur_mean average duration of pauses between syllables, ms
-#' @param pitchAnchors dataframe specifying the time (ms) and frequency (Hz) of pitch anchors. These anchors are used to create a smooth contour of fundamental frequency f0 (pitch) within one syllable (see Details)
+#' @param pitchAnchors dataframe specifying the time (ms) and value (Hz) of pitch anchors. These anchors are used to create a smooth contour of fundamental frequency f0 (pitch) within one syllable (see Details)
 #' @param pitchAnchors_global unlike \code{pitchAnchors}, this dataframe is used to create a smooth contour of average f0 across multiple syllables
 #' @param temperature hyperparameter for regulating the amount of stochasticity in sound generation (see Details)
 #' @param maleFemale hyperparameter for shifting f0 contour, formants, and vocalTract_length to make the speaker appear more male (-1...0) or more female (0...+1).
@@ -68,9 +68,9 @@ NULL
 #' @param breathingAnchors dataframe specifying the time (ms) and frequency (Hz) of breathing anchors
 #' @param exactFormants_unvoiced the same as \code{exactFormants}, but for the noise component instead of the harmonic component. If NA (default), the noise component will be filtered through the same formants as the harmonic component, approximating breathing noise [h]
 #' @param rolloff_breathing rolloff of breathing noise, dB/octave. It is analogous to \code{rolloff_exp}, but while \code{rolloff_exp} applies to the harmonic component, \code{rolloff_breathing} applies to the noise component
-#' @param mouthAnchors dataframe specifying the time (ms) and size (0 to 1) of mouth-opening anchors
-#' @param amplAnchors dataframe specifying the time (ms) and amplitude (0 to 1) of amplitude anchors
-#' @param amplAnchors_global dataframe specifying the time (ms) and amplitude (0 to 1) of global amplitude anchors, i.e. spanning multiple syllables
+#' @param mouthAnchors dataframe specifying the time (ms) and value (0 to 1) of mouth-opening anchors
+#' @param amplAnchors dataframe specifying the time (ms) and value (0 to 1) of amplitude anchors
+#' @param amplAnchors_global dataframe specifying the time (ms) and value (0 to 1) of global amplitude anchors, i.e. spanning multiple syllables
 #' @param samplingRate sampling frequency (Hz)
 #' @param windowLength_points Fourier window length (points)
 #' @param overlap Fourier window overlap (points)
@@ -98,28 +98,28 @@ NULL
 #' # Intonation contours per syllable and globally:
 #' sound = generateBout (nSyl = 5, sylDur_mean = 200, pauseDur_mean = 140,
 #'   playSound = TRUE, pitchAnchors = data.frame(
-#'     time = c(0, 0.65, 1), ampl = c(977, 1540, 826)),
-#'   pitchAnchors_global = data.frame(time = c(0, .5, 1), ampl = c(-6, 7, 0)))
+#'     time = c(0, 0.65, 1), value = c(977, 1540, 826)),
+#'   pitchAnchors_global = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 #'
 #' # Subharmonics in sidebands (noisy scream, chimpanzee-like)
 #' sound = generateBout (noiseAmount = 100, g0 = 75, sideband_width_hz = 130,
 #'   pitchAnchors = data.frame(
-#'     time = c(0, .3, .9, 1), ampl = c(1200, 1547, 1487, 1154)),
+#'     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
 #'   sylDur_mean = 800, samplingRate = 16000,
 #'   playSound = TRUE, plotSpectro = TRUE)
 #'
 #' # Jitter and mouth opening (bark, dog-like)
 #' sound = generateBout (repeatBout = 2, sylDur_mean = 160, pauseDur_mean = 100,
 #'   noiseAmount = 100, g0 = 100, sideband_width_hz = 60, jitterDep = 1,
-#'   pitchAnchors = data.frame(time = c(0, 0.52, 1), ampl = c(559, 785, 557)),
-#'   mouthAnchors = data.frame(time = c(0, 0.5, 1), ampl = c(0, 0.5, 0)),
+#'   pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
+#'   mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
 #'   vocalTract_length = 5, samplingRate = 16000, playSound = TRUE)
 generateBout = function(repeatBout = 1,
                         nSyl = 1,
                         sylDur_mean = 300,
                         pauseDur_mean = 200,
                         pitchAnchors = data.frame(time = c(0, .1, .9, 1),
-                                                  ampl = c(100, 150, 135, 100)),
+                                                  value = c(100, 150, 135, 100)),
                         pitchAnchors_global = NA,
                         temperature = 0.025,
                         maleFemale = 0,
@@ -161,11 +161,11 @@ generateBout = function(repeatBout = 1,
                         trill_dep = 0,
                         trill_freq = 30,
                         breathingAnchors = data.frame(time = c(0, 300),
-                                                      ampl = c(-120,-120)),
+                                                      value = c(-120,-120)),
                         exactFormants_unvoiced = NA,
                         rolloff_breathing = -6,
                         mouthAnchors = data.frame(time = c(0, 1),
-                                                  ampl = c(.5, .5)),
+                                                  value = c(.5, .5)),
                         amplAnchors = NA,
                         amplAnchors_global = NA,
                         samplingRate = 16000,
@@ -188,7 +188,7 @@ generateBout = function(repeatBout = 1,
     sideband_width_hz = sideband_width_hz * 2 ^ (-creakyBreathy)
   } else if (creakyBreathy > 0) {
     # for breathy voice, add breathing
-    breathingAnchors$ampl = breathingAnchors$ampl + creakyBreathy * 120
+    breathingAnchors$value = breathingAnchors$value + creakyBreathy * 120
   }
   # adjust rolloff for both creaky and breathy voices
   rolloff_exp = rolloff_exp - creakyBreathy * 10
@@ -205,7 +205,7 @@ generateBout = function(repeatBout = 1,
   if (maleFemale != 0) {
     # adjust pitch and formants along the male-female dimension
     # pitch varies by 1 octave up or down
-    pitchAnchors$ampl = pitchAnchors$ampl * 2 ^ maleFemale
+    pitchAnchors$value = pitchAnchors$value * 2 ^ maleFemale
     if (!is.null(exactFormants) && !is.na(exactFormants)) {
       for (f in 1:length(exactFormants)) {
         # formants vary by 25% up or down:
@@ -296,10 +296,10 @@ generateBout = function(repeatBout = 1,
   pitchAnchors$time = pitchAnchors$time - min(pitchAnchors$time)
   pitchAnchors$time = pitchAnchors$time / max(pitchAnchors$time) # 0 to 1
   wiggleBreathing = temperature > 0 && !is.na(breathingAnchors) &&
-    sum(breathingAnchors$ampl > throwaway_dB) > 0
+    sum(breathingAnchors$value > throwaway_dB) > 0
   wiggleAmpl_per_syl = temperature > 0 &&
                        !is.na(amplAnchors) &&
-                       sum(amplAnchors$ampl < -throwaway_dB) > 0
+                       sum(amplAnchors$value < -throwaway_dB) > 0
 
   # START OF BOUT GENERATION
   for (b in 1:repeatBout) {
@@ -412,15 +412,15 @@ generateBout = function(repeatBout = 1,
         anchors = pitchAnchors_per_syl,
         len = round(dur_syl * pitchSamplingRate / 1000),
         samplingRate = pitchSamplingRate,
-        ampl_floor = pitch_floor,
-        ampl_ceiling = pitch_ceiling,
+        value_floor = pitch_floor,
+        value_ceiling = pitch_ceiling,
         thisIsPitch = TRUE
       ) * pitchDeltas[s]
       # plot(pitchContour_syl, type = 'l')
 
       # generate the voiced part
       if (dur_syl < permittedValues['sylDur_mean', 'low'] |
-          (!is.na(breathingAnchors) && min(breathingAnchors$ampl) >= 40)) {
+          (!is.na(breathingAnchors) && min(breathingAnchors$value) >= 40)) {
         # only synthesize voiced part if breathing is weaker than 40 dB
         #   and the voiced part is long enough to bother synthesizing it
         syllable = rep(0, round(dur_syl * samplingRate / 1000))
@@ -451,7 +451,7 @@ generateBout = function(repeatBout = 1,
 
       # generate the unvoiced part, but don't add it to the sound just yet
       if (!is.na(breathingAnchors) &&
-          sum(breathingAnchors$ampl > throwaway_dB) > 0) {
+          sum(breathingAnchors$value > throwaway_dB) > 0) {
         # adjust breathingAnchors$time to match the actual syllable duration
         breathingAnchors_syl[[s]] = breathingAnchors
         breathingAnchors_syl[[s]]$time[breathingAnchors_syl[[s]]$time > 0] =
@@ -463,14 +463,14 @@ generateBout = function(repeatBout = 1,
         # syllable duration re the average expected duration (which the user
         # sees in the UI when choosing time anchors)
         unvoicedDur_syl = round(diff(range(breathingAnchors_syl[[s]]$time)) *
-                            samplingRate / 1000)
+                          samplingRate / 1000)
 
         # calculate noise spectrum
         if (is.na(exactFormants_unvoiced[1])) {
           spectralEnvelope_unvoiced = NA
         } else {
           movingFormants = max(unlist(lapply(exactFormants_unvoiced, nrow))) > 1 |
-            sum(mouthAnchors$ampl != .5) > 0 # are noise formants moving, as opposed to constant?
+            sum(mouthAnchors$value != .5) > 0 # are noise formants moving, as opposed to constant?
           nInt = ifelse (movingFormants,
                     round(diff(range(breathingAnchors_syl[[s]]$time)) / 10),
                     1) # the number of different noise spectra,
@@ -526,14 +526,14 @@ generateBout = function(repeatBout = 1,
     # for polysyllabic vocalizations, apply amplitude envelope (if specified)
     #   over the entire bout and normalize to -1...+1
     if (!is.na(amplAnchors_global) &&
-        length(which(amplAnchors_global$ampl < -throwaway_dB)) > 0) {
+        length(which(amplAnchors_global$value < -throwaway_dB)) > 0) {
       # convert from dB to linear multiplier
-      amplAnchors_global$ampl = 2 ^ (amplAnchors_global$ampl / 10)
+      amplAnchors_global$value = 2 ^ (amplAnchors_global$value / 10)
       amplEnvelope = getSmoothContour(
         anchors = amplAnchors_global,
         len = length(sound),
-        ampl_floor = 0,
-        ampl_ceiling = -throwaway_dB,
+        value_floor = 0,
+        value_ceiling = -throwaway_dB,
         samplingRate = samplingRate
       ) # plot(amplEnvelope)
       sound = sound * amplEnvelope
@@ -554,7 +554,7 @@ generateBout = function(repeatBout = 1,
       nc = length(step) # number of windows for fft
       nr = windowLength_points / 2 # number of frequency bins for fft
       movingFormants = max(unlist(lapply(exactFormants, nrow))) > 1 |
-        sum(mouthAnchors$ampl != .5) > 0 # are formants moving or constant?
+        sum(mouthAnchors$value != .5) > 0 # are formants moving or constant?
       nInt = ifelse (movingFormants, nc, 1)
       spectralEnvelope = getSpectralEnvelope(
         nr = nr,

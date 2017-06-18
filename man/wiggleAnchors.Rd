@@ -8,7 +8,7 @@ wiggleAnchors(df, temperature, temp_coef, low, high, wiggleAllRows = FALSE)
 }
 \arguments{
 \item{df}{dataframe of anchors, for ex. \code{data.frame(time = c(0, .1, .8,
-1), ampl = c(100, 230, 180, 90))}}
+1), value = c(100, 230, 180, 90))}}
 
 \item{temperature, temp_coef}{regulate the amount of stochasticity
 ("wiggling"). Since \code{temperature} is used in several functions,
@@ -19,8 +19,8 @@ temperature.}
 
 \item{low, high}{bounds on possible variation. Both \code{low} and \code{high}
 should be vectors of length 2: the first element specifies the boundary for
-\code{df$time} and the second for \code{df$ampl}. Ex.: low = c(0,1) - low
-bound on "time"=0, low bound on "ampl"=1}
+\code{df$time} and the second for \code{df$value}. Ex.: low = c(0,1) - low
+bound on "time"=0, low bound on "value"=1}
 
 \item{wiggleAllRows}{should the firts and last time anchors be wiggled? (TRUE
 for breathing, FALSE for other anchors)}
@@ -34,16 +34,16 @@ Internal soundgen function.
 \details{
 A helper function for introducing random variation into any anchors (for
 pitch / breathing / amplitude / ...). NB: if the lower and upper bounds are
-unreasonable given the scale of df$ampl, \code{wiggleAnchors} will keep
+unreasonable given the scale of df$value, \code{wiggleAnchors} will keep
 running forever!
 }
 \examples{
 soundgen:::wiggleAnchors(df = data.frame(
-  time = c(0, .1, .8, 1), ampl = c(100, 230, 180, 90)),
+  time = c(0, .1, .8, 1), value = c(100, 230, 180, 90)),
   temperature = .2, temp_coef = .1, low = c(0, 50), high = c(1, 1000),
   wiggleAllRows = FALSE) # pitch
 soundgen:::wiggleAnchors(df = data.frame(
-  time = c(-100, 100, 600, 900), ampl = c(-120, -80, 0, -120)),
+  time = c(-100, 100, 600, 900), value = c(-120, -80, 0, -120)),
   temperature = .1, temp_coef = .5, low = c(-Inf, -120), high = c(+Inf, 30),
   wiggleAllRows = TRUE) # breathing
 }

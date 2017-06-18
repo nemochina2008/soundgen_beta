@@ -28,7 +28,7 @@ duration is determined by length(ampl). See details below.}
 the mouth is open}
 
 \item{mouthAnchors}{specify when the mouth is open. Example: mouthAnchors =
-data.frame('time' = seq(0, 1000, length.out = 5), 'ampl'=c(0, .2, 1, .2,
+data.frame('time' = seq(0, 1000, length.out = 5), 'value'=c(0, .2, 1, .2,
 0))}
 
 \item{mouthOpening_threshold}{count the mouth as open when its opening degree

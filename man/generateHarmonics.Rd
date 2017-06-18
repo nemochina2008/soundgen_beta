@@ -77,7 +77,7 @@ narrow sidebands, high values produce uniformly strong subharmonics}
 
 \item{trill_freq}{amplitude modulation frequency, Hz}
 
-\item{amplAnchors}{dataframe specifying the time (ms) and amplitude (0 to 1) of amplitude anchors}
+\item{amplAnchors}{dataframe specifying the time (ms) and value (0 to 1) of amplitude anchors}
 
 \item{overlap}{Fourier window overlap (points)}
 
@@ -100,7 +100,7 @@ sine waves.
 }
 \examples{
 pitch=soundgen:::getSmoothContour(len = 3500,
-  anchors = data.frame('time' = c(0, 1), 'ampl' = c(200, 300)))
+  anchors = data.frame('time' = c(0, 1), 'value' = c(200, 300)))
 plot(pitch)
 sound = soundgen:::generateHarmonics(pitch, samplingRate = 16000)
 # playme(sound, samplingRate = 16000) # no formants yet

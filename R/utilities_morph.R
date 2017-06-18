@@ -39,13 +39,13 @@ defaults = list(
   addSilence = 100,
   pitchAnchors = data.frame(
     'time' = c(0, 30, 270, 300),
-    'ampl' = c(100, 150, 135, 100)
+    'value' = c(100, 150, 135, 100)
   ),
-  pitchAnchors_global = data.frame(time = c(0, 1), ampl = c(0, 0)),
-  breathingAnchors = data.frame('time' = c(0, 300), 'ampl' = c(-120, -120)),
-  mouthAnchors = data.frame(time = c(0, 1), ampl = c(.5, .5)),
-  amplAnchors = data.frame(time = c(0, 1), ampl = c(120, 120)),
-  amplAnchors_global = data.frame(time = c(0, 1), ampl = c(0, 0)),
+  pitchAnchors_global = data.frame(time = c(0, 1), value = c(0, 0)),
+  breathingAnchors = data.frame('time' = c(0, 300), 'value' = c(-120, -120)),
+  mouthAnchors = data.frame(time = c(0, 1), value = c(.5, .5)),
+  amplAnchors = data.frame(time = c(0, 1), value = c(120, 120)),
+  amplAnchors_global = data.frame(time = c(0, 1), value = c(0, 0)),
   exactFormants = NA,
   exactFormants_unvoiced = NA
 )
@@ -69,8 +69,8 @@ defaults = list(
 #' @param plot if TRUE, plots the morphing sequence of anchors
 #' @return A list of length nHybrids containing anchor dataframes for morphing
 #' @examples
-#' a = data.frame(time=c(0, .2, .9, 1), ampl=c(100, 110, 180, 110))
-#' b = data.frame(time=c(0, .3, .5, .8, 1), ampl=c(300, 220, 190, 400, 350))
+#' a = data.frame(time=c(0, .2, .9, 1), value=c(100, 110, 180, 110))
+#' b = data.frame(time=c(0, .3, .5, .8, 1), value=c(300, 220, 190, 400, 350))
 #' plot (a, type = 'b', ylim = c(0, 500))
 #' points (b, type = 'b', col = 'blue')
 #' m = soundgen:::morphDF (a, b, nHybrids = 15, method = 'smooth', plot = TRUE)
@@ -79,11 +79,11 @@ defaults = list(
 #' m = soundgen:::morphDF (a = data.frame(time = c(0, 1), freq = c(700, 700)),
 #'                         b = data.frame(time = c(0, 1), freq = c(400, 600)),
 #'                         nHybrids = 5, method = 'perAnchor', plot = TRUE)
-#' m = soundgen:::morphDF (a = data.frame(time = c(-30, 120, 350), ampl = c(-120, 10, -120)),
-#'                         b = data.frame(time = c(50, 500), ampl = c(0, -30)),
+#' m = soundgen:::morphDF (a = data.frame(time = c(-30, 120, 350), value = c(-120, 10, -120)),
+#'                         b = data.frame(time = c(50, 500), value = c(0, -30)),
 #'                         nHybrids = 10, method = 'perAnchor', plot = TRUE)
-#' m = soundgen:::morphDF (a = data.frame(time = c(-50, 1214), ampl = c(-50, -70)),
-#'                         b = data.frame(time = c(0, 49, 256), ampl = c(-120, 10, -120)),
+#' m = soundgen:::morphDF (a = data.frame(time = c(-50, 1214), value = c(-50, -70)),
+#'                         b = data.frame(time = c(0, 49, 256), value = c(-120, 10, -120)),
 #'                         nHybrids = 8, method = 'perAnchor', plot = TRUE)
 morphDF = function(a,
                    b,
@@ -92,7 +92,7 @@ morphDF = function(a,
                    lenSmooth = 50,
                    matchIdx = NULL,
                    plot = F) {
-  # example of expected input a & b: data.frame(time=c(0,1), ampl=c(-30,15))  NB: min 2 rows!!!
+  # example of expected input a & b: data.frame(time=c(0,1), value=c(-30,15))  NB: min 2 rows!!!
 
   if (identical(a, b)) {
     return (rep(list(a), nHybrids))
@@ -113,7 +113,7 @@ morphDF = function(a,
     idx = seq(0, 1, length.out = nHybrids)
     timeIdx_a = seq(a[1, 1], a[nrow(a), 1], length.out = lenSmooth)
     timeIdx_b = seq(b[1, 1], b[nrow(b), 1], length.out = lenSmooth)
-    out[[1]] = data.frame(time = timeIdx_a, ampl = a_up)
+    out[[1]] = data.frame(time = timeIdx_a, value = a_up)
     if (plot)
       plot (
         out[[1]],
@@ -124,7 +124,7 @@ morphDF = function(a,
     for (d in 2:length(idx)) {
       hybrid = a_up * (1 - idx[d]) + b_up * idx[d]
       hybrid_time = timeIdx_a * (1 - idx[d]) + timeIdx_b * idx[d]
-      out[[d]] = data.frame(time = hybrid_time, ampl = hybrid)
+      out[[d]] = data.frame(time = hybrid_time, value = hybrid)
       if (plot)
         points (out[[d]], main = idx[d], col = cols[d])
     }

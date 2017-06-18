@@ -4,7 +4,7 @@
 \alias{generateNoise}
 \title{Generate noise}
 \usage{
-generateNoise(len, breathingAnchors = data.frame(time = c(0, 300), ampl =
+generateNoise(len, breathingAnchors = data.frame(time = c(0, 300), value =
   c(throwaway_dB, throwaway_dB)), rolloff_breathing = -6, attackLen = 10,
   windowLength_points = 1024, samplingRate = 44100, overlap = 75,
   filter_breathing = NA)
@@ -16,7 +16,7 @@ generateNoise(len, breathingAnchors = data.frame(time = c(0, 300), ampl =
 output. $time: timing of aspiration noise, ms c(start,finish) relative to
 voiced part, eg c(-100,500) means breathing starts 100 ms before the voiced
 part and lasts until 500 ms into the voiced part (eg total duration of
-breathing = 500 - (-100) = 600 ms). breathingAnchors$ampl: the amount of
+breathing = 500 - (-100) = 600 ms). breathingAnchors$value: the amount of
 aspiration noise at the given time anchors (to be smoothed). throwaway_dB =
 no breathing, 0 = as strong as the voiced (harmonic) part}
 

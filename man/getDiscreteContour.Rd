@@ -4,9 +4,9 @@
 \alias{getDiscreteContour}
 \title{Discrete smooth contour from anchors}
 \usage{
-getDiscreteContour(len, anchors = data.frame(time = c(0, 1), ampl = c(1, 1)),
-  method = c("spline", "loess")[2], ampl_floor = NULL,
-  ampl_ceiling = NULL, ylim = NULL, plot = FALSE, ...)
+getDiscreteContour(len, anchors = data.frame(time = c(0, 1), value = c(1, 1)),
+  method = c("spline", "loess")[2], value_floor = NULL,
+  value_ceiling = NULL, ylim = NULL, plot = FALSE, ...)
 }
 \arguments{
 \item{len}{the number of syllables (equivalently, the length of generated contour)}
@@ -15,16 +15,16 @@ getDiscreteContour(len, anchors = data.frame(time = c(0, 1), ampl = c(1, 1)),
 \code{achors$time} can be in ms (with len=NULL) or in arbitrary units, eg 0
 to 1 (with duration determined by len, which must then be provided in ms).
 So anchors$time is assumed to be in ms if len=NULL and relative if len is
-specified. \code{anchors$ampl} can be on any scale.}
+specified. \code{anchors$value} can be on any scale.}
 
 \item{method}{smoothing method: 'spline' or 'loess' (default). Consider
 'spline' if you have a lot of anchors and not much patience, since it is
 much faster than 'loess', but it may produce weird results when there are
 only a few anchors}
 
-\item{ampl_floor}{lower/upper bounds for the contour}
+\item{value_floor}{lower/upper bounds for the contour}
 
-\item{ampl_ceiling}{lower/upper bounds for the contour}
+\item{value_ceiling}{lower/upper bounds for the contour}
 
 \item{ylim}{ylim for plotting}
 
@@ -45,5 +45,5 @@ A discrete version of \code{\link{getSmoothContour}} with modified plotting. Int
 # for a bout consisting of 10 syllables
 soundgen:::getDiscreteContour (len = 10, method = 'spline', plot = TRUE,
   ylab = 'Semitones', anchors = data.frame(time = c(0, .2, .6, 1),
-  ampl = c(0, -3, 1, 0)))
+  value = c(0, -3, 1, 0)))
 }

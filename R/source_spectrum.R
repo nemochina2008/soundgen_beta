@@ -228,7 +228,7 @@ getRolloff = function(pitch_per_gc = c(440),
 #' @param rolloff_lip adds this many dB per octave (high-frequency boost) when
 #'   the mouth is open
 #' @param mouthAnchors specify when the mouth is open. Example: mouthAnchors =
-#'   data.frame('time' = seq(0, 1000, length.out = 5), 'ampl'=c(0, .2, 1, .2,
+#'   data.frame('time' = seq(0, 1000, length.out = 5), 'value'=c(0, .2, 1, .2,
 #'   0))
 #' @param mouthOpening_threshold count the mouth as open when its opening degree
 #'   is >threshold
@@ -436,8 +436,8 @@ getSpectralEnvelope = function(nr,
     mouthOpening_upsampled = getSmoothContour(
       len = nc,
       anchors = mouthAnchors,
-      ampl_floor = permittedValues['mouthOpening', 'low'],
-      ampl_ceiling = permittedValues['mouthOpening', 'high'],
+      value_floor = permittedValues['mouthOpening', 'low'],
+      value_ceiling = permittedValues['mouthOpening', 'high'],
       plot = FALSE
     )
     mouthOpening_upsampled[mouthOpening_upsampled < mouthOpening_threshold] = 0

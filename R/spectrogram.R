@@ -163,7 +163,7 @@ getEntropy = function(x) {
 #' @examples
 #' # synthesize a sound 1 s long, with a gradually increasing breathing noise
 #' sound = generateBout(sylDur_mean = 1000, samplingRate = 16000,
-#'   breathingAnchors = data.frame(time = c(0, 1200), ampl = c(-120, -10)))
+#'   breathingAnchors = data.frame(time = c(0, 1200), value = c(-120, -10)))
 #' # playme(sound, samplingRate = 16000)
 #'
 #' # basic spectrogram

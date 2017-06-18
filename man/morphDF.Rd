@@ -35,8 +35,8 @@ Morphs two dataframes of anchors, with two columns and at least two rows in
 each.
 }
 \examples{
-a = data.frame(time=c(0, .2, .9, 1), ampl=c(100, 110, 180, 110))
-b = data.frame(time=c(0, .3, .5, .8, 1), ampl=c(300, 220, 190, 400, 350))
+a = data.frame(time=c(0, .2, .9, 1), value=c(100, 110, 180, 110))
+b = data.frame(time=c(0, .3, .5, .8, 1), value=c(300, 220, 190, 400, 350))
 plot (a, type = 'b', ylim = c(0, 500))
 points (b, type = 'b', col = 'blue')
 m = soundgen:::morphDF (a, b, nHybrids = 15, method = 'smooth', plot = TRUE)
@@ -45,10 +45,10 @@ m = soundgen:::morphDF (a, b, nHybrids = 15, method = 'perAnchor', plot = TRUE)
 m = soundgen:::morphDF (a = data.frame(time = c(0, 1), freq = c(700, 700)),
                         b = data.frame(time = c(0, 1), freq = c(400, 600)),
                         nHybrids = 5, method = 'perAnchor', plot = TRUE)
-m = soundgen:::morphDF (a = data.frame(time = c(-30, 120, 350), ampl = c(-120, 10, -120)),
-                        b = data.frame(time = c(50, 500), ampl = c(0, -30)),
+m = soundgen:::morphDF (a = data.frame(time = c(-30, 120, 350), value = c(-120, 10, -120)),
+                        b = data.frame(time = c(50, 500), value = c(0, -30)),
                         nHybrids = 10, method = 'perAnchor', plot = TRUE)
-m = soundgen:::morphDF (a = data.frame(time = c(-50, 1214), ampl = c(-50, -70)),
-                        b = data.frame(time = c(0, 49, 256), ampl = c(-120, 10, -120)),
+m = soundgen:::morphDF (a = data.frame(time = c(-50, 1214), value = c(-50, -70)),
+                        b = data.frame(time = c(0, 49, 256), value = c(-120, 10, -120)),
                         nHybrids = 8, method = 'perAnchor', plot = TRUE)
 }

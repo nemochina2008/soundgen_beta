@@ -1,4 +1,4 @@
-ui <- fluidPage(
+ui = fluidPage(
   headerPanel('SoundGen 4.0'),
 
   fluidRow(

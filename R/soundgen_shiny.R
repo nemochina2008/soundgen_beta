@@ -1,3 +1,5 @@
+# Note: wrap shiny::runApp in suppress.warnings() before publishing
+
 soundgen_app = function() {
   appDir = system.file("shiny", "soundgen_main", package = "soundgen")
   if (appDir == "") {
