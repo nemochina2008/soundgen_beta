@@ -10,34 +10,16 @@ server = function(input, output, session) {
   myPars = reactiveValues('myfile' = NULL,
                            'sound' = as.numeric(tuneR::readWave('www/temp.wav')@left),
                             # w/o as.numeric we get integers and spectro_denoised complains
-                           'pitchAnchors' = data.frame('time' = c(0,.1,.9,1),
-                                                       'value' = c(100,150,135,100)),
-                           'pitchAnchors_global' = data.frame('time' = c(0,1),
-                                                              'value' = c(0,0)),
-                           'breathingAnchors' = data.frame('time' = c(0,300),
-                                                           'value' = c(throwaway_dB,throwaway_dB)),
-                           'mouthAnchors' = data.frame('time' = c(0,1),
-                                                       'value' = c(.5,.5)),
-                           'amplAnchors' = data.frame('time' = c(0,1),
-                                                      'value' = c(-throwaway_dB,-throwaway_dB)),
-                           'amplAnchors_global' = data.frame('time' = c(0,1),
-                                                             'value' = c(-throwaway_dB,-throwaway_dB)),
-                           'exactFormants' = data.frame(
-                             'f1' = data.frame('time' = 0,
-                                               'freq' = permittedValues['f1_freq','default'],
-                                               'amp' = permittedValues['f1_amp','default'],
-                                               'width' = permittedValues['f1_width','default']),
-                             'f2' = data.frame('time' = 0,
-                                               'freq' = permittedValues['f2_freq','default'],
-                                               'amp' = permittedValues['f1_amp','default'],
-                                               'width' = permittedValues['f2_width','default']),
-                             'f3' = data.frame('time' = 0,
-                                               'freq' = permittedValues['f3_freq','default'],
-                                               'amp' = permittedValues['f1_amp','default'],
-                                               'width' = permittedValues['f3_width','default'])
-                           ),
+                           'pitchAnchors' = presets$M1$Vowel$pitchAnchors,
+                           'pitchAnchors_global' = presets$M1$Vowel$pitchAnchors_global,
+                           'breathingAnchors' = presets$M1$Vowel$breathingAnchors,
+                           'mouthAnchors' = presets$M1$Vowel$mouthAnchors,
+                           'amplAnchors' = presets$M1$Vowel$amplAnchors,
+                           'amplAnchors_global' = presets$M1$Vowel$amplAnchors_global,
+                           'exactFormants' = presets$M1$Vowel$exactFormants,
                            'exactFormants_unvoiced' = NA,
-                           'updateDur' = FALSE
+                           'updateDur' = FALSE,
+                           'loaded_presets' = list()
   )
 
   durTotal = reactive({
@@ -60,8 +42,8 @@ server = function(input, output, session) {
   ## R E S E T T I N G
   sliders_to_reset = c('')
 
-  reset_all = reactive({  # this key function is EXTREMELY bug-prone - careful
-    # with what you change! The right order is crucial
+  # this key function is EXTREMELY bug-prone - careful with what you change! The right order is crucial
+  reset_all = reactive({
     myPars$updateDur = FALSE # to prevent duration-related settings in myPars
     # from being updated by event listener observeEvent(input$sylDur_mean)
     # when a new preset is loaded
@@ -73,34 +55,40 @@ server = function(input, output, session) {
 
     # ...then load the partial list of presets that are specified (≠ default)
     # for this speaker and call type
-    preset = presets[[input$speaker]] [[input$callType]] # a list of reference
-    # values for this speaker and call type
+    if (length(myPars$loaded_presets) >= 1) {
+      preset = myPars$loaded_presets[[length(myPars$loaded_presets)]]  # the last user-uploaded preset
+    } else {
+      preset = presets[[input$speaker]] [[input$callType]]  # a preset from the library
+    }
+    if(class(preset$exactFormants) == 'character') {
+      preset$vowelString = preset$exactFormants  # in case exactFormants = 'aui' etc
+    }
 
     sliders_to_reset = names(preset) [which(names(preset) %in% names(input))]
     for (v in sliders_to_reset){
       try(updateSliderInput(session, v, value = as.numeric(preset[[v]])))
     }
 
-    myPars[['pitchAnchors_global']] = data.frame('time' = c(0,1),
-                                                 'value' = c(0,0))
-    myPars[['mouthAnchors']] = data.frame('time' = c(0,1),
-                                          'value' = c(0.5,0.5))
-    myPars[['amplAnchors_global']] = data.frame('time' = c(0,1),
-                                                'value' = c(-throwaway_dB, -throwaway_dB))
-    myPars[['amplAnchors']] = data.frame('time' = c(0,1),
-                                         'value' = c(-throwaway_dB, -throwaway_dB))
-    myPars[['breathingAnchors']] = data.frame('time' = c(0,preset$sylDur_mean),
-                                              'value' = c(throwaway_dB, throwaway_dB))
+    myPars[['pitchAnchors']] = presets$M1$Vowel$pitchAnchors
+    myPars[['pitchAnchors_global']] = presets$M1$Vowel$pitchAnchors_global
+    myPars[['breathingAnchors']] = presets$M1$Vowel$breathingAnchors
+    myPars[['mouthAnchors']] = presets$M1$Vowel$mouthAnchors
+    myPars[['amplAnchors']] = presets$M1$Vowel$amplAnchors
+    myPars[['amplAnchors_global']] = presets$M1$Vowel$amplAnchors_global
+    myPars[['exactFormants']] = presets$M1$Vowel$exactFormants
+    myPars[['exactFormants_unvoiced']] = NA
+
+    # myPars[['breathingAnchors']] = data.frame('time' = c(0,preset$sylDur_mean), 'value' = c(throwaway_dB, throwaway_dB))
 
     myPars_to_reset = names(myPars) [which(names(myPars) %in% names(preset))]
-    for (v in myPars_to_reset){
+    for (v in myPars_to_reset) {
       myPars[[v]] = preset[[v]]
     }
     updateSliderInput(session, 'breathingTime',
                       value = range(myPars$breathingAnchors$time))
 
     # special cases
-    if (!is.null(preset$pitchAnchors)){
+    if (!is.null(preset$pitchAnchors)) {
       updateSliderInput(session, 'pitchRange',
         value = c(round(min(preset$pitchAnchors$value) / 2 ^ (1 / 12), 0),
                   round(max(preset$pitchAnchors$value) * 2 ^ (1 / 12), 0)))
@@ -137,10 +125,12 @@ server = function(input, output, session) {
   })
 
   observeEvent(input$callType, {
+    myPars$loaded_presets = list()  # remove user-uploaded preset
     reset_all()
   })
 
   observeEvent(input$speaker, {
+    myPars$loaded_presets = list()  # remove user-uploaded preset
     reset_all()
     # update available call types for this speaker specified in presets,
     # except the last call type, which is reserved for formants
@@ -876,4 +866,18 @@ server = function(input, output, session) {
       seewave::savewav(myPars$sound, f = input$samplingRate, filename = filename)
     }
   )
+
+  observeEvent(input$import_preset, {
+    # replace "generateBout" with "list" and parse
+    new_preset_text = substr(input$user_preset, 13, nchar(input$user_preset))
+    new_preset_text = paste0('list', new_preset_text)
+    new_preset_list = try(eval(parse(text = new_preset_text)), silent = TRUE)
+
+    # create a new preset
+    new_presetID = paste (sample (c(letters, 0:9), 8, replace = TRUE), collapse = '')
+    myPars$loaded_presets[[new_presetID]] = new_preset_list
+
+    # update sliders
+    reset_all()
+  })
 }

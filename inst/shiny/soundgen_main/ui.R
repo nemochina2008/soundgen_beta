@@ -232,7 +232,7 @@ ui = fluidPage(
                         ),
 
                         navbarMenu ("Unvoiced",
-                                    tabPanel("Noise timing",
+                                    tabPanel("Timing",
                                              sidebarLayout(
                                                sidebarPanel(
                                                  actionButton(inputId = "breathing_flatten", label = "Flatten contour"),
@@ -247,7 +247,7 @@ ui = fluidPage(
                                              )
                                     ),
 
-                                    tabPanel("Noise type",
+                                    tabPanel("Type",
                                              sidebarLayout(
                                                sidebarPanel(
                                                  selectInput(inputId='noiseType', label="Presets", choices=c('Breathing'='b', 'Snuffling'='n', 'h'='h', 'sh'='x','f'='f', 's'='s'), selected='b'),
@@ -302,10 +302,16 @@ ui = fluidPage(
             tags$h2('Presets'),
             selectInput(inputId='speaker', label="Speaker", choices=names(presets), selected=names(presets)[1]),
             selectInput(inputId='callType', label="Call", choices=names(presets[[1]]), selected=names(presets[[1]])[1]),
+            shinyBS::bsCollapsePanel("Load new preset",
+                                     tags$style(type="text/css", "textarea {width:100%; font-size:50%}"),
+                                     tags$textarea(id="user_preset", label='Type in a new preset here', rows=10, cols=20, value="", placeholder ="generateBout(...)"),
+                                     actionButton(inputId = "import_preset", label = "Update sliders")
+            ),
+
             tags$h2('Export'),
             downloadButton (outputId = "saveAudio", label = "Save audio"),
             tags$br(), tags$br(),
-            shinyBS::bsCollapsePanel("Show R code",
+            shinyBS::bsCollapsePanel("Export R code",
                             tags$style(type="text/css", "textarea {width:100%; font-size:50%}"), # NB: this little hack ties the width of the following textarea to the width of the panel in which it is embedded; see http://stackoverflow.com/questions/32640875/r-shiny-tie-textarea-width-to-wellpanel-width
                             tags$textarea(id="mycall", label='Copy-paste function call', rows=10, cols=20, value="", placeholder ="generateBout()")
             )

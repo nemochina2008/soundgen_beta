@@ -129,11 +129,31 @@ rownames(permittedValues) = temp
 "presets"
 presets = list(
   M1 = list(
-    'Vowel' = c(
+    'Vowel' = c( # these are basically just the global defaults
       as.list (permittedValues[1 : which(rownames(permittedValues)=='rolloff_breathing'),'default']),
       'vowelString'='a',
-      list('pitchAnchors' = data.frame('time'=c(0,.1,.9,1), 'value'=c(100,150,135,100)))
-    ), # these are basically just the global defaults
+      list('pitchAnchors' = data.frame('time'=c(0,.1,.9,1), 'value'=c(100,150,135,100))),
+      list('pitchAnchors_global' = data.frame('time' = c(0,1), 'value' = c(0,0))),
+      list('breathingAnchors' = data.frame('time' = c(0,300), 'value' = c(throwaway_dB,throwaway_dB))),
+      list('mouthAnchors' = data.frame('time' = c(0,1), 'value' = c(.5,.5))),
+      list('amplAnchors' = data.frame('time' = c(0,1), 'value' = c(-throwaway_dB,-throwaway_dB))),
+      list('amplAnchors_global' = data.frame('time' = c(0,1), 'value' = c(-throwaway_dB,-throwaway_dB))),
+      list('exactFormants' = list(
+        'f1' = data.frame('time' = 0,
+                          'freq' = permittedValues['f1_freq','default'],
+                          'amp' = permittedValues['f1_amp','default'],
+                          'width' = permittedValues['f1_width','default']),
+        'f2' = data.frame('time' = 0,
+                          'freq' = permittedValues['f2_freq','default'],
+                          'amp' = permittedValues['f1_amp','default'],
+                          'width' = permittedValues['f2_width','default']),
+        'f3' = data.frame('time' = 0,
+                          'freq' = permittedValues['f3_freq','default'],
+                          'amp' = permittedValues['f1_amp','default'],
+                          'width' = permittedValues['f3_width','default'])
+      )),
+      'exactFormants_unvoiced' = NA
+    ),
 
     'Gasp' = c(
       'sylDur_mean' = 280,
@@ -741,6 +761,10 @@ presets = list(
     'Formants' = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       # ...
     )
-
   )
+
+  # # empty container for importing user presets with random names
+  # Custom = list(
+  #
+  # )
 ) # END of presets / dictionaries
