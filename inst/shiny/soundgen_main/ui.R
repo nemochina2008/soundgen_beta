@@ -10,13 +10,13 @@ ui = fluidPage(
                                                sidebarPanel(
                                                  actionButton(inputId = "pitch_flatten", label = "Flatten pitch contour"),
                                                  shinyBS::bsPopover(id='pitch_flatten', title=NULL, content='Revert to a flat intonation contour with pitch equal to the first (left) anchor', placement="right", trigger="hover"),
+                                                 tableOutput("pitch_anchors"),
+                                                 width=6),
+                                               mainPanel(
+                                                 plotOutput('plot_intonation', click = "plot_intonation_click", dblclick = dblclickOpts(id = "plot_intonation_dblclick")),
                                                  sliderInput('pitchRange', 'Plotted pitch range, Hz', value=c(75,150), min=permittedValues['pitch', 'low'], max=permittedValues['pitch', 'high'], step=permittedValues['pitch', 'step']),
                                                  shinyBS::bsPopover(id='pitchRange', title=NULL, content='Set upper / lower limit separately or drag in between the markers to shift both limits simultaneously', placement="right", trigger="hover"),
-                                                 tableOutput("pitch_anchors"), width=6
-                                               ),
-                                               mainPanel(
-                                                 plotOutput('plot_intonation', click = "plot_intonation_click", dblclick = dblclickOpts(id = "plot_intonation_dblclick")), width=6
-                                               )
+                                                 width=6)
                                              )
                                     ),
 

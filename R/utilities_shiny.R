@@ -37,11 +37,11 @@ semitonesToHz = function(s) {
 #' and modifiable
 #' @param l a list of exact formants
 #' @examples
-#' exactFormants=list(f1 = data.frame(time = c(0), freq = c(860),
-#'                                    amp = c(30), width = c(120)),
-#'                            f2 = data.frame(time = c(0), freq = c(1280),
-#'                                 amp = c(40), width = c(120)))
-#' pickle (exactFormants)
+#' exactFormants = list(f1 = data.frame(time = c(0), freq = c(860),
+#'                                      amp = c(30), width = c(120)),
+#'                      f2 = data.frame(time = c(0), freq = c(1280),
+#'                                      amp = c(40), width = c(120)))
+#' soundgen:::pickle(exactFormants)
 pickle = function(l) {
   if (is.null(l) | length(l) < 1) {
     return (NA)

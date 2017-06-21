@@ -155,6 +155,9 @@ rnorm_bounded = function(n = 1,
                          low = NULL,
                          high = NULL,
                          roundToInteger = FALSE) {
+  if (sum(mean > high | mean < low) > 0) {
+    warning('Some of the specified means are outside the low/high bounds!')
+  }
   if (sum(sd != 0) == 0) {
     out = rep(mean, n)
     out[roundToInteger] = round (out[roundToInteger], 0)

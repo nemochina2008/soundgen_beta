@@ -18,23 +18,25 @@ server = function(input, output, session) {
                            'amplAnchors_global' = presets$M1$Vowel$amplAnchors_global,
                            'exactFormants' = presets$M1$Vowel$exactFormants,
                            'exactFormants_unvoiced' = NA,
-                           'updateDur' = FALSE,
-                           'loaded_presets' = list()
+                           'updateDur' = TRUE,
+                           'loaded_presets' = list(),
+                           'sylDur_previous' = presets$M1$Vowel$sylDur_mean
   )
 
   durTotal = reactive({
+    # the duration of the entire bout without breathing,
+    # calculated as the sum of voiced syllables and pauses
     ifelse(input$nSyl == 1,
            input$sylDur_mean,
-           (input$sylDur_mean*input$nSyl + input$pauseDur_mean*(input$nSyl-1)))
-    # the duration of the entire bout without breathing, calculated as a sum of
-    # voiced syllables and pauses
+           (input$sylDur_mean * input$nSyl + input$pauseDur_mean * (input$nSyl - 1)))
   })
 
   durSyl_withBreathing = reactive({ # the duration of a single syllable with breathing
     ifelse(!sum(myPars$breathingAnchors$value > throwaway_dB) > 0,
            input$sylDur_mean,
            min(0, myPars$breathingAnchors$time[1]) +
-             max(input$sylDur_mean, myPars$breathingAnchors$time[length(myPars$breathingAnchors$time)]))
+             max(input$sylDur_mean,
+                 myPars$breathingAnchors$time[length(myPars$breathingAnchors$time)]))
   })
 
 
@@ -44,6 +46,7 @@ server = function(input, output, session) {
 
   # this key function is EXTREMELY bug-prone - careful with what you change! The right order is crucial
   reset_all = reactive({
+    print('running reset_all()')
     myPars$updateDur = FALSE # to prevent duration-related settings in myPars
     # from being updated by event listener observeEvent(input$sylDur_mean)
     # when a new preset is loaded
@@ -78,7 +81,7 @@ server = function(input, output, session) {
     myPars[['exactFormants']] = presets$M1$Vowel$exactFormants
     myPars[['exactFormants_unvoiced']] = NA
 
-    # myPars[['breathingAnchors']] = data.frame('time' = c(0,preset$sylDur_mean), 'value' = c(throwaway_dB, throwaway_dB))
+    myPars[['breathingAnchors']] = data.frame('time' = c(0,preset$sylDur_mean), 'value' = c(throwaway_dB, throwaway_dB))
 
     myPars_to_reset = names(myPars) [which(names(myPars) %in% names(preset))]
     for (v in myPars_to_reset) {
@@ -174,7 +177,7 @@ server = function(input, output, session) {
   })
 
   updateNoise = reactive({
-    if (input$noiseType == 'b'){  # breathing
+    if (input$noiseType == 'b') {  # breathing
       myPars$exactFormants_unvoiced = NA
       updateTextInput(session, inputId = 'exactFormants_unvoiced', value = 'NA')
     } else if (nchar(input$noiseType) > 0) {  # TODO - check if this always works!!!
@@ -188,21 +191,23 @@ server = function(input, output, session) {
   })
 
   observeEvent(input$sylDur_mean, {
+    print (myPars$updateDur)
     # has to be updated manually, b/c breathingAnchors are the only time anchors
     # expressed in ms rather than 0 to 1 (b/c we don't want to rescale
     # pre-syllable aspiration depending on the syllable duration)
     if (myPars$updateDur == TRUE) {
       # doesn't run if updateDur == FALSE (set to F in reset_all())
+      scale_coef = input$sylDur_mean / myPars$sylDur_previous
       myPars$breathingAnchors$time[myPars$breathingAnchors$time > 0] =
-        round(myPars$breathingAnchors$time[myPars$breathingAnchors$time > 0] *
-                (input$nSyl * input$sylDur_mean + input$pauseDur_mean *
-                   (input$nSyl - 1)) / durTotal()) # rescale positive time anchors,
-      # but not negative ones (ie the length of pre-syllable aspiration does not
+        round(myPars$breathingAnchors$time[myPars$breathingAnchors$time > 0] * scale_coef)
+      # rescale positive time anchors, but not negative ones
+      # (ie the length of pre-syllable aspiration does not
       # vary as the syllable length changes - just doesn't seem to make sense)
       updateSliderInput(session, inputId = 'breathingTime',
                         value = range(myPars$breathingAnchors$time))
+      myPars$sylDur_previous = input$sylDur_mean  # track the previous value
     }
-    myPars$updateDur = TRUE # execute after the first change (resetting)
+    myPars$updateDur = TRUE  # execute after the first change (resetting)
   })
 
 
@@ -792,11 +797,11 @@ server = function(input, output, session) {
   ## A U D I O
   # create a string with the call to generateBout() with the par values from the UI
   mycall = reactive({
-    paste0('generateBout (nSyl = ', input$nSyl,', sylDur_mean = ',
-           input$sylDur_mean, ', pauseDur_mean = ', input$pauseDur_mean,
-           ', noiseAmount = ', input$noiseAmount, ', noiseIntensity = ',
-           input$noiseIntensity, ', attackLen = ', input$attackLen,
-           ', jitterDep = ', input$jitterDep, ', jitterLength_ms = ',
+    paste0('generateBout (repeatBout = ', input$repeatBout, ', nSyl = ', input$nSyl,
+           ', sylDur_mean = ', input$sylDur_mean, ', pauseDur_mean = ',
+           input$pauseDur_mean, ', noiseAmount = ', input$noiseAmount,
+           ', noiseIntensity = ', input$noiseIntensity, ', attackLen = ',
+           input$attackLen, ', jitterDep = ', input$jitterDep, ', jitterLength_ms = ',
            input$jitterLength_ms, ', vibratoFreq = ', input$vibratoFreq,
            ', vibratoDep = ', input$vibratoDep, ', shimmerDep = ', input$shimmerDep,
            ', formantStrength = ', input$formantStrength, ', extraFormants_ampl = ',
@@ -814,7 +819,7 @@ server = function(input, output, session) {
            windowLength_points, ', overlap = ', overlap, ', pitch_floor = ',
            input$pitchFloorCeiling[1], ', pitch_ceiling = ', input$pitchFloorCeiling[2],
            ', pitchSamplingRate = ', input$pitchSamplingRate, ', vocalTract_length = ',
-           input$vocalTract_length, ', repeatBout = ', input$repeatBout,
+           input$vocalTract_length,
             ', pitchAnchors = data.frame(time = c(',
            paste0(myPars$pitchAnchors$time, collapse = ","), '), value = c(',
            paste0(myPars$pitchAnchors$value,collapse = ","),

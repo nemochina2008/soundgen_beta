@@ -160,8 +160,7 @@ generateBout = function(repeatBout = 1,
                         min_epoch_length_ms = 300,
                         trill_dep = 0,
                         trill_freq = 30,
-                        breathingAnchors = data.frame(time = c(0, 300),
-                                                      value = c(-120,-120)),
+                        breathingAnchors = NA,
                         exactFormants_unvoiced = NA,
                         rolloff_breathing = -6,
                         mouthAnchors = data.frame(time = c(0, 1),
@@ -188,7 +187,11 @@ generateBout = function(repeatBout = 1,
     sideband_width_hz = sideband_width_hz * 2 ^ (-creakyBreathy)
   } else if (creakyBreathy > 0) {
     # for breathy voice, add breathing
+    if(is.na(breathingAnchors)) breathingAnchors$time = c(0, sylDur_mean)
     breathingAnchors$value = breathingAnchors$value + creakyBreathy * 120
+    breathingAnchors$value[breathingAnchors$value >
+                             permittedValues['breathing_ampl', 'high']] =
+      permittedValues['breathing_ampl', 'high']
   }
   # adjust rolloff for both creaky and breathy voices
   rolloff_exp = rolloff_exp - creakyBreathy * 10

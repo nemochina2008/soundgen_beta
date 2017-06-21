@@ -20,9 +20,9 @@ object, but I can't figure out how to make the interim string human-readable
 and modifiable
 }
 \examples{
-exactFormants=list(f1 = data.frame(time = c(0), freq = c(860),
-                                   amp = c(30), width = c(120)),
-                           f2 = data.frame(time = c(0), freq = c(1280),
-                                amp = c(40), width = c(120)))
-pickle (exactFormants)
+exactFormants = list(f1 = data.frame(time = c(0), freq = c(860),
+                                     amp = c(30), width = c(120)),
+                     f2 = data.frame(time = c(0), freq = c(1280),
+                                     amp = c(40), width = c(120)))
+soundgen:::pickle(exactFormants)
 }
