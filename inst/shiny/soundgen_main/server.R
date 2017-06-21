@@ -10,17 +10,17 @@ server = function(input, output, session) {
   myPars = reactiveValues('myfile' = NULL,
                            'sound' = as.numeric(tuneR::readWave('www/temp.wav')@left),
                             # w/o as.numeric we get integers and spectro_denoised complains
-                           'pitchAnchors' = presets$M1$Vowel$pitchAnchors,
-                           'pitchAnchors_global' = presets$M1$Vowel$pitchAnchors_global,
-                           'breathingAnchors' = presets$M1$Vowel$breathingAnchors,
-                           'mouthAnchors' = presets$M1$Vowel$mouthAnchors,
-                           'amplAnchors' = presets$M1$Vowel$amplAnchors,
-                           'amplAnchors_global' = presets$M1$Vowel$amplAnchors_global,
-                           'exactFormants' = presets$M1$Vowel$exactFormants,
+                           'pitchAnchors' = defaults$pitchAnchors,
+                           'pitchAnchors_global' = defaults$pitchAnchors_global,
+                           'breathingAnchors' = defaults$breathingAnchors,
+                           'mouthAnchors' = defaults$mouthAnchors,
+                           'amplAnchors' = defaults$amplAnchors,
+                           'amplAnchors_global' = defaults$amplAnchors_global,
+                           'exactFormants' = defaults$exactFormants,
                            'exactFormants_unvoiced' = NA,
                            'updateDur' = TRUE,
                            'loaded_presets' = list(),
-                           'sylDur_previous' = presets$M1$Vowel$sylDur_mean
+                           'sylDur_previous' = defaults$sylDur_mean
   )
 
   durTotal = reactive({
@@ -46,49 +46,57 @@ server = function(input, output, session) {
 
   # this key function is EXTREMELY bug-prone - careful with what you change! The right order is crucial
   reset_all = reactive({
-    print('running reset_all()')
     myPars$updateDur = FALSE # to prevent duration-related settings in myPars
     # from being updated by event listener observeEvent(input$sylDur_mean)
     # when a new preset is loaded
 
     # first reset everything to defaults
-    for (v in rownames(permittedValues)[1:which(rownames(permittedValues) == 'repeatBout')]) {
+    for (v in rownames(permittedValues)[1:which(rownames(permittedValues) == 'rolloff_breathing')]) {
       updateSliderInput(session, v, value = permittedValues[v,'default'])
     }
+    lists_to_default = c('pitchAnchors', 'pitchAnchors_global', 'mouthAnchors',
+                         'breathingAnchors', 'amplAnchors', 'amplAnchors_global',
+                         'exactFormants', 'exactFormants_unvoiced')
+    for (v in lists_to_default) {
+      myPars[[v]] = defaults[[v]]
+    }
+    # myPars[['breathingAnchors']] = data.frame('time' = c(0, defaults$sylDur_mean),
+    #                                           'value' = c(throwaway_dB, throwaway_dB))   # TODO: check!!!
 
     # ...then load the partial list of presets that are specified (≠ default)
     # for this speaker and call type
     if (length(myPars$loaded_presets) >= 1) {
-      preset = myPars$loaded_presets[[length(myPars$loaded_presets)]]  # the last user-uploaded preset
+      # the last user-uploaded preset
+      preset = myPars$loaded_presets[[length(myPars$loaded_presets)]]
     } else {
-      preset = presets[[input$speaker]] [[input$callType]]  # a preset from the library
+      # a preset from the library
+      preset_text = presets[[input$speaker]] [[input$callType]]
+      preset_text = substr(preset_text, 13, nchar(preset_text))  # remove 'generateBout('
+      preset_text = paste0('list', preset_text)  # start with 'list('
+      preset_list = try(eval(parse(text = preset_text)), silent = TRUE)
+      if (class(preset_list) == 'list') {
+        preset = preset_list
+      }
     }
+
     if(class(preset$exactFormants) == 'character') {
       preset$vowelString = preset$exactFormants  # in case exactFormants = 'aui' etc
     }
 
     sliders_to_reset = names(preset) [which(names(preset) %in% names(input))]
-    for (v in sliders_to_reset){
+    for (v in sliders_to_reset) {
       try(updateSliderInput(session, v, value = as.numeric(preset[[v]])))
     }
 
-    myPars[['pitchAnchors']] = presets$M1$Vowel$pitchAnchors
-    myPars[['pitchAnchors_global']] = presets$M1$Vowel$pitchAnchors_global
-    myPars[['breathingAnchors']] = presets$M1$Vowel$breathingAnchors
-    myPars[['mouthAnchors']] = presets$M1$Vowel$mouthAnchors
-    myPars[['amplAnchors']] = presets$M1$Vowel$amplAnchors
-    myPars[['amplAnchors_global']] = presets$M1$Vowel$amplAnchors_global
-    myPars[['exactFormants']] = presets$M1$Vowel$exactFormants
-    myPars[['exactFormants_unvoiced']] = NA
-
-    myPars[['breathingAnchors']] = data.frame('time' = c(0,preset$sylDur_mean), 'value' = c(throwaway_dB, throwaway_dB))
 
     myPars_to_reset = names(myPars) [which(names(myPars) %in% names(preset))]
     for (v in myPars_to_reset) {
       myPars[[v]] = preset[[v]]
     }
-    updateSliderInput(session, 'breathingTime',
-                      value = range(myPars$breathingAnchors$time))
+
+    if (length(myPars$breathingAnchors) > 1) {
+      updateSliderInput(session, 'breathingTime', value = range(myPars$breathingAnchors$time))
+    }
 
     # special cases
     if (!is.null(preset$pitchAnchors)) {
@@ -104,7 +112,7 @@ server = function(input, output, session) {
     } else if (is.null(preset$vowelString) & !is.null(preset$exactFormants)) {
       updateTextInput(session, inputId = 'vowelString', value = '')
       updateTextInput(session, inputId = 'exactFormants',
-                      value = pickle(preset$exactFormants))
+                      value = as.character(call('print', preset$exactFormants)[2]))
       myPars$exactFormants = preset$exactFormants
     } else { # if both are NULL
       updateTextInput(session, inputId = 'vowelString', value = defaultVowel)
@@ -119,7 +127,7 @@ server = function(input, output, session) {
                !is.null(preset$exactFormants_unvoiced)) {
       updateTextInput(session, inputId = 'noiseType', value = '')
       updateTextInput(session, inputId = 'exactFormants_unvoiced',
-                      value = pickle(preset$exactFormants_unvoiced))
+                      value = as.character(call('print', preset$exactFormants)[2]))
       myPars$exactFormants_unvoiced = preset$exactFormants_unvoiced
     } else { # if both are NULL
       updateTextInput(session, inputId = 'noiseType', value = 'b')
@@ -161,7 +169,7 @@ server = function(input, output, session) {
         myPars$exactFormants = converted
         # (...otherwise don't change myPars$exactFormants to prevent crashing)
       }
-      updateTextInput(session, inputId = 'exactFormants', value = pickle(converted))
+      updateTextInput(session, inputId = 'exactFormants', value = as.character(call('print', converted)[2]))
     }
   })
 
@@ -186,12 +194,11 @@ server = function(input, output, session) {
       updateSliderInput(session, inputId = 'rolloff_breathing',
                         value = n[['rolloff_breathing']])
       updateTextInput(session, inputId = 'exactFormants_unvoiced',
-                      value = pickle(myPars$exactFormants_unvoiced))
+                      value = as.character(call('print', preset$exactFormants_unvoiced)[2]))
     }
   })
 
   observeEvent(input$sylDur_mean, {
-    print (myPars$updateDur)
     # has to be updated manually, b/c breathingAnchors are the only time anchors
     # expressed in ms rather than 0 to 1 (b/c we don't want to rescale
     # pre-syllable aspiration depending on the syllable duration)
@@ -797,53 +804,69 @@ server = function(input, output, session) {
   ## A U D I O
   # create a string with the call to generateBout() with the par values from the UI
   mycall = reactive({
-    paste0('generateBout (repeatBout = ', input$repeatBout, ', nSyl = ', input$nSyl,
-           ', sylDur_mean = ', input$sylDur_mean, ', pauseDur_mean = ',
-           input$pauseDur_mean, ', noiseAmount = ', input$noiseAmount,
-           ', noiseIntensity = ', input$noiseIntensity, ', attackLen = ',
-           input$attackLen, ', jitterDep = ', input$jitterDep, ', jitterLength_ms = ',
-           input$jitterLength_ms, ', vibratoFreq = ', input$vibratoFreq,
-           ', vibratoDep = ', input$vibratoDep, ', shimmerDep = ', input$shimmerDep,
-           ', formantStrength = ', input$formantStrength, ', extraFormants_ampl = ',
-           input$extraFormants_ampl, ', creakyBreathy = ', input$creakyBreathy,
-           ', rolloff_exp = ', input$rolloff_exp, ', rolloff_exp_delta = ',
-           input$rolloff_exp_delta, ', adjust_rolloff_per_kHz = ',
-           input$adjust_rolloff_per_kHz, ', quadratic_delta = ', input$quadratic_delta,
-           ', quadratic_nHarm = ', input$quadratic_nHarm, ', rolloff_lip = ',
-           input$rolloff_lip, ', trill_dep = ', input$trill_dep, ', trill_freq = ',
-           input$trill_freq, ', rolloff_breathing = ', input$rolloff_breathing,
-           ', temperature = ', input$temperature, ', min_epoch_length_ms = ',
-           input$min_epoch_length_ms, ', g0 = ', input$g0, ', sideband_width_hz = ',
-           input$sideband_width_hz, ', maleFemale = ', input$maleFemale,
-           ', samplingRate = ', input$samplingRate, ', windowLength_points = ',
-           windowLength_points, ', overlap = ', overlap, ', pitch_floor = ',
-           input$pitchFloorCeiling[1], ', pitch_ceiling = ', input$pitchFloorCeiling[2],
-           ', pitchSamplingRate = ', input$pitchSamplingRate, ', vocalTract_length = ',
-           input$vocalTract_length,
-            ', pitchAnchors = data.frame(time = c(',
-           paste0(myPars$pitchAnchors$time, collapse = ","), '), value = c(',
-           paste0(myPars$pitchAnchors$value,collapse = ","),
-           ')), pitchAnchors_global = data.frame(time = c(',
-           paste0(myPars$pitchAnchors_global$time,collapse = ","),
-           '), value = c(',paste0(myPars$pitchAnchors_global$value, collapse = ","),
-           ')), breathingAnchors = data.frame(time = c(',
-           paste0(myPars$breathingAnchors$time, collapse = ","),
-           '), value = c(', paste0(myPars$breathingAnchors$value, collapse = ","),
-           ')), mouthAnchors = data.frame(time = c(',
-           paste0(myPars$mouthAnchors$time, collapse = ","),
-           '), value = c(',paste0(myPars$mouthAnchors$value, collapse = ","),
-           ')), amplAnchors = data.frame(time = c(',
-           paste0(myPars$amplAnchors$time, collapse = ","),
-           '), value = c(',paste0(myPars$amplAnchors$value, collapse = ","),
-           ')), amplAnchors_global = data.frame(time = c(',
-           paste0(myPars$amplAnchors_global$time, collapse = ","),
-           '), value = c(',paste0(myPars$amplAnchors_global$value, collapse = ","),
-           ')), exactFormants = ', pickle(myPars$exactFormants),
-           ', exactFormants_unvoiced = ', pickle(myPars$exactFormants_unvoiced),
-           ')')
+    arg_list = list(
+      repeatBout = input$repeatBout,
+      nSyl = input$nSyl,
+      sylDur_mean = input$sylDur_mean,
+      pauseDur_mean = input$pauseDur_mean,
+      pitchAnchors = myPars$pitchAnchors,
+      pitchAnchors_global = myPars$pitchAnchors_global,
+      temperature = input$temperature,
+      maleFemale = input$maleFemale,
+      creakyBreathy = input$creakyBreathy,
+      noiseAmount = input$noiseAmount,
+      noiseIntensity = input$noiseIntensity,
+      jitterDep = input$jitterDep,
+      jitterLength_ms = input$jitterLength_ms,
+      vibratoFreq = input$vibratoFreq,
+      vibratoDep = input$vibratoDep,
+      shimmerDep = input$shimmerDep,
+      attackLen = input$attackLen,
+      rolloff_exp = input$rolloff_exp,
+      rolloff_exp_delta = input$rolloff_exp_delta,
+      quadratic_delta = input$quadratic_delta,
+      quadratic_nHarm = input$quadratic_nHarm,
+      adjust_rolloff_per_kHz = input$adjust_rolloff_per_kHz,
+      rolloff_lip = input$rolloff_lip,
+      exactFormants = myPars$exactFormants,
+      formantStrength = input$formantStrength,
+      extraFormants_ampl = input$extraFormants_ampl,
+      vocalTract_length = input$vocalTract_length,
+      g0 = input$g0,
+      sideband_width_hz = input$sideband_width_hz,
+      min_epoch_length_ms = input$min_epoch_length_ms,
+      trill_dep = input$trill_dep,
+      trill_freq = input$trill_freq,
+      breathingAnchors = myPars$breathingAnchors,
+      exactFormants_unvoiced = myPars$exactFormants_unvoiced,
+      rolloff_breathing = input$rolloff_breathing,
+      mouthAnchors = myPars$mouthAnchors,
+      amplAnchors = myPars$amplAnchors,
+      amplAnchors_global = myPars$amplAnchors_global,
+      samplingRate = input$samplingRate,
+      pitch_floor = input$pitchFloorCeiling[1],
+      pitch_ceiling = input$pitchFloorCeiling[2],
+      pitchSamplingRate = input$pitchSamplingRate
+    )
+    # simplify arg_list by removing values that are the same as defaults
+    idx_same = apply(matrix(1:length(arg_list)), 1, function(x) {
+      temp = all.equal(arg_list[[x]], defaults[[names(arg_list)[x]]], check.attributes = FALSE)
+      if (class(temp) == 'character') temp = FALSE
+      temp
+    })
+    not_defaults = which(idx_same != TRUE)
+    arg_list = arg_list[not_defaults]
+    arg_list
   })
-  # show this string to user for copy-pasting if needed
-  observeEvent(mycall(), updateTextInput(session, inputId = 'mycall', value = mycall()))
+
+  # show simplified function call as string to user for copy-pasting
+  observeEvent(mycall(),
+               updateTextInput(session, inputId = 'mycall',
+                 value = {
+                   temp = as.character(call('print', mycall())[2])
+                   paste0('generateBout', substr(temp, 5, nchar(temp)))
+                 })
+  )
 
   output$myAudio = renderUI (
     tags$audio(src = "temp.wav", type = "audio/wav", autoplay = NA, controls = NA)
@@ -854,7 +877,7 @@ server = function(input, output, session) {
     if (!is.null(myPars$myfile)){
       file.remove(paste0('www/', myPars$myfile))
     }
-    myPars$sound = eval(parse(text = mycall()))  # generate audio
+    myPars$sound = do.call('generateBout', mycall()) # eval(parse(text = mycall()))  # generate audio
     randomID = paste (sample (c(letters, 0:9), 8, replace = TRUE), collapse = '')
     myPars$myfile = paste0(randomID, '.wav')
     # this is the new sound file. NB: has to be saved in www/ !!!

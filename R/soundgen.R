@@ -126,7 +126,7 @@ generateBout = function(repeatBout = 1,
                         creakyBreathy = 0,
                         noiseAmount = 0,
                         noiseIntensity = 50,
-                        jitterDep = 0,
+                        jitterDep = 3,
                         jitterLength_ms = 1,
                         vibratoFreq = 5,
                         vibratoDep = 0,
@@ -138,25 +138,17 @@ generateBout = function(repeatBout = 1,
                         quadratic_nHarm = 3,
                         adjust_rolloff_per_kHz = -6,
                         rolloff_lip = 6,
-                        exactFormants = list(
-                          f1 = data.frame(
-                            time = c(0),
-                            freq = c(860),
-                            amp = c(30),
-                            width = c(120)
-                          ),
-                          f2 = data.frame(
-                            time = c(0),
-                            freq = c(1280),
-                            amp = c(40),
-                            width = c(120)
-                          )
-                        ),
+                        exactFormants = list(f1 = list(time = 0, freq = 860,
+                                                       amp = 30, width = 120),
+                                             f2 = list(time = 0, freq = 1280,
+                                                       amp = 40, width = 120),
+                                             f3 = list(time = 0, freq = 2900,
+                                                       amp = 25, width = 200)),
                         formantStrength = 1,
                         extraFormants_ampl = 30,
                         vocalTract_length = 15.5,
                         g0 = 100,
-                        sideband_width_hz = 0,
+                        sideband_width_hz = 100,
                         min_epoch_length_ms = 300,
                         trill_dep = 0,
                         trill_freq = 30,
@@ -178,6 +170,14 @@ generateBout = function(repeatBout = 1,
                         playSound = FALSE,
                         savePath = NA,
                         ...) {
+  # force anchor lists to dataframe
+  if (class(pitchAnchors) == 'list') pitchAnchors = as.data.frame(pitchAnchors)
+  if (class(pitchAnchors_global) == 'list') pitchAnchors_global = as.data.frame(pitchAnchors_global)
+  if (class(amplAnchors) == 'list') amplAnchors = as.data.frame(amplAnchors)
+  if (class(amplAnchors_global) == 'list') amplAnchors_global = as.data.frame(amplAnchors_global)
+  if (class(mouthAnchors) == 'list') mouthAnchors = as.data.frame(mouthAnchors)
+  if (class(breathingAnchors) == 'list') breathingAnchors = as.data.frame(breathingAnchors)
+
   # adjust parameters according to the specified hyperparameters
   if (creakyBreathy < 0) {
     # for creaky voice
@@ -225,6 +225,9 @@ generateBout = function(repeatBout = 1,
   # (dictionary for caller 1 is used to interpret)
   if (class(exactFormants) == 'character') {
     exactFormants = convertStringToFormants(exactFormants)
+  }
+  if (class(exactFormants[[1]]) == 'list') {
+    exactFormants = lapply(exactFormants, as.data.frame)
   }
 
   # stochastic rounding of the number of syllables and repeatBouts
@@ -472,7 +475,7 @@ generateBout = function(repeatBout = 1,
         if (is.na(exactFormants_unvoiced[1])) {
           spectralEnvelope_unvoiced = NA
         } else {
-          movingFormants = max(unlist(lapply(exactFormants_unvoiced, nrow))) > 1 |
+          movingFormants = max(unlist(lapply(exactFormants_unvoiced, length))) > 1 |
             sum(mouthAnchors$value != .5) > 0 # are noise formants moving, as opposed to constant?
           nInt = ifelse (movingFormants,
                     round(diff(range(breathingAnchors_syl[[s]]$time)) / 10),
@@ -556,7 +559,7 @@ generateBout = function(repeatBout = 1,
                  windowLength_points - (overlap * windowLength_points / 100))
       nc = length(step) # number of windows for fft
       nr = windowLength_points / 2 # number of frequency bins for fft
-      movingFormants = max(unlist(lapply(exactFormants, nrow))) > 1 |
+      movingFormants = max(unlist(lapply(exactFormants, length))) > 1 |
         sum(mouthAnchors$value != .5) > 0 # are formants moving or constant?
       nInt = ifelse (movingFormants, nc, 1)
       spectralEnvelope = getSpectralEnvelope(

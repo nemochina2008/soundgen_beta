@@ -290,6 +290,13 @@ getSpectralEnvelope = function(nr,
                                samplingRate = 44100) {
   if (class(exactFormants) == 'character') {
     exactFormants = convertStringToFormants(exactFormants)
+  } else if (class(exactFormants) == 'list') {
+    if (class(exactFormants[[1]]) == 'list') {
+      exactFormants = lapply(exactFormants, as.data.frame)
+    }
+  } else if (!is.na(exactFormants)) {
+    stop('exactFormants must be a list or a string of characters
+          from dictionary presets: a, o, i, e, u, 0 (schwa)')
   }
   if (is.null(vocalTract_length) & length(exactFormants[[1]]) > 2) {
     # if we don't know vocalTract_length, but at least one formant is defined,
@@ -406,11 +413,6 @@ getSpectralEnvelope = function(nr,
         }  # for actual random walks, make sure mean is 1
         exactFormants_upsampled[[f]][, c] = exactFormants_upsampled[[f]][, c] * rw
       }
-
-      #   # Humans only (or specify permittedValues for your animal species): make sure frequencies for each formant are within some reasonable bounds
-      #   permitted_range = c(permittedValues[paste0('f',f,'_freq'),'low'], permittedValues[paste0('f',f,'_freq'),'high'])
-      #   exactFormants_upsampled[[f]]$freq[exactFormants_upsampled[[f]]$freq < permittedValues[paste0('f',f,'_freq'),'low']] = permittedValues[paste0('f',f,'_freq'),'low']
-      #   exactFormants_upsampled[[f]]$freq[exactFormants_upsampled[[f]]$freq > permittedValues[paste0('f',f,'_freq'),'high']] = permittedValues[paste0('f',f,'_freq'),'high']
     } # end of wiggling existing formants
   } # end of if temperature > 0
 

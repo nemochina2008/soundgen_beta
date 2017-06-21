@@ -237,7 +237,7 @@ ui = fluidPage(
                                                sidebarPanel(
                                                  actionButton(inputId = "breathing_flatten", label = "Flatten contour"),
                                                  shinyBS::bsPopover(id='breathing_flatten', title=NULL, content='Revert to a flat contour with amplitude equal to the first (left) anchor', placement="right", trigger="hover"),
-                                                 sliderInput('breathingTime', 'Breathing start / end, ms', value=c(0,300), min=permittedValues['breathing_dur', 'low'], max=permittedValues['breathing_dur', 'high'], step=permittedValues['breathing_dur','step']),
+                                                 sliderInput('breathingTime', 'Breathing start / end, ms', value=c(0,300), min=permittedValues['sylDur_mean', 'low'], max=permittedValues['sylDur_mean', 'high'], step=permittedValues['sylDur_mean','step']),
                                                  shinyBS::bsPopover(id='breathingTime', title=NULL, content='Timing of respiration noise relative to the voiced component', placement="right", trigger="hover"),
                                                  tableOutput("breathing_anchors"), width=6
                                                ),

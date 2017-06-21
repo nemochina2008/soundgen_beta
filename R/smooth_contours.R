@@ -64,6 +64,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             voiced = NULL,
                             contourLabel = NULL,
                             ...) {
+  if (class(anchors) == 'list') anchors = as.data.frame(anchors)
   if (!is.null(value_floor)) {
     anchors$value[anchors$value < value_floor] = value_floor
   }
