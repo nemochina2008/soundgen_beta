@@ -46,6 +46,7 @@ server = function(input, output, session) {
 
   # this key function is EXTREMELY bug-prone - careful with what you change! The right order is crucial
   reset_all = reactive({
+    print('running reset_all()')
     myPars$updateDur = FALSE # to prevent duration-related settings in myPars
     # from being updated by event listener observeEvent(input$sylDur_mean)
     # when a new preset is loaded
@@ -67,71 +68,69 @@ server = function(input, output, session) {
     # for this speaker and call type
     if (length(myPars$loaded_presets) >= 1) {
       # the last user-uploaded preset
-      preset = myPars$loaded_presets[[length(myPars$loaded_presets)]]
+      preset = try(myPars$loaded_presets[[length(myPars$loaded_presets)]], silent = TRUE)
     } else {
       # a preset from the library
       preset_text = presets[[input$speaker]] [[input$callType]]
       preset_text = substr(preset_text, 13, nchar(preset_text))  # remove 'generateBout('
       preset_text = paste0('list', preset_text)  # start with 'list('
-      preset_list = try(eval(parse(text = preset_text)), silent = TRUE)
-      if (class(preset_list) == 'list') {
-        preset = preset_list
+      preset = try(eval(parse(text = preset_text)), silent = TRUE)
+    }
+    if (class(preset) == 'list') {
+      if(class(preset$exactFormants) == 'character') {
+        preset$vowelString = preset$exactFormants  # in case exactFormants = 'aui' etc
       }
-    }
 
-    if(class(preset$exactFormants) == 'character') {
-      preset$vowelString = preset$exactFormants  # in case exactFormants = 'aui' etc
-    }
-
-    sliders_to_reset = names(preset) [which(names(preset) %in% names(input))]
-    for (v in sliders_to_reset) {
-      try(updateSliderInput(session, v, value = as.numeric(preset[[v]])))
-    }
+      sliders_to_reset = names(preset) [which(names(preset) %in% names(input))]
+      for (v in sliders_to_reset) {
+        try(updateSliderInput(session, v, value = as.numeric(preset[[v]])))
+      }
 
 
-    myPars_to_reset = names(myPars) [which(names(myPars) %in% names(preset))]
-    for (v in myPars_to_reset) {
-      myPars[[v]] = preset[[v]]
-    }
+      myPars_to_reset = names(myPars) [which(names(myPars) %in% names(preset))]
+      for (v in myPars_to_reset) {
+        myPars[[v]] = preset[[v]]
+      }
 
-    if (length(myPars$breathingAnchors) > 1) {
-      updateSliderInput(session, 'breathingTime', value = range(myPars$breathingAnchors$time))
-    }
+      if (length(myPars$breathingAnchors) > 1) {
+        updateSliderInput(session, 'breathingTime', value = range(myPars$breathingAnchors$time))
+      }
 
-    # special cases
-    if (!is.null(preset$pitchAnchors)) {
-      updateSliderInput(session, 'pitchRange',
-        value = c(round(min(preset$pitchAnchors$value) / 2 ^ (1 / 12), 0),
-                  round(max(preset$pitchAnchors$value) * 2 ^ (1 / 12), 0)))
-    }
+      # special cases
+      if (!is.null(preset$pitchAnchors)) {
+        updateSliderInput(session, 'pitchRange',
+                          value = c(round(min(preset$pitchAnchors$value) / 2 ^ (1 / 12), 0),
+                                    round(max(preset$pitchAnchors$value) * 2 ^ (1 / 12), 0)))
+      }
 
-    if(!is.null(preset$vowelString)) {
-      updateTextInput(session, inputId = 'vowelString',
-                      value = preset$vowelString)
-      updateVowels()
-    } else if (is.null(preset$vowelString) & !is.null(preset$exactFormants)) {
-      updateTextInput(session, inputId = 'vowelString', value = '')
-      updateTextInput(session, inputId = 'exactFormants',
-                      value = as.character(call('print', preset$exactFormants)[2]))
-      myPars$exactFormants = preset$exactFormants
-    } else { # if both are NULL
-      updateTextInput(session, inputId = 'vowelString', value = defaultVowel)
-      updateVowels()
-    }
+      if(!is.null(preset$vowelString)) {
+        updateTextInput(session, inputId = 'vowelString',
+                        value = preset$vowelString)
+        updateVowels()
+      } else if (is.null(preset$vowelString) & !is.null(preset$exactFormants)) {
+        updateTextInput(session, inputId = 'vowelString', value = '')
+        updateTextInput(session, inputId = 'exactFormants',
+                        value = as.character(call('print', preset$exactFormants)[2]))
+        myPars$exactFormants = preset$exactFormants
+      } else { # if both are NULL
+        updateTextInput(session, inputId = 'vowelString', value = defaultVowel)
+        updateVowels()
+      }
 
-    if(!is.null(preset$noiseType)){
-      updateSelectInput(session, inputId = 'noiseType',
-                        value = preset$noiseType)
-      updateNoise()
-    } else if (is.null(preset$noiseType) &
-               !is.null(preset$exactFormants_unvoiced)) {
-      updateTextInput(session, inputId = 'noiseType', value = '')
-      updateTextInput(session, inputId = 'exactFormants_unvoiced',
-                      value = as.character(call('print', preset$exactFormants)[2]))
-      myPars$exactFormants_unvoiced = preset$exactFormants_unvoiced
-    } else { # if both are NULL
-      updateTextInput(session, inputId = 'noiseType', value = 'b')
-      updateNoise()
+      if(!is.null(preset$noiseType)){
+        updateSelectInput(session, inputId = 'noiseType',
+                          value = preset$noiseType)
+        updateNoise()
+      } else if (is.null(preset$noiseType) &
+                 !is.null(preset$exactFormants_unvoiced)) {
+        updateTextInput(session, inputId = 'noiseType', value = '')
+        updateTextInput(session, inputId = 'exactFormants_unvoiced',
+                        value = as.character(call('print', preset$exactFormants)[2]))
+        myPars$exactFormants_unvoiced = preset$exactFormants_unvoiced
+      } else { # if both are NULL
+        updateTextInput(session, inputId = 'noiseType', value = 'b')
+        updateNoise()
+      }
     }
   })
 
@@ -142,12 +141,12 @@ server = function(input, output, session) {
 
   observeEvent(input$speaker, {
     myPars$loaded_presets = list()  # remove user-uploaded preset
-    reset_all()
     # update available call types for this speaker specified in presets,
     # except the last call type, which is reserved for formants
     updateSelectInput(session, inputId = 'callType',
-                      choices = head(names(presets[[input$speaker]]), -1))
-
+                      choices = head(names(presets[[input$speaker]]), -1),
+                      selected = head(names(presets[[input$speaker]]), 1))
+    # NB: this triggers observeEvent(input$callType), and that in turn triggers reset_all()
   })
 
   observeEvent(input$exactFormants, {
