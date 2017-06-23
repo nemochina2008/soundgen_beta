@@ -9,7 +9,7 @@ segmentFolder(myfolder, shortest_syl = 40, shortest_pause = 50,
   interburst_min_scale = 1.2, peak_to_global_max = 0.12,
   peak_to_trough = 3.2, trough_left = TRUE, trough_right = FALSE,
   smooth_ms = 27, smooth_overlap = 90, summary = TRUE, plot = FALSE,
-  savePath = NA, verbose = FALSE, ...)
+  savePath = NA, verbose = TRUE, ...)
 }
 \arguments{
 \item{myfolder}{full path to target folder}

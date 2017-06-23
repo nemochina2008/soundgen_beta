@@ -10,13 +10,13 @@ getFrameBank(sound, samplingRate, windowLength_points, wn, step, zp,
 \arguments{
 \item{sound}{numeric vector}
 
-\item{samplingRate}{sampling rate, Hz}
+\item{samplingRate}{sampling rate (Hz)}
 
-\item{windowLength_points}{fft window length, in points}
+\item{windowLength_points}{fft window length (points)}
 
 \item{wn}{window type}
 
-\item{step}{fft step, ms}
+\item{step}{fft step (ms)}
 
 \item{zp}{zero padding, points}
 

@@ -12,7 +12,7 @@
 #'   individual frames as produced by function \code{\link{getFrameBank}}
 #' @param samplingRate sampling rate of \code{x} (only needed if
 #'   \code{x} is a numeric vector, rather than a .wav file)
-#' @param windowLength length of fft window, ms
+#' @param windowLength length of fft window (ms)
 #' @inheritParams getFrameBank
 #' @param median_smoothing_freq,median_smoothing_time length of the window, in
 #'   data points (0 to +inf), for calculating a rolling median. Applies median
@@ -253,7 +253,8 @@ spec = function (x,
     }
     seewave::filled.contour.modif2 (x = X, y = Y, z = Z1, levels = seq(0, 1, length = 30),
                                     color.palette = color.palette, ylim = ylim, ...)
-    par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)  # restore original pars
+    # restore original pars
+    par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
   }
 
   if (output == 'original') {
@@ -314,10 +315,10 @@ gaussian.w = function(n) {
 #' optionally zero-padded) frames, i.e. chunks of the sound file of the right
 #' size and spacing. Handy for further processing.
 #' @param sound numeric vector
-#' @param samplingRate sampling rate, Hz
-#' @param windowLength_points fft window length, in points
+#' @param samplingRate sampling rate (Hz)
+#' @param windowLength_points fft window length (points)
 #' @param wn window type
-#' @param step fft step, ms
+#' @param step fft step (ms)
 #' @param zp zero padding, points
 #' @param filter fft window filter (defaults to NULL)
 #' @return A matrix with \code{nrow = windowLength_points/2} and \code{ncol}

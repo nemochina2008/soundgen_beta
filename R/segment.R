@@ -99,7 +99,7 @@ segment = function(x,
 
   ## import a sound
   if (class(x) == 'character') {
-    sound = tuneR::readWave (x)
+    sound = tuneR::readWave(x)
     samplingRate = sound@samp.rate
     sound = sound@left
     plotname = tail(unlist(strsplit(x, '/')), n = 1)
@@ -126,8 +126,8 @@ segment = function(x,
     sound,
     f = samplingRate,
     msmooth = c(smooth_points, smooth_overlap),
-    fftw = T,
-    plot = F
+    fftw = TRUE,
+    plot = FALSE
   )
   timestep = 1000 / samplingRate *
     (length(sound) / length(sound_downsampled)) # time step in the envelope, ms
@@ -180,10 +180,10 @@ segment = function(x,
   )
 
   ## plotting (optional)
-  if (is.character(savePath)) plot = T
+  if (is.character(savePath)) plot = TRUE
   if (plot) {
     if (is.character(savePath)) {
-      jpeg(file = paste0 (savePath, plotname, ".jpg"), 900, 500)
+      jpeg(filename = paste0 (savePath, plotname, ".jpg"), 900, 500)
     }
     plot (envelope$time, envelope$value, type = 'l', col = 'green',
           xlab = 'Time, ms', ylab = 'Amplitude', main = plotname, ...)
@@ -208,7 +208,9 @@ segment = function(x,
 
 #' Segment all files in a folder
 #'
-#' Finds syllables and bursts in all .wav files in a folder. See \code{link\{segment}} for details.
+#' Finds syllables and bursts in all .wav files in a folder. See
+#' \code{link\{segment}} for details.
+#'
 #' @param myfolder full path to target folder
 #' @inheritParams segment
 #' @param verbose If TRUE, reports progress and estimated time left
@@ -229,9 +231,9 @@ segmentFolder = function (myfolder,
                           summary = TRUE,
                           plot = FALSE,
                           savePath = NA,
-                          verbose = FALSE,
+                          verbose = TRUE,
                           ...) {
-  initTime = Sys.time()  # timing
+  time_start = proc.time()  # timing
   # open all .wav files in folder
   filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
   result = list()
@@ -257,10 +259,11 @@ segmentFolder = function (myfolder,
 
     if (verbose) {
       if (i %% 10 == 0) {
-        remainTime = difftime(Sys.time(), initTime) / i * (nIter - i)
-        remainTime_formatted = capture.output(print (round(remainTime), format = "%H:%M:%S"))
-        remainTime_stripped = substr(remainTime_formatted, 20, nchar(remainTime_formatted))
-        print(paste0('Done ', i, ' / ', nIter, '; Estimated time left: ', remainTime_stripped))
+        time_diff = as.numeric((proc.time() - time_start)[3])
+        time_left = time_diff / i * (length(filenames) - i)
+        time_left_hms = convert_sec_to_hms(time_left)
+        print(paste0('Done ', i, ' / ', length(filenames),
+                     '; Estimated time left: ', time_left_hms))
       }
     }
   }
@@ -278,10 +281,9 @@ segmentFolder = function (myfolder,
   }
 
   if (verbose) {
-    totalTime = difftime(Sys.time(), initTime)
-    totalTime_formatted = capture.output(print(round(totalTime), format = "%H:%M:%S"))
-    totalTime_stripped = substr(totalTime_formatted, 20, nchar(totalTime_formatted))
-    print(paste0('Analyzed ', i, ' files in ', totalTime_stripped))
+    total_time = as.numeric((proc.time() - time_start)[3])
+    total_time_hms = convert_sec_to_hms(total_time_hms)
+    print(paste0('Analyzed ', i, ' files in ', total_time_hms))
   }
   return (output)
 }
@@ -456,7 +458,7 @@ findBursts = function(envelope,
 
 
 #
-# plot_some_examples = F  # check manually on some problematic files from different categories:
+# plot_some_examples = FALSE  # check manually on some problematic files from different categories:
 # if (plot_some_examples) {
 #   path = '/home/allgoodguys/Documents/Studying/Lund_cognitive-science/00_master/cartoons_clips/all_shrunk_260/'
 #   files = c(
@@ -479,11 +481,11 @@ findBursts = function(envelope,
 #     nrow = 3,
 #     ncol = 4,
 #     1:12,
-#     byrow = T
+#     byrow = TRUE
 #   ))
 #   for (f in sort(files)) {
 #     myfile = paste0(path, f, '.wav')
-#     segment (myfile, plot = T)
+#     segment (myfile, plot = TRUE)
 #   }
 #   layout (matrix(c(1, 1)))
 # }
