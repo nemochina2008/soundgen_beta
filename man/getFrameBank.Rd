@@ -30,7 +30,7 @@ A matrix with \code{nrow = windowLength_points/2} and \code{ncol}
 Internal soundgen function.
 }
 \details{
-A subroutine of \code{\link{spectro_denoised}} that saves windowed (and
+A subroutine of \code{\link{spec}} that saves windowed (and
 optionally zero-padded) frames, i.e. chunks of the sound file of the right
 size and spacing. Handy for further processing.
 }

@@ -1,128 +1,17 @@
 # Functions for preparing and plotting a spectrogram.
 
-#' Fourier transform windows (seewave)
-#'
-#' Internal soundgen function
-#'
-#' Generates different Fourier Transform windows. Just like
-#' \code{\link[seewave]{ftwindow}}, but with the addition of a gaussian window.
-#' @param wl window length, in points
-#' @param wn window type (defaults to gaussian)
-ftwindow_modif = function (wl, wn = "gaussian") {
-  if (wn == "bartlett")
-    w = seewave::bartlett.w(wl)
-  if (wn == "blackman")
-    w = seewave::blackman.w(wl)
-  if (wn == "flattop")
-    w = seewave::flattop.w(wl)
-  if (wn == "hamming")
-    w = seewave::hamming.w(wl)
-  if (wn == "hanning")
-    w = seewave::hanning.w(wl)
-  if (wn == "rectangle")
-    w = seewave::rectangle.w(wl)
-  if (wn == "gaussian")
-    w = gaussian.w(wl)
-  return(w)
-}
-
-#' Gaussian window
-#'
-#' Internal soundgen function.
-#'
-#' Generates a gaussian window of length n. Based on the formula by P. Boersma (PRAAT)
-#' @param n window length, in points
-gaussian.w = function(n) {
-  if (n == 0)
-    stop("'n' must be a positive integer")
-  w = (exp(-12 * (((
-    1:n
-  ) / n) - 0.5) ^ 2) - exp(-12)) / (1 - exp(-12))
-  # Boersma (PRAAT)
-  return(w)
-}
-
-#' Frame bank
-#'
-#' Internal soundgen function.
-#'
-#' A subroutine of \code{\link{spectro_denoised}} that saves windowed (and
-#' optionally zero-padded) frames, i.e. chunks of the sound file of the right
-#' size and spacing. Handy for further processing.
-#' @param sound numeric vector
-#' @param samplingRate sampling rate, Hz
-#' @param windowLength_points fft window length, in points
-#' @param wn window type
-#' @param step fft step, ms
-#' @param zp zero padding, points
-#' @param filter fft window filter (defaults to NULL)
-#' @return A matrix with \code{nrow = windowLength_points/2} and \code{ncol}
-#'   depending on \code{length(sound)} and \code{step}
-#' @examples
-#' a = soundgen:::getFrameBank(sin(1:1000), 16000, 512, 'gaussian', 15, 0)
-getFrameBank = function(sound,
-                        samplingRate,
-                        windowLength_points,
-                        wn,
-                        step,
-                        zp,
-                        filter = NULL) {
-  # # normalize to range from no less than -1 to no more than +1
-  if (min(sound) > 0) {
-    sound = scale(sound)
-  }
-  sound = sound / max(abs(max(sound)), abs(min(sound)))
-  duration = length(sound) / samplingRate
-  myseq = seq(1, max(1, (length(sound) - windowLength_points)),
-              step / 1000 * samplingRate)
-  if (is.null(filter)) {
-    filter = ftwindow_modif(wl = windowLength_points, wn = wn)
-  }
-  zpExtra = floor((zp - windowLength_points) / 2) * 2 # how many extra zeroes
-  # we pad with. Made even
-  if (zpExtra > 0) {
-    frameBank = apply (as.matrix(myseq), 1, function(x) {
-      c(rep(0, zpExtra / 2),
-        sound[x:(windowLength_points + x - 1)] * filter,
-        rep(0, zpExtra / 2))
-    })
-  } else {
-    frameBank = apply (as.matrix(myseq), 1, function(x) {
-      sound[x:(windowLength_points + x - 1)] * filter
-    })
-  }
-  return (frameBank)
-}
-
-#' Shannon entropy
-#'
-#' Internal soundgen function.
-#'
-#' Returns Shannon entropy of a vector. Zeroes are dealt with by adding 1 to all
-#' elements. If all elements are zero, returns NA.
-#' @param x vector of non-negative floats
-#' @return Float or NA
-getEntropy = function(x) {
-  if (sum(x) == 0)
-    return (NA)  # empty frames shouldn't count
-  x = x + 1  # otherwise log0 gives NaN
-  p = x / sum(x)
-  -sum(log2(p) * p)
-}
-
-
 #' Spectrogram
 #'
 #' Produces a spectrogram of a sound using short-term Fourier transform. This is
 #' a simplified version of \code{\link[seewave]{spectro}} with fewer
 #' plotting options, but with added routines for noise reduction, smoothing in
 #' time and frequency domains, and controlling contrast and brightness.
-#' @param soundfile path to a .wav file or a vector of amplitudes with specified
+#' @param x path to a .wav file or a vector of amplitudes with specified
 #'   samplingRate
-#' @param frameBank (alternative to \code{soundfile}) a previously saved bank of
+#' @param frameBank (alternative to \code{x}) a previously saved bank of
 #'   individual frames as produced by function \code{\link{getFrameBank}}
-#' @param samplingRate sampling rate of \code{soundfile} (only needed if
-#'   \code{soundfile} is a numeric vector, rather than a .wav file)
+#' @param samplingRate sampling rate of \code{x} (only needed if
+#'   \code{x} is a numeric vector, rather than a .wav file)
 #' @param windowLength length of fft window, ms
 #' @inheritParams getFrameBank
 #' @param median_smoothing_freq,median_smoothing_time length of the window, in
@@ -167,55 +56,55 @@ getEntropy = function(x) {
 #' # playme(sound, samplingRate = 16000)
 #'
 #' # basic spectrogram
-#' spectro_denoised(sound, samplingRate = 16000)
+#' spec(sound, samplingRate = 16000)
 #' # add an oscillogram
-#' spectro_denoised(sound, samplingRate = 16000, osc = TRUE)
+#' spec(sound, samplingRate = 16000, osc = TRUE)
 #' # broad-band instead of narrow-band
-#' spectro_denoised(sound, samplingRate = 16000, windowLength = 5)
+#' spec(sound, samplingRate = 16000, windowLength = 5)
 #' # spectral derivatives
-#' spectro_denoised(sound, samplingRate = 16000, method = 'spectralDerivative')
+#' spec(sound, samplingRate = 16000, method = 'spectralDerivative')
 #'
 #' # focus only on values in the upper 5% for each frequency bin
-#' spectro_denoised(sound, samplingRate = 16000, denoise_median_time = 0.95)
+#' spec(sound, samplingRate = 16000, denoise_median_time = 0.95)
 #'
 #' # detect 10% of the noisiest frames based on entropy and remove the pattern
 #' # found in those frames (in this cases, breathing)
-#' spectro_denoised(sound, samplingRate = 16000, percentNoise = 0.1,
+#' spec(sound, samplingRate = 16000, percentNoise = 0.1,
 #'   noiseReduction = 1.2, brightness = -2) # breathing almost gone
 #'
 #' # apply median smoothing in both time and frequency domains
-#' spectro_denoised(sound, samplingRate = 16000, median_smoothing_freq = 5,
+#' spec(sound, samplingRate = 16000, median_smoothing_freq = 5,
 #'   median_smoothing_time = 5)
 #'
 #' # increase contrast, reduce brightness
-#' spectro_denoised(sound, samplingRate = 16000, contrast = 1, brightness = -1)
+#' spec(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 #'
 #' # add bells and whistles
-#' spectro_denoised(sound, samplingRate = 16000, osc = TRUE, contrast = 1,
+#' spec(sound, samplingRate = 16000, osc = TRUE, contrast = 1,
 #'   brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
 #'   ylab = 'Frequency, kHz', ylim = c(0,5))
-spectro_denoised = function (soundfile,
-                             frameBank = NULL,
-                             samplingRate = NULL,
-                             windowLength = 50,
-                             step = 15,
-                             wn = 'gaussian',
-                             zp = 0,
-                             median_smoothing_freq = 0,
-                             median_smoothing_time = 0,
-                             denoise_median_time = 0,
-                             percentNoise = 0,
-                             noiseReduction = 0,
-                             contrast = .2,
-                             brightness = 0,
-                             method = c('spectrum', 'spectralDerivative')[1],
-                             output = c('none', 'original', 'processed')[1],
-                             ylim = NULL,
-                             plot = TRUE,
-                             osc = F,
-                             colorTheme = c('bw', 'seewave', '...')[1],
-                             xlab = '',
-                             ...) {
+spec = function (x,
+                 frameBank = NULL,
+                 samplingRate = NULL,
+                 windowLength = 50,
+                 step = 15,
+                 wn = 'gaussian',
+                 zp = 0,
+                 median_smoothing_freq = 0,
+                 median_smoothing_time = 0,
+                 denoise_median_time = 0,
+                 percentNoise = 0,
+                 noiseReduction = 0,
+                 contrast = .2,
+                 brightness = 0,
+                 method = c('spectrum', 'spectralDerivative')[1],
+                 output = c('none', 'original', 'processed')[1],
+                 ylim = NULL,
+                 plot = TRUE,
+                 osc = F,
+                 colorTheme = c('bw', 'seewave', '...')[1],
+                 xlab = '',
+                 ...) {
   # fix default settings
   if (is.null(ylim)) {
     ylim = c(0, floor(samplingRate / 2 / 1000))
@@ -225,10 +114,10 @@ spectro_denoised = function (soundfile,
   # visualization: plot(exp(3 * seq(-1, 1, by = .01)), type = 'l')
 
   # import audio
-  if (class(soundfile) == 'character') {
-    sound_wav = tuneR::readWave (soundfile)
+  if (class(x) == 'character') {
+    sound_wav = tuneR::readWave(x)
     samplingRate = sound_wav@samp.rate
-    windowLength_points = floor (windowLength / 1000 * samplingRate / 2) * 2
+    windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
     sound = sound_wav@left
     duration = length(sound) / samplingRate
     frameBank = getFrameBank (
@@ -240,15 +129,15 @@ spectro_denoised = function (soundfile,
       wn = wn,
       filter = NULL
     )
-  } else if (class(soundfile) == 'numeric' & length(soundfile) > 1) {
+  } else if (class(x) == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {
-      sound = soundfile
+      sound = x
       duration = length(sound) / samplingRate
       windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
       frameBank = getFrameBank (
-        sound = soundfile,
+        sound = x,
         samplingRate = samplingRate,
         windowLength_points = windowLength_points,
         step = step,
@@ -363,7 +252,7 @@ spectro_denoised = function (soundfile,
       xlab = ''
     }
     seewave::filled.contour.modif2 (x = X, y = Y, z = Z1, levels = seq(0, 1, length = 30),
-                                     color.palette = color.palette, ylim = ylim, ...)
+                                    color.palette = color.palette, ylim = ylim, ...)
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)  # restore original pars
   }
 
@@ -372,4 +261,117 @@ spectro_denoised = function (soundfile,
   } else if (output == 'processed') {
     return (t(Z1))  # denoised spectrum / spectralDerivative
   }
+  }
+
+
+#' Fourier transform windows (seewave)
+#'
+#' Internal soundgen function
+#'
+#' Generates different Fourier Transform windows. Just like
+#' \code{\link[seewave]{ftwindow}}, but with the addition of a gaussian window.
+#' @param wl window length, in points
+#' @param wn window type (defaults to gaussian)
+ftwindow_modif = function (wl, wn = "gaussian") {
+  if (wn == "bartlett")
+    w = seewave::bartlett.w(wl)
+  if (wn == "blackman")
+    w = seewave::blackman.w(wl)
+  if (wn == "flattop")
+    w = seewave::flattop.w(wl)
+  if (wn == "hamming")
+    w = seewave::hamming.w(wl)
+  if (wn == "hanning")
+    w = seewave::hanning.w(wl)
+  if (wn == "rectangle")
+    w = seewave::rectangle.w(wl)
+  if (wn == "gaussian")
+    w = gaussian.w(wl)
+  return(w)
 }
+
+#' Gaussian window
+#'
+#' Internal soundgen function.
+#'
+#' Generates a gaussian window of length n. Based on the formula by P. Boersma (PRAAT)
+#' @param n window length, in points
+gaussian.w = function(n) {
+  if (n == 0)
+    stop("'n' must be a positive integer")
+  w = (exp(-12 * (((
+    1:n
+  ) / n) - 0.5) ^ 2) - exp(-12)) / (1 - exp(-12))
+  # Boersma (PRAAT)
+  return(w)
+}
+
+#' Frame bank
+#'
+#' Internal soundgen function.
+#'
+#' A subroutine of \code{\link{spec}} that saves windowed (and
+#' optionally zero-padded) frames, i.e. chunks of the sound file of the right
+#' size and spacing. Handy for further processing.
+#' @param sound numeric vector
+#' @param samplingRate sampling rate, Hz
+#' @param windowLength_points fft window length, in points
+#' @param wn window type
+#' @param step fft step, ms
+#' @param zp zero padding, points
+#' @param filter fft window filter (defaults to NULL)
+#' @return A matrix with \code{nrow = windowLength_points/2} and \code{ncol}
+#'   depending on \code{length(sound)} and \code{step}
+#' @examples
+#' a = soundgen:::getFrameBank(sin(1:1000), 16000, 512, 'gaussian', 15, 0)
+getFrameBank = function(sound,
+                        samplingRate,
+                        windowLength_points,
+                        wn,
+                        step,
+                        zp,
+                        filter = NULL) {
+  # # normalize to range from no less than -1 to no more than +1
+  if (min(sound) > 0) {
+    sound = scale(sound)
+  }
+  sound = sound / max(abs(max(sound)), abs(min(sound)))
+  duration = length(sound) / samplingRate
+  myseq = seq(1, max(1, (length(sound) - windowLength_points)),
+              step / 1000 * samplingRate)
+  if (is.null(filter)) {
+    filter = ftwindow_modif(wl = windowLength_points, wn = wn)
+  }
+  zpExtra = floor((zp - windowLength_points) / 2) * 2 # how many extra zeroes
+  # we pad with. Made even
+  if (zpExtra > 0) {
+    frameBank = apply (as.matrix(myseq), 1, function(x) {
+      c(rep(0, zpExtra / 2),
+        sound[x:(windowLength_points + x - 1)] * filter,
+        rep(0, zpExtra / 2))
+    })
+  } else {
+    frameBank = apply (as.matrix(myseq), 1, function(x) {
+      sound[x:(windowLength_points + x - 1)] * filter
+    })
+  }
+  return (frameBank)
+}
+
+#' Shannon entropy
+#'
+#' Internal soundgen function.
+#'
+#' Returns Shannon entropy of a vector. Zeroes are dealt with by adding 1 to all
+#' elements. If all elements are zero, returns NA.
+#' @param x vector of non-negative floats
+#' @return Float or NA
+getEntropy = function(x) {
+  if (sum(x) == 0)
+    return (NA)  # empty frames shouldn't count
+  x = x + 1  # otherwise log0 gives NaN
+  p = x / sum(x)
+  -sum(log2(p) * p)
+}
+
+

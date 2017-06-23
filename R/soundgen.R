@@ -85,7 +85,7 @@ NULL
 #' @return Returns the synthesized waveform as a numeric vector.
 #' @examples
 #' sound = generateBout(playSound = TRUE)
-#' spectro_denoised (sound, samplingRate = 16000, osc = TRUE)
+#' spec (sound, samplingRate = 16000, osc = TRUE)
 #  # playme(sound, samplingRate = 16000)
 
 #' # unless temperature is 0, the sound is different every time
@@ -435,7 +435,7 @@ generateBout = function(repeatBout = 1,
           list(pitch = pitchContour_syl, amplAnchors = amplAnchors_per_syl))))
         # the actual synthesis is here
       }
-      # spectro_denoised (syllable, samplingRate = samplingRate)
+      # spec (syllable, samplingRate = samplingRate)
       # playme(syllable, samplingRate = samplingRate)
       if (class(syllable) == 'try-error') {
         stop ('Failed to generate the new syllable!')
@@ -511,7 +511,7 @@ generateBout = function(repeatBout = 1,
       }
     }
     # plot (voiced, type = 'l')
-    # spectro_denoised (voiced, samplingRate = samplingRate, osc = TRUE)
+    # spec (voiced, samplingRate = samplingRate, osc = TRUE)
     # playme(voiced, samplingRate = samplingRate)
     # END OF SYLLABLE GENERATION
 
@@ -526,7 +526,7 @@ generateBout = function(repeatBout = 1,
       }
     }
     # plot (sound, type = 'l')
-    # spectro_denoised (sound, samplingRate = samplingRate)
+    # spec (sound, samplingRate = samplingRate)
     # playme(sound, samplingRate = samplingRate)
 
     # for polysyllabic vocalizations, apply amplitude envelope (if specified)
@@ -607,7 +607,7 @@ generateBout = function(repeatBout = 1,
       )
       sound_filtered = sound_filtered / max(sound_filtered) # normalize
     }
-    # spectro_denoised (sound_filtered, samplingRate = samplingRate)
+    # spec (sound_filtered, samplingRate = samplingRate)
     # playme(sound_filtered, samplingRate = samplingRate)
 
     # add the separately filtered noise back into the sound at the appropriate time points AFTER filtering the sound
@@ -646,13 +646,13 @@ generateBout = function(repeatBout = 1,
 
   if (playSound) {
     playme (bout, samplingRate = samplingRate)
-    # spectro_denoised (sound_filtered, samplingRate = samplingRate, osc = TRUE)
+    # spec (sound_filtered, samplingRate = samplingRate, osc = TRUE)
   }
   if (!is.na(savePath)) {
     seewave::savewav(bout, filename = savePath, f = samplingRate)
   }
   if (plotSpectro) {
-    spectro_denoised (bout, samplingRate = samplingRate)
+    spec (bout, samplingRate = samplingRate)
   }
   return (bout)
 }

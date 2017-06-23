@@ -8,17 +8,17 @@ generateBout(repeatBout = 1, nSyl = 1, sylDur_mean = 300,
   pauseDur_mean = 200, pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
   value = c(100, 150, 135, 100)), pitchAnchors_global = NA,
   temperature = 0.025, maleFemale = 0, creakyBreathy = 0,
-  noiseAmount = 0, noiseIntensity = 50, jitterDep = 0,
+  noiseAmount = 0, noiseIntensity = 50, jitterDep = 3,
   jitterLength_ms = 1, vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0,
   attackLen = 50, rolloff_exp = -12, rolloff_exp_delta = -12,
   quadratic_delta = 0, quadratic_nHarm = 3, adjust_rolloff_per_kHz = -6,
-  rolloff_lip = 6, exactFormants = list(f1 = data.frame(time = c(0), freq =
-  c(860), amp = c(30), width = c(120)), f2 = data.frame(time = c(0), freq =
-  c(1280), amp = c(40), width = c(120))), formantStrength = 1,
-  extraFormants_ampl = 30, vocalTract_length = 15.5, g0 = 100,
-  sideband_width_hz = 0, min_epoch_length_ms = 300, trill_dep = 0,
-  trill_freq = 30, breathingAnchors = data.frame(time = c(0, 300), value =
-  c(-120, -120)), exactFormants_unvoiced = NA, rolloff_breathing = -6,
+  rolloff_lip = 6, exactFormants = list(f1 = list(time = 0, freq = 860, amp
+  = 30, width = 120), f2 = list(time = 0, freq = 1280, amp = 40, width = 120),
+  f3 = list(time = 0, freq = 2900, amp = 25, width = 200)),
+  formantStrength = 1, extraFormants_ampl = 30, vocalTract_length = 15.5,
+  g0 = 100, sideband_width_hz = 100, min_epoch_length_ms = 300,
+  trill_dep = 0, trill_freq = 30, breathingAnchors = NA,
+  exactFormants_unvoiced = NA, rolloff_breathing = -6,
   mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
   amplAnchors = NA, amplAnchors_global = NA, samplingRate = 16000,
   windowLength_points = 2048, overlap = 75, addSilence = 100,
@@ -145,7 +145,7 @@ Details: put some parts of the manual here.
 }
 \examples{
 sound = generateBout(playSound = TRUE)
-spectro_denoised (sound, samplingRate = 16000, osc = TRUE)
+spec (sound, samplingRate = 16000, osc = TRUE)
 # unless temperature is 0, the sound is different every time
 for (i in 1:3) sound = generateBout(playSound = TRUE, temperature = .2)
 

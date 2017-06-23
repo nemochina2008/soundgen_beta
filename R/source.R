@@ -134,7 +134,7 @@ generateNoise = function(len,
   )  # add attack
   # plot(breathing, type = 'l')
   # playme(breathing, samplingRate = samplingRate)
-  # spectro_denoised(breathing, samplingRate = samplingRate)
+  # spec(breathing, samplingRate = samplingRate)
   # seewave::meanspec(breathing, f = samplingRate, wl = windowLength_points,
   #   dB = 'max0')
   return (breathing)
@@ -412,7 +412,7 @@ generateHarmonics = function(pitch,
   }
   # sum(is.na(waveform))
   # plot(waveform[], type = 'l')
-  # spectro_denoised (waveform, samplingRate = samplingRate, osc = TRUE)
+  # spec (waveform, samplingRate = samplingRate, osc = TRUE)
   # playme(waveform, samplingRate = samplingRate)
   # seewave::meanspec(waveform, f = samplingRate)
 
@@ -451,6 +451,6 @@ generateHarmonics = function(pitch,
   }
   waveform = waveform * drift_upsampled
   # playme(waveform, samplingRate = samplingRate)
-  # spectro_denoised (waveform, samplingRate = samplingRate)
+  # spec (waveform, samplingRate = samplingRate)
   return (waveform)
 }
