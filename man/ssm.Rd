@@ -9,7 +9,7 @@ ssm(x, samplingRate = NULL, windowLength = 40, step = NULL,
   input = c("cepstrum", "audiogram")[1], normalizeInput = FALSE,
   simil_measure = c("cosine", "correlation")[1], plot = T, returnSSM = T,
   novelty_col = "black", novelty_lwd = 3, kernel_ms = 200,
-  kernel_sd = 0.5, win = 3, ...)
+  kernel_sd = 0.2, win = 3, ...)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -47,13 +47,36 @@ samplingRate}
 \item{kernel_sd}{SD of checkerboard kernel for calculating novelty}
 
 \item{win}{window for averaging SSM (reduces its size). Forced to odd: 1 3 5 etc}
+
+\item{...}{other graphical parameters}
 }
 \value{
-Returns
+If \code{returnSSM} is TRUE, returns a list of two components: $ssm contains the self-similarity matrix, and $novelty contains the novelty vector. If \code{returnSSM} is FALSE, only produces a plot.
 }
 \description{
 Calculates the self-similarity matrix and novelty vector for a sound.
 }
 \examples{
-s = ssm(x)
+sound = c(generateBout(), generateBout(nSyl = 4, sylDur_mean = 200,
+  pauseDur_mean = 140,  pitchAnchors = list(time = c(0, 0.65, 1),
+  value = c(977, 1540, 826)), exactFormants = NA))
+s = ssm(sound, samplingRate = 16000,
+        input = 'cepstrum', win = 3, kernel_ms = 350)  # detailed, local features
+s = ssm(sound, samplingRate = 16000,
+        input = 'cepstrum', win = 7, kernel_ms = 800)  # more global
+plot(s$novelty, type='b')  # use for peak detection, etc
+}
+\references{
+\itemize{
+  \item El Badawy, D., Marmaroli, P., & Lissek, H. (2013). Audio
+  Novelty-Based Segmentation of Music Concerts. In Acoustics 2013 (No.
+  EPFL-CONF-190844)
+  \item Foote, J. (1999, October). Visualizing music and
+  audio using self-similarity. In Proceedings of the seventh ACM
+  international conference on Multimedia (Part 1) (pp. 77-80). ACM.
+  \item
+  Foote, J. (2000). Automatic audio segmentation using a measure of audio
+  novelty. In Multimedia and Expo, 2000. ICME 2000. 2000 IEEE International
+  Conference on (Vol. 1, pp. 452-455). IEEE.
+  }
 }

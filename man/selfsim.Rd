@@ -22,3 +22,6 @@ Returns a square self-similarity matrix.
 \description{
 Internal soundgen function.
 }
+\details{
+Called by \code{\link{ssm}}.
+}

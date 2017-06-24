@@ -2,12 +2,12 @@
 #'
 #' Internal soundgen function.
 #'
-#' Converts time in seconds to time in h:m:s for pretty printing.
+#' Converts time in seconds to time in hh:mm:ss for pretty printing.
 #' @param time_s time (s)
 #' @return Returns a character string like "1 h 20 min 3 s"
 #' @examples
 #' time_start = proc.time()
-#' Sys.sleep(1.5)
+#' Sys.sleep(1)
 #' time_diff = as.numeric((proc.time() - time_start)[3])
 #' soundgen:::convert_sec_to_hms(time_diff)
 convert_sec_to_hms = function(time_s) {

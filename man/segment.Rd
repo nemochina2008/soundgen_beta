@@ -4,11 +4,11 @@
 \alias{segment}
 \title{Segment a sound}
 \usage{
-segment(x, samplingRate = NULL, shortest_syl = 40, shortest_pause = 50,
+segment(x, samplingRate = NULL, shortest_syl = 40, shortest_pause = 40,
   syl_to_global_mean = 0.9, interburst_min_ms = NULL,
-  interburst_min_scale = 1.2, peak_to_global_max = 0.12,
-  peak_to_trough = 3.2, trough_left = TRUE, trough_right = FALSE,
-  smooth_ms = 27, smooth_overlap = 90, summary = FALSE, plot = FALSE,
+  interburst_min_scale = 1, peak_to_global_max = 0.075,
+  peak_to_trough = 3, trough_left = TRUE, trough_right = FALSE,
+  smooth_ms = 40, smooth_overlap = 80, summary = FALSE, plot = FALSE,
   savePath = NA, ...)
 }
 \arguments{
@@ -48,7 +48,8 @@ analysis window (which is controlled by \code{interburst_min_ms} or
 \item{trough_left, trough_right}{should local maxima be compared to the trough
 on the left and/or right of it? TRUE / FALSE}
 
-\item{smooth_ms}{length of smoothing window (ms)}
+\item{smooth_ms}{length of smoothing window (ms). Capped at half the length
+of sound. Low values dramatically increase processing time}
 
 \item{smooth_overlap}{overlap between smoothing windows (%): the higher, the
 more accurate, but also slower}
@@ -78,11 +79,11 @@ mimima).
 The algorithm is very flexible, but the parameters may be hard to optimize by
 hand. If you have an annotated sample of the sort of audio you are planning
 to analyze, with syllables or bursts counted manually, you can use it for
-automatic optimization of control parameters (see the final example). The
-defaults are the results of just such optimization against 260 human
-vocalizations in Anikin, A. & Persson, T. (2017). Non-linguistic
-vocalizations from online amateur videos for emotion research: a validated
-corpus. Behavior Research Methods, 49(2): 758-771.
+automatic optimization of control parameters (see
+\code{\link{optimizeSegment}}). The defaults are the results of just such
+optimization against 260 human vocalizations in Anikin, A. & Persson, T.
+(2017). Non-linguistic vocalizations from online amateur videos for emotion
+research: a validated corpus. Behavior Research Methods, 49(2): 758-771.
 }
 \examples{
 sound = generateBout(nSyl = 8, sylDur_mean = 50, pauseDur_mean = 70,
@@ -104,9 +105,4 @@ s = segment(sound, samplingRate = 16000, plot = TRUE,
 s = segment(sound, samplingRate = 16000, plot = TRUE,
   shortest_syl = 25, shortest_pause = 25, syl_to_global_mean = .6,
   interburst_min_scale = 1)
-
-# automatic optimization
-\dontrun{
-  key =
-}
 }

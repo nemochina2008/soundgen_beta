@@ -9,11 +9,11 @@
 #' The algorithm is very flexible, but the parameters may be hard to optimize by
 #' hand. If you have an annotated sample of the sort of audio you are planning
 #' to analyze, with syllables or bursts counted manually, you can use it for
-#' automatic optimization of control parameters (see the final example). The
-#' defaults are the results of just such optimization against 260 human
-#' vocalizations in Anikin, A. & Persson, T. (2017). Non-linguistic
-#' vocalizations from online amateur videos for emotion research: a validated
-#' corpus. Behavior Research Methods, 49(2): 758-771.
+#' automatic optimization of control parameters (see
+#' \code{\link{optimizeSegment}}). The defaults are the results of just such
+#' optimization against 260 human vocalizations in Anikin, A. & Persson, T.
+#' (2017). Non-linguistic vocalizations from online amateur videos for emotion
+#' research: a validated corpus. Behavior Research Methods, 49(2): 758-771.
 #' @param x path to a .wav file or a vector of amplitudes with specified
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
@@ -40,7 +40,8 @@
 #'   \code{interburst_min_scale})
 #' @param trough_left,trough_right should local maxima be compared to the trough
 #'   on the left and/or right of it? TRUE / FALSE
-#' @param smooth_ms length of smoothing window (ms)
+#' @param smooth_ms length of smoothing window (ms). Capped at half the length
+#'   of sound. Low values dramatically increase processing time
 #' @param smooth_overlap overlap between smoothing windows (%): the higher, the
 #'   more accurate, but also slower
 #' @param summary if TRUE, returns only a summary of the number and spacing of
@@ -72,30 +73,29 @@
 #' s = segment(sound, samplingRate = 16000, plot = TRUE,
 #'   shortest_syl = 25, shortest_pause = 25, syl_to_global_mean = .6,
 #'   interburst_min_scale = 1)
-#'
-#' # automatic optimization
-#' \dontrun{
-#'   key =
-#' }
-
 segment = function(x,
                    samplingRate = NULL,
                    shortest_syl = 40,
-                   shortest_pause = 50,
+                   shortest_pause = 40,
                    syl_to_global_mean = 0.9,
                    interburst_min_ms = NULL,
-                   interburst_min_scale = 1.2,
-                   peak_to_global_max = 0.12,
-                   peak_to_trough = 3.2,
+                   interburst_min_scale = 1,
+                   peak_to_global_max = 0.075,
+                   peak_to_trough = 3,
                    trough_left = TRUE,
                    trough_right = FALSE,
-                   smooth_ms = 27,
-                   smooth_overlap = 90,
+                   smooth_ms = 40,
+                   smooth_overlap = 80,
                    summary = FALSE,
                    plot = FALSE,
                    savePath = NA,
                    ...) {
   merge_close_syl = ifelse(is.null(shortest_pause) || is.na(shortest_pause), F, T)
+  if (smooth_ms < 10) {
+    warning('smooth_ms < 10 ms is slow and usually not very useful')
+  }
+  if (smooth_overlap < 0) smooth_overlap = 0
+  if (smooth_overlap > 99) smooth_overlap = 99
 
   ## import a sound
   if (class(x) == 'character') {
@@ -121,8 +121,12 @@ segment = function(x,
   # plot(sound, type='l')
 
   ## extract amplitude envelope
-  smooth_points = smooth_ms * samplingRate / 1000
-  sound_downsampled = seewave::env (
+  smooth_points = ceiling(smooth_ms * samplingRate / 1000)
+  if (smooth_points > length(sound) / 2) {
+    smooth_points = length(sound) / 2
+  }
+
+  sound_downsampled = seewave::env(
     sound,
     f = samplingRate,
     msmooth = c(smooth_points, smooth_overlap),
@@ -208,26 +212,47 @@ segment = function(x,
 
 #' Segment all files in a folder
 #'
-#' Finds syllables and bursts in all .wav files in a folder. See
-#' \code{link\{segment}} for details.
+#' Finds syllables and bursts in all .wav files in a folder.
+#'
+#' This is just a convenient wrapper for \code{\link{segment}} intended for
+#' analyzing the syllables and bursts in a large number of audio files at a
+#' time. In verbose mode, it also reports ETA every ten iterations. With default
+#' settings, running time should be about a second per minute of audio.
 #'
 #' @param myfolder full path to target folder
 #' @inheritParams segment
 #' @param verbose If TRUE, reports progress and estimated time left
-#' @return If \code{summary} is TRUE, returns a dataframe with one row per audio file. If \code{summary} is FALSE, returns a list of detailed descriptives.
+#' @return If \code{summary} is TRUE, returns a dataframe with one row per audio
+#'   file. If \code{summary} is FALSE, returns a list of detailed descriptives.
 #' @export
+#' @examples
+#' \dontrun{
+#' # download 260 sounds from Anikin & Persson (2017)
+#' # http://cogsci.se/personal/results/
+#' # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
+#' # unzip them into a folder, say '~/Downloads/temp'
+#' myfolder = '~/Downloads/temp'  # 260 .wav files live here
+#' s = segmentFolder(myfolder, verbose = TRUE)
+#'
+#' # import manual counts of syllables in 260 sounds from Anikin & Persson (2017) (our "key")
+#' key = segment_manual  # a vector of 260 integers
+#' trial = as.numeric(s$nBursts)
+#' cor (key, trial, use = 'pairwise.complete.obs')
+#' boxplot(trial ~ as.integer(key), xlab='key')
+#' abline(a=0, b=1, col='red')
+#' }
 segmentFolder = function (myfolder,
                           shortest_syl = 40,
-                          shortest_pause = 50,
+                          shortest_pause = 40,
                           syl_to_global_mean = 0.9,
                           interburst_min_ms = NULL,
-                          interburst_min_scale = 1.2,
-                          peak_to_global_max = 0.12,
-                          peak_to_trough = 3.2,
+                          interburst_min_scale = 1,
+                          peak_to_global_max = 0.075,
+                          peak_to_trough = 3,
                           trough_left = TRUE,
                           trough_right = FALSE,
-                          smooth_ms = 27,
-                          smooth_overlap = 90,
+                          smooth_ms = 40,
+                          smooth_overlap = 80,
                           summary = TRUE,
                           plot = FALSE,
                           savePath = NA,
@@ -282,7 +307,7 @@ segmentFolder = function (myfolder,
 
   if (verbose) {
     total_time = as.numeric((proc.time() - time_start)[3])
-    total_time_hms = convert_sec_to_hms(total_time_hms)
+    total_time_hms = convert_sec_to_hms(total_time)
     print(paste0('Analyzed ', i, ' files in ', total_time_hms))
   }
   return (output)
@@ -290,203 +315,143 @@ segmentFolder = function (myfolder,
 
 
 
-#' Find fyllables
+#' Optimize segmentation
 #'
-#' Internal soundgen function.
+#' Attemps to optimize the parameters of \code{\link{segmentFolder}} by
+#' comparing the results with manual counting. This assumes that there is some
+#' "key" - a manually annotated collection of audio files. This optimization
+#' function just counts the number of bursts or syllables, so the key should be
+#' a vector of counts per file. For other purposes, you may want to adapt the
+#' optimization function so that the key specifies the exact timing of
+#' syllables, their median length, interburst interval, or any other
+#' characteristic that you want to optimize for. The general idea remains the
+#' same, however: we want to tune the parameters of segmentation to fit our type
+#' of audio and research priorities. The default settings of
+#' \code{\link{segmentFolder}} are optimized for human non-linguistic
+#' vocalizations.
 #'
-#' @param envelope downsampled amplitude envelope
-#' @param timestep time difference between two points in the envelope (ms)
-#' @param threshold all continuous segments above this value are considered to
-#'   be syllables
-#' @inheritParams segment
-#' @param merge_close_syl if TRUE, syllable separated by less than
-#'   \code{shortest_pause} will be merged
-#' @return Returns a dataframe with timing of syllables.
-findSyllables = function(envelope,
-                         timestep,
-                         threshold,
-                         shortest_syl,
-                         shortest_pause,
-                         merge_close_syl) {
-  # find strings of TTTTT
-  envelope$aboveThres = ifelse (envelope$value > threshold, 1, 0)
-  env_above_thres = data.frame (value = rle(envelope$aboveThres)[[2]],
-                                count = rle(envelope$aboveThres)[[1]])
-  env_above_thres$idx = 1:nrow(env_above_thres) # a convoluted way of tracing
-  # the time stamp in the output of rle
-  # exclude segments of length < shortest_syl or below threshold
-  env_short = na.omit(env_above_thres[env_above_thres$value == 1 &
-                                        env_above_thres$count > ceiling(shortest_syl / timestep), ])
-  nSyllables = nrow(env_short)
+#' If your sounds are very different from human non-linguistic vocalizations,
+#' you may want to change the default values of arguments to
+#' \code{\link{segmentFolder}} to speed up convergence. Also note that the
+#' parameters are forced to be non-negative, but this may not be enough to
+#' prevent occasional crashing, e.g. when optimizing smoothing parameters. Adapt
+#' the code to enforce suitable constraints, depending on your data.
+#' @param myfolder path to where the .wav files live
+#' @param key a vector containing the "correct" number of syllables in each file
+#' @param pars_to_optimize names of arguments of \code{\link{segmentFolder}}
+#'   that should be optimized
+#' @param pars_bounds a list setting the lower and upper boundaries for possible values of optimized parameters. For ex., if we optimize \code{smooth_ms} and \code{smooth_overlap}, reasonable pars_bounds might be list(low = c(5, 0), high = c(500, 95))
+#' @param fitness_measure are we interested in optimizing the count of syllables
+#'   (\code{nSyllables}) or bursts (\code{nBursts})?
+#' @param nIter repeat the optimization several times to check convergence
+#' @param wiggle_init each optimization begins with a random seed, and
+#'   \code{wiggle_init} specifies the SD of normal distribution used to generate
+#'   random deviation of initial values from the defaults
+#' @param control a list of control parameters passed on to
+#'   \code{\link[stats]{optim}}. The method used is "Nelder-Mead"
+#' @return Returns a matrix with one row per iteration, containing Pearson's
+#'   correlation between the key and \code{fitness_measure} in the first column
+#'   and the best values of each of the optimized parameters in the remaining
+#'   columns.
+#' @export
+#' @examples
+#' \dontrun{
+#' # download 260 sounds from Anikin & Persson (2017)
+#' # http://cogsci.se/personal/results/
+#' # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
+#' # unzip them into a folder, say '~/Downloads/temp'
+#' myfolder = '~/Downloads/temp'  # 260 .wav files live here
+#' # import manual counts of syllables in 260 sounds from Anikin & Persson (2017) (our "key")
+#' key = segment_manual  # a vector of 260 integers
+#'
+#' # run optimization loop several times with random initial values to check convergence
+#' # NB: with 260 sounds and maxit = 50, this can take ~20 min per iteration!
+#' res = optimizeSegment(myfolder = myfolder, key = key,
+#'   pars_to_optimize = c('shortest_syl', 'shortest_pause', 'syl_to_global_mean'),
+#'   fitness_measure = 'nSyllables',
+#'   nIter = 2, control = list(maxit = 50, reltol = .01, trace = 0))
+#'
+#' # examine the results
+#' print(res)
+#' for (c in 2:ncol(res)) {
+#'   plot(res[, c], res[, 1], main = colnames(res)[c])
+#' }
+#' pars = as.list(res[1, 2:ncol(res)])  # top candidate (best pars)
+#' s = do.call(segmentFolder, c(myfolder, pars))  # segment with best pars
+#' cor(key, as.numeric(s[, fitness_measure]))
+#' boxplot(as.numeric(s[, fitness_measure]) ~ as.integer(key), xlab='key')
+#' abline(a=0, b=1, col='red')
+#' }
+optimizeSegment = function(myfolder,
+                           key,
+                           pars_to_optimize = list(
+                             c('shortest_syl', 'shortest_pause', 'syl_to_global_mean'),
+                             c(
+                               'interburst_min_scale',
+                               'peak_to_global_max',
+                               'peak_to_trough'
+                             ),
+                             c('smooth_ms', 'smooth_overlap')
+                           )[[1]],
+                           pars_bounds = NULL,
+                           fitness_measure = c('nSyllables', 'nBursts')[2],
+                           nIter = 10,
+                           wiggle_init = .2,
+                           control = list(maxit = 50, reltol = .01, trace = 0)) {
+  if (is.null(pars_bounds)) {
+    pars_bounds = list(low = rep(-Inf, length(pars_to_optimize)),
+                       high = rep(Inf, length(pars_to_optimize)))
+  }
+  defaults = list(
+    shortest_syl = 40,
+    shortest_pause = 40,
+    syl_to_global_mean = 0.9,
+    interburst_min_ms = NULL,
+    interburst_min_scale = 1,
+    peak_to_global_max = 0.075,
+    peak_to_trough = 3,
+    trough_left = TRUE,
+    trough_right = FALSE,
+    smooth_ms = 27,
+    smooth_overlap = 90
+  )
 
-  # save the time of each syllable for plotting
-  if (nSyllables == 0){
-    syllables = data.frame(syllable = 0,
-                           time_start = NA,
-                           time_end = NA,
-                           dur = NA)
-  } else {
-    syllables = data.frame(
-      syllable = 1:nSyllables,
-      time_start = apply(matrix(1:nSyllables), 1, function(x) {
-        sum(env_above_thres$count[1:(env_short$idx[x] - 1)]) * timestep
-      }),
-      time_end = NA
+  pars_to_optimize_defaults = defaults[names(defaults) %in% pars_to_optimize]
+  optimal_pars = list()
+  time_start = proc.time()
+
+  for (i in 1:nIter) {
+    # start with randomly wiggled default pars
+    p_init = rnorm_bounded(
+      length(pars_to_optimize_defaults),
+      mean = as.numeric(unlist(pars_to_optimize_defaults)),
+      sd = as.numeric(unlist(pars_to_optimize_defaults)) * wiggle_init,
+      low = pars_bounds$low, high = pars_bounds$high
     )
-    if (env_above_thres$value[1] == 1) {   # if the sounds begins with a syllable
-      syllables$time_start[1] = 0  # the first syllable begins at zero
-    }
-    syllables$time_end = syllables$time_start + env_short$count * timestep
+    # run Nelder-Mead optimization (other methods don't work)
+    myOptim = optim(
+      par = p_init,
+      fn = evaluate_params,
+      pars_to_optimize = pars_to_optimize,
+      pars_bounds = pars_bounds,
+      fitness_measure = fitness_measure,
+      myfolder = myfolder,
+      key = key,
+      method = 'Nelder-Mead',
+      control = control
+    )
+    my_r = 1 - myOptim$value # the best achievable correlation with these predictors
+    my_pars = myOptim$par # optimal pars
+    optimal_pars[[i]] = c(my_r, my_pars)
 
-    # Optional: merge syllables with very short intervals in between them
-    if (merge_close_syl) {
-      syllables = mergeSyllables(syllables, shortest_pause)
-      syllables$syllable = 1:nrow(syllables)
-    }
-    syllables$dur = syllables$time_end - syllables$time_start
+    time_diff = as.numeric((proc.time() - time_start)[3])
+    time_left = time_diff / i * (nIter - i)
+    time_left_hms = convert_sec_to_hms(time_left)
+    print(paste0('Done ', i, ' / ', nIter, '; Estimated time left: ', time_left_hms))
   }
-
-
-  return (syllables)
+  res = as.data.frame(sapply(optimal_pars, cbind))
+  rownames(res) = c('r', pars_to_optimize)
+  res = t(res)
+  res = res[order(res[, 1], decreasing = TRUE),]
+  return (res)
 }
-
-
-#' Merge syllables
-#'
-#' Internal soundgen function.
-#'
-#' Merges syllables if they are separated by less than \code{shortest_pause ms}
-#' @param syllables a dataframe listing syllables with time_start and time_end
-#' @inheritParams segment
-mergeSyllables = function (syllables, shortest_pause) {
-  i = 1
-  while (i < nrow(syllables)) {
-    while (syllables$time_start[i + 1] - syllables$time_end[i] < shortest_pause &
-           i < nrow(syllables)) {
-      syllables$time_end[i] = syllables$time_end[i + 1]
-      syllables = syllables[-(i + 1), ]
-    }
-    i = i + 1
-  }
-  return (syllables)
-}
-
-
-#' Find bursts
-#'
-#' Internal soundgen function.
-#'
-#' @inheritParams findSyllables
-#' @inheritParams segment
-#' @return Returns a dataframe with timing of bursts
-findBursts = function(envelope,
-                      timestep,
-                      interburst_min_ms,
-                      peak_to_global_max,
-                      peak_to_trough,
-                      trough_left = TRUE,
-                      trough_right = FALSE) {
-  if (!is.numeric(interburst_min_ms)) {
-    stop(paste0('interburst_min_ms is weird:', interburst_min_ms))
-  }
-  if (interburst_min_ms < 0) {
-    stop('interburst_min_ms is negative')
-  }
-
-  # we're basically going to look for local maxima within ± n
-  n = floor(interburst_min_ms / timestep)
-  bursts = data.frame(time = 0, ampl = 0)
-
-  for (i in 1:nrow(envelope)) {
-    # for each datapoint, compare it with the local minima to the left/right over ± interburst_min ms
-    if (i > n) {
-      local_min_left = min(envelope$value[(i - n):i])
-    } else {
-      local_min_left = 0
-    }
-    # close to the beginning of the file, local_min_left = 0
-    if (i < (nrow(envelope) - n - 1)) {
-      # lowest ampl over interburst_min ms on the right
-      local_min_right = min (envelope$value[i:(i + n)])
-    } else {
-      # just in case we want to evaluate both sides of a peak
-      local_min_right = 0
-    }
-
-    # define the window for analysis (differs from ± interburst_min because we have to consider the beginning and end of file)
-    if (i > n) {
-      limit_left = i - n
-    } else {
-      limit_left = 1
-    }
-    if (i < (nrow(envelope) - n - 1)) {
-      limit_right = i + n
-    } else {
-      limit_right = nrow(envelope)
-    }
-
-    # DEFINITION OF A BURST FOLLOWS!!!
-    # (1) it is a local maximum over ± interburst_min
-    cond1 = envelope$value[i] == max(envelope$value[limit_left:limit_right])
-    # (2) it is above a certain % of the global maximum
-    cond2 = envelope$value[i] / max(envelope$value) > peak_to_global_max
-    # (3) it exceeds the local minimum on the LEFT / RIGHT by a factor of peak_to_trough
-    cond3_left = ifelse(trough_left,
-                        envelope$value[i] / local_min_left > peak_to_trough,
-                        TRUE)  # always TRUE if we're not interested in what's left
-    cond3_right = ifelse(trough_right,
-                         envelope$value[i] / local_min_right > peak_to_trough,
-                         TRUE)  # always TRUE if we're not interested in what's right
-    if (cond1 && cond2 && cond3_left && cond3_right) {
-      bursts = rbind(bursts, c(i * timestep, envelope$value[i]))
-    }
-  }
-
-  # prepare output
-  bursts = bursts[-1, ]  # remove the first empty row
-  if (nrow(bursts) > 0) {
-    bursts$interburst_int = NA
-    if (nrow(bursts) > 1) {
-      bursts$interburst_int[1:(nrow(bursts)-1)] = diff(bursts$time)
-    }
-  }
-
-  return (bursts)
-}
-
-
-
-
-#
-# plot_some_examples = FALSE  # check manually on some problematic files from different categories:
-# if (plot_some_examples) {
-#   path = '/home/allgoodguys/Documents/Studying/Lund_cognitive-science/00_master/cartoons_clips/all_shrunk_260/'
-#   files = c(
-#     'ut_exams_05-f-laugh',
-#     'ut_fear-bungee_11',
-#     'ut_fear_23-scream-laugh',
-#     'ut_fear_29-f-scream',
-#     'ut_fear_49-m-scream',
-#     'ut_fear_51-m-scream',
-#     'ut_laugh-amused_05-f',
-#     'ut_laugh-amused_31-m',
-#     'ut_laugh-amused_53-f',
-#     'ut_pain_47-birth',
-#     'ut_sad-cry_16-m',
-#     'ut_sad-cry_38-f'
-#   )
-#   length(files)
-#
-#   layout (matrix(
-#     nrow = 3,
-#     ncol = 4,
-#     1:12,
-#     byrow = TRUE
-#   ))
-#   for (f in sort(files)) {
-#     myfile = paste0(path, f, '.wav')
-#     segment (myfile, plot = TRUE)
-#   }
-#   layout (matrix(c(1, 1)))
-# }
-#

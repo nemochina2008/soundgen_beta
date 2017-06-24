@@ -20,7 +20,5 @@ Returns a numeric vector of length \code{nrow(ssm)}
 Internal soundgen function.
 }
 \details{
-Calculates novelty in a self-similarity matrix. See El Badawy, D., Marmaroli,
-P., & Lissek, H. (2013). Audio Novelty-Based Segmentation of Music Concerts.
-In Acoustics 2013 (No. EPFL-CONF-190844).
+Calculates novelty in a self-similarity matrix. Called by \code{\link{ssm}}.
 }
