@@ -55,19 +55,24 @@ zeroOne = function(x) {
 #'
 #' Internal soundgen function.
 #'
-#' Returns Shannon entropy of a vector. Zeroes are dealt with by adding 1 to all
-#' elements. If all elements are zero, returns NA.
-#' @param x vector of non-negative floats
-#' @return Float or NA
-getEntropy = function(x) {
-  if (sum(x) == 0)
-    return (NA)  # empty frames shouldn't count
-  x = x + 1  # otherwise log0 gives NaN
-  p = x / sum(x)
-  -sum(log2(p) * p)
+#' Returns Weiner entropy of a power spectrum. Zeroes are dealt with by adding
+#' 1e-10 to all elements. If all elements are zero, returns NA.
+#' @param x vector of non-negative floats, e.g. a power spectrum
+#' @return Float between 0 and 1 or NA
+#' @examples
+#' # a single peak in spectrum: entropy approaches 0
+#' getEntropy(c(rep(0, 255), 1, rep(0, 256)))
+#' # silent frame: entropy is NA
+#' getEntropy(rep(0, 512))
+#' # white noise: entropy = 1
+#' getEntropy(rep(1, 512))
+getEntropy = function(x, normalize = FALSE) {
+  if (sum(x) == 0) return (NA)  # empty frames
+  x = ifelse (x==0, 1e-10, x)  # otherwise log0 gives NaN
+  geom_mean = exp(mean(log(x)))
+  ar_mean = mean(x)
+  return (geom_mean / ar_mean)
 }
-
-
 
 
 #' Random draw from a truncated normal distribution

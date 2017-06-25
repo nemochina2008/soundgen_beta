@@ -8,8 +8,6 @@
 #' time and frequency domains, and controlling contrast and brightness.
 #' @param x path to a .wav file or a vector of amplitudes with specified
 #'   samplingRate
-#' @param frameBank (alternative to \code{x}) a previously saved bank of
-#'   individual frames as produced by function \code{\link{getFrameBank}}
 #' @param samplingRate sampling rate of \code{x} (only needed if
 #'   \code{x} is a numeric vector, rather than a .wav file)
 #' @param windowLength length of fft window (ms)
@@ -23,7 +21,7 @@
 #'   bin. For ex., if denoise_median_time = 0.5, the median of each frequency
 #'   bin (over the entire sound duration) will be calculated and subtracted from
 #'   each frame (see examples)
-#' @param percentNoise proportion of frames (0 to 1) used for calculating noise
+#' @param percentNoise percentage of frames (0 to 100%) used for calculating noise
 #'   spectrum
 #' @param noiseReduction how much noise to remove (0 to +inf, recommended 0 to
 #'   2). 0 = no noise reduction, 2 = strong noise reduction: \eqn{spectrum -
@@ -46,15 +44,18 @@
 #'   or another color theme (e.g. 'heat.colors')
 #' @param xlab label for x-axis
 #' @param ... other graphical parameters
+#' @param frameBank ignore (only needed for pitch tracking)
+#' @param duration ignore (only needed for pitch tracking)
 #' @export
 #' @return Returns nothing (if output = 'none'), raw spectrum (if output =
 #'   'original'), denoised and/or smoothed spectrum (if output = 'processed'),
 #'   or spectral derivatives (if method = 'spectralDerivative') as a matrix of
 #'   real numbers.
 #' @examples
-#' # synthesize a sound 1 s long, with a gradually increasing breathing noise
-#' sound = generateBout(sylDur_mean = 1000, samplingRate = 16000,
-#'   breathingAnchors = data.frame(time = c(0, 1200), value = c(-120, -10)))
+#' # synthesize a sound 1 s long, with gradually increasing hissing noise
+#' sound = generateBout(sylDur_mean = 1000, temperature = 0, breathingAnchors = list(
+#'   time = c(0, 1300), value = c(-120, 0)), exactFormants_unvoiced = list(
+#'   f1 = list(time = 0, freq = 5000, width = 10000, amp = 0)))
 #' # playme(sound, samplingRate = 16000)
 #'
 #' # basic spectrogram
@@ -71,8 +72,8 @@
 #'
 #' # detect 10% of the noisiest frames based on entropy and remove the pattern
 #' # found in those frames (in this cases, breathing)
-#' spec(sound, samplingRate = 16000, percentNoise = 0.1,
-#'   noiseReduction = 1.2, brightness = -2) # breathing almost gone
+#' spec(sound, samplingRate = 16000,  noiseReduction = 1.1,
+#'   brightness = -2)  # white noise almost gone
 #'
 #' # apply median smoothing in both time and frequency domains
 #' spec(sound, samplingRate = 16000, median_smoothing_freq = 5,
@@ -82,11 +83,10 @@
 #' spec(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 #'
 #' # add bells and whistles
-#' spec(sound, samplingRate = 16000, osc = TRUE, contrast = 1,
+#' spec(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
 #'   brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
 #'   ylab = 'Frequency, kHz', ylim = c(0,5))
 spec = function (x,
-                 frameBank = NULL,
                  samplingRate = NULL,
                  windowLength = 50,
                  step = 15,
@@ -95,7 +95,7 @@ spec = function (x,
                  median_smoothing_freq = 0,
                  median_smoothing_time = 0,
                  denoise_median_time = 0,
-                 percentNoise = 0,
+                 percentNoise = 10,
                  noiseReduction = 0,
                  contrast = .2,
                  brightness = 0,
@@ -106,15 +106,9 @@ spec = function (x,
                  osc = F,
                  colorTheme = c('bw', 'seewave', '...')[1],
                  xlab = '',
+                 frameBank = NULL,
+                 duration = NULL,
                  ...) {
-  # fix default settings
-  if (is.null(ylim)) {
-    ylim = c(0, floor(samplingRate / 2 / 1000))
-  }
-  contrast_exp = exp(3 * contrast)
-  brightness_exp = exp(3 * brightness)
-  # visualization: plot(exp(3 * seq(-1, 1, by = .01)), type = 'l')
-
   # import audio
   if (class(x) == 'character') {
     sound_wav = tuneR::readWave(x)
@@ -155,6 +149,14 @@ spec = function (x,
       a vector of amplitudes plus samplingRate, or a preprocessed frameBank'
     )
   }
+
+  # fix default settings
+  if (is.null(ylim)) {
+    ylim = c(0, floor(samplingRate / 2 / 1000))
+  }
+  contrast_exp = exp(3 * contrast)
+  brightness_exp = exp(3 * brightness)
+  # visualization: plot(exp(3 * seq(-1, 1, by = .01)), type = 'l')
 
   # FFT
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
@@ -203,10 +205,10 @@ spec = function (x,
   Z1[nonpositives] = min(Z1[positives])
   Z1 = Z1 - min(Z1)
 
-  if (percentNoise > 0) {
+  if (noiseReduction > 0) {
     # silence frames with entropy above threshold
     entr = apply(Z1, 1, function(x) getEntropy(x)) # Z1 >= 0
-    q = quantile(entr, probs = 1 - percentNoise, na.rm = T) # the entropy of
+    q = quantile(entr, probs = 1 - percentNoise/100, na.rm = T) # the entropy of
     # silent frames is NA
     # plot(entr, type='l'); lines(x=1:length(entr),y=rep(q,length(entr)), col='blue', lty=2)
     idx = as.numeric(which(entr >= q))

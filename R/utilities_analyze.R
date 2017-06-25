@@ -81,8 +81,8 @@ analyzeFrame = function (frame,
                          voiced_threshold_cep = 0.45,
                          voiced_threshold_spec = 0.45,
                          specPitchThreshold_nullNA = 0.8,
-                         slopeSpec = 0.75,
-                         widthSpec = 100,
+                         slope_spec = 0.75,
+                         width_spec = 100,
                          pitch_floor = 75,
                          pitch_ceiling = 3500,
                          silence = 0.03,
@@ -120,7 +120,7 @@ analyzeFrame = function (frame,
     'quartile25' = NA,
     'quartile50' = NA,
     'quartile75' = NA,
-    'specSlope' = NA
+    'slope_spec' = NA
   )
 
   ### DESCRIPTIVES
@@ -138,7 +138,7 @@ analyzeFrame = function (frame,
   quartile25 = meanSpec_cut$freq [min(which(cumsum(meanSpec_cut$amp) >= 0.25 * amplitude_cut))] # first quartile of spectral energy distribution in the band from pitch_floor to cutoff_dom kHz
   quartile50 = meanSpec_cut$freq [min(which(cumsum(meanSpec_cut$amp) >= 0.5 * amplitude_cut))] # second quartile (same as mean freq within this spectral band)
   quartile75 = meanSpec_cut$freq [min(which(cumsum(meanSpec_cut$amp) >= 0.75 * amplitude_cut))] # third quertile. Note: half the energy in the band from pitch_floor to cutoff_dom kHz lies between quartile25 and quartile75
-  specSlope = summary(lm(amp ~ freq, data = meanSpec_cut))$coef[2, 1]
+  slope_spec = summary(lm(amp ~ freq, data = meanSpec_cut))$coef[2, 1]
 
   # get lowest dominant frequency bands
   dom = NA
@@ -261,12 +261,12 @@ analyzeFrame = function (frame,
 
 
   ## PITCH_SPECTRAL. Try to detect pitch by finding peaks in the spectrum (frequency domain analysis, ~ modified BaNa algorithm)
-  width = 2 * ceiling((widthSpec / bin + 1) * 20 / bin / 2) - 1 # to be always ~100 Hz, regardless of bin, but an odd number
+  width = 2 * ceiling((width_spec / bin + 1) * 20 / bin / 2) - 1 # to be always ~100 Hz, regardless of bin, but an odd number
   if (is.na(HNR)) {
     specPitchThreshold = specPitchThreshold_nullNA # if HNR is NA, the sound is probably a mess, so we play safe by only looking at very strong harmonics
   } else {
     specPitchThreshold = specPitchThreshold_nullNA - specPitchThreshold_nullNA *
-      HNR * slopeSpec  # for noisy sounds the threshold is high to avoid false sumharmonics etc, for tonal sounds it is low to catch weak harmonics
+      HNR * slope_spec  # for noisy sounds the threshold is high to avoid false sumharmonics etc, for tonal sounds it is low to catch weak harmonics
   }
   temp = rollapply(frame_zoo, width = width, align = 'center', function(x)
     isCentral.localMax(x, threshold = specPitchThreshold)) # plot(frame_zoo, type='l')
@@ -387,7 +387,7 @@ analyzeFrame = function (frame,
       quartile25 = quartile25,
       quartile50 = quartile50,
       quartile75 = quartile75,
-      specSlope = specSlope
+      slope_spec = slope_spec
     )
   ))
 }

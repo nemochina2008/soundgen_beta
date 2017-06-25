@@ -32,7 +32,8 @@
 #' @return Returns ... The best guess at the pitch contour considering all available information is stored in the variable called "pitch". In addition, the output contains pitch estimates based on three separate algorithms: autocorrelation (pitchAutocor), cepstrum (pitchCep), and BaNa (pitchSpec).
 #' @export
 #' @examples
-#'
+#' sound = generateBout()
+#' spec(sound, samplingRate = 16000)
 analyzeSound = function (x,
                          samplingRate = NULL,
                          silence = 0.03,
@@ -69,8 +70,8 @@ analyzeSound = function (x,
                          smooth_vars = c('pitch', 'dom'),
                          plot = T,
                          savePath = NA,
-                         contrast = 1,
-                         brightness = 1,
+                         contrast = .2,
+                         brightness = 0,
                          ylim = c(0, 5),
                          ...) {
   ## preliminaries
@@ -79,11 +80,15 @@ analyzeSound = function (x,
     sound = tuneR::readWave(x)
     samplingRate = sound@samp.rate
     sound = sound@left
+    plotname = tail(unlist(strsplit(soundfile, '/')), n = 1)
+    plotname = substring (plotname, first = 1,
+                          last = (nchar(plotname) - 4))
   }  else if (class(x) == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
       stop ('Please specify samplingRate, eg 44100')
     } else {
       sound = x
+      plotname = ''
     }
   }
 
@@ -96,7 +101,8 @@ analyzeSound = function (x,
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   # windowLength_points = 2^round (log(windowLength * samplingRate /1000)/log(2), 0) # to ensure that the window length in points is a power of 2, say 2048 or 1024
   duration = length(sound) / samplingRate
-  maxNoCands = (max_pitch_cands - 2) %/% 2 # one for dom, one for pitchCep, the rest shared between pitchAutocor and pitchSpec
+  maxNoCands = (max_pitch_cands - 2) %/% 2 # one for dom, one for pitchCep,
+  # the rest shared between pitchAutocor and pitchSpec
 
   # Set up filter for calculating pitchAutocor
   filter = ftwindow_modif(2 * windowLength_points, wn = wn) # plot(filter, type='l')
@@ -109,12 +115,9 @@ analyzeSound = function (x,
   ## fft and acf per frame
   if (!is.na(savePath)) {
     plot = T
-    plotname = tail(unlist(strsplit(soundfile, '/')), n = 1)
-    plotname = substring (plotname, first = 1,
-                          last = (nchar(plotname) - 4))
     jpeg(file = paste0 (savePlotPath, plotname, ".jpg"), 1200, 800)
   }
-  frameBank = getFrameBank (
+  frameBank = getFrameBank(
     sound = sound,
     samplingRate = samplingRate,
     windowLength_points = windowLength_points,
@@ -123,9 +126,9 @@ analyzeSound = function (x,
     zp = zp,
     filter = NULL
   )
-  s = spec (
+  s = spec(
+    x = NULL,
     frameBank = frameBank,
-    soundfile = NULL,
     duration = duration,
     samplingRate = samplingRate,
     ylim = ylim,
@@ -135,14 +138,14 @@ analyzeSound = function (x,
     contrast = contrast,
     brightness = brightness,
     step = step,
-    main = tail(unlist(strsplit(soundfile, '/')), 1),
+    main = plotname,
     plot = plot,
     output = 'original',
     ...
   )
   autocorBank = apply (frameBank, 2, function(x)
     acf(x, windowLength_points, plot = F)$acf / autoCorrelation_filter)
-  # plot (windowBank[, 5], type = 'l')
+  # plot (autocorBank[, 5], type = 'l')
   rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
 
   # calculate amplitude of each frame
@@ -192,7 +195,7 @@ analyzeSound = function (x,
     # for each frame that satisfies our condition, do spectral analysis (NB: we
     # do NOT analyze frames that are too quiet or have very high entropy, so we
     # only get NA's for those frames, no meanFreq, dom etc!)
-    frameInfo [[i]] = analyzeFrame (
+    frameInfo [[i]] = analyzeFrame(
       frame = s[, i],
       autoCorrelation = autocorBank[, i],
       samplingRate = samplingRate,

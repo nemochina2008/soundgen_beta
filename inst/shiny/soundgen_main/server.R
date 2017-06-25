@@ -9,7 +9,7 @@ server = function(input, output, session) {
   ## S E T U P
   myPars = reactiveValues('myfile' = NULL,
                            'sound' = as.numeric(tuneR::readWave('www/temp.wav')@left),
-                            # w/o as.numeric we get integers and spectro_denoised complains
+                            # w/o as.numeric we get integers and spec complains
                            'pitchAnchors' = defaults$pitchAnchors,
                            'pitchAnchors_global' = defaults$pitchAnchors_global,
                            'breathingAnchors' = defaults$breathingAnchors,
@@ -61,8 +61,6 @@ server = function(input, output, session) {
     for (v in lists_to_default) {
       myPars[[v]] = defaults[[v]]
     }
-    # myPars[['breathingAnchors']] = data.frame('time' = c(0, defaults$sylDur_mean),
-    #                                           'value' = c(throwaway_dB, throwaway_dB))   # TODO: check!!!
 
     # ...then load the partial list of presets that are specified (≠ default)
     # for this speaker and call type
@@ -85,7 +83,6 @@ server = function(input, output, session) {
       for (v in sliders_to_reset) {
         try(updateSliderInput(session, v, value = as.numeric(preset[[v]])))
       }
-
 
       myPars_to_reset = names(myPars) [which(names(myPars) %in% names(preset))]
       for (v in myPars_to_reset) {
@@ -117,7 +114,7 @@ server = function(input, output, session) {
         updateVowels()
       }
 
-      if(!is.null(preset$noiseType)){
+      if(!is.null(preset$noiseType)) {
         updateSelectInput(session, inputId = 'noiseType',
                           value = preset$noiseType)
         updateNoise()
@@ -188,12 +185,12 @@ server = function(input, output, session) {
       myPars$exactFormants_unvoiced = NA
       updateTextInput(session, inputId = 'exactFormants_unvoiced', value = 'NA')
     } else if (nchar(input$noiseType) > 0) {  # TODO - check if this always works!!!
-      n = presets[[input$speaker]] [['Formants']][input$noiseType] [[1]]
+      n = presets[[input$speaker]][['Formants']][input$noiseType] [[1]]
       myPars$exactFormants_unvoiced = n[2:length(n)]
       updateSliderInput(session, inputId = 'rolloff_breathing',
                         value = n[['rolloff_breathing']])
       updateTextInput(session, inputId = 'exactFormants_unvoiced',
-                      value = as.character(call('print', preset$exactFormants_unvoiced)[2]))
+                      value = as.character(call('print', myPars$exactFormants_unvoiced)[2]))
     }
   })
 
@@ -788,7 +785,7 @@ server = function(input, output, session) {
   })
 
   output$spectrogram <- renderPlot({
-    spectro_denoised (myPars$sound,  samplingRate = input$samplingRate,
+    spec (myPars$sound,  samplingRate = input$samplingRate,
                       wn = 'gaussian', windowLength = input$spec_windowLength,
                       step = round(input$spec_windowLength / 4),
                       osc = TRUE, xlab = 'Time, ms', ylab = 'Frequency, kHz',

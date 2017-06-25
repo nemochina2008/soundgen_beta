@@ -1,3 +1,5 @@
+## TODO: check strange behavior of smooth contours: for breathing, strength of breathing doesn't change with time=c(0, 1000), amp = c(-120, 0)). For ampl, linear looks ok, but with anchors in between the ampl contour seems too steep. Check!!!
+
 #' soundgen: A package for parametric synthesis of voice and acoustic analysis.
 #'
 #' The soundgen package provides ? categories of important functions:
