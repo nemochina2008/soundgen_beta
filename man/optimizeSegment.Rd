@@ -64,7 +64,8 @@ the code to enforce suitable constraints, depending on your data.
 \examples{
 \dontrun{
 # download 260 sounds from Anikin & Persson (2017)
-# http://cogsci.se/personal/results/01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
+# http://cogsci.se/personal/results/
+# 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp'  # 260 .wav files live here
 # import manual counts of syllables in 260 sounds from Anikin & Persson (2017) (our "key")

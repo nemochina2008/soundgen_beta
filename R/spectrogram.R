@@ -1,4 +1,4 @@
-# Functions for preparing and plotting a spectrogram.
+### FUNCTIONS FOR PREPARING AND PLOTTING A SPECTROGRAM ###
 
 #' Spectrogram
 #'
@@ -13,7 +13,9 @@
 #' @param samplingRate sampling rate of \code{x} (only needed if
 #'   \code{x} is a numeric vector, rather than a .wav file)
 #' @param windowLength length of fft window (ms)
-#' @inheritParams getFrameBank
+#' @param wn window type: gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop
+#' @param step fft step (ms)
+#' @param zp zero padding (points)
 #' @param median_smoothing_freq,median_smoothing_time length of the window, in
 #'   data points (0 to +inf), for calculating a rolling median. Applies median
 #'   smoothing to spectrogram in frequency and time domains, respectively
@@ -315,11 +317,8 @@ gaussian.w = function(n) {
 #' optionally zero-padded) frames, i.e. chunks of the sound file of the right
 #' size and spacing. Handy for further processing.
 #' @param sound numeric vector
-#' @param samplingRate sampling rate (Hz)
-#' @param windowLength_points fft window length (points)
-#' @param wn window type
-#' @param step fft step (ms)
-#' @param zp zero padding, points
+#' @inheritParams spec
+#' @param windowLength_points length of fft window (points)
 #' @param filter fft window filter (defaults to NULL)
 #' @return A matrix with \code{nrow = windowLength_points/2} and \code{ncol}
 #'   depending on \code{length(sound)} and \code{step}
@@ -357,22 +356,6 @@ getFrameBank = function(sound,
     })
   }
   return (frameBank)
-}
-
-#' Shannon entropy
-#'
-#' Internal soundgen function.
-#'
-#' Returns Shannon entropy of a vector. Zeroes are dealt with by adding 1 to all
-#' elements. If all elements are zero, returns NA.
-#' @param x vector of non-negative floats
-#' @return Float or NA
-getEntropy = function(x) {
-  if (sum(x) == 0)
-    return (NA)  # empty frames shouldn't count
-  x = x + 1  # otherwise log0 gives NaN
-  p = x / sum(x)
-  -sum(log2(p) * p)
 }
 
 
