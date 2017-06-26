@@ -1,4 +1,5 @@
 ## TODO: check strange behavior of smooth contours: for breathing, strength of breathing doesn't change with time=c(0, 1000), amp = c(-120, 0)). For ampl, linear looks ok, but with anchors in between the ampl contour seems too steep. Check!!!
+# Export a nice fade-in/out function, with linear/exp/log/smooth fade. It could call getSmoothContour() for generating the contour.
 
 #' soundgen: A package for parametric synthesis of voice and acoustic analysis.
 #'

@@ -51,27 +51,51 @@ zeroOne = function(x) {
 
 
 
-#' Shannon entropy
+#' Entropy
 #'
 #' Internal soundgen function.
 #'
-#' Returns Weiner entropy of a power spectrum. Zeroes are dealt with by adding
-#' 1e-10 to all elements. If all elements are zero, returns NA.
-#' @param x vector of non-negative floats, e.g. a power spectrum
+#' Returns Weiner or Shannon entropy of an input vector such as a power spectrum. Non-negative input values are recoded as as a small positive number (1e-10). If all elements are zero, returns NA.
+#' @param x vector of non-negative floats, e.g. a power spectrum. NB:: all non-negative values are recoded as 1e-10!
+#' @param type 'shannon' for Shannon (information) entropy, 'weiner' for Weiner entropy
+#' @param normalize if TRUE, Shannon entropy is normalized by the length of input vector to range from 0 to 1. It has no affect on Weiner entropy.
 #' @return Float between 0 and 1 or NA
 #' @examples
-#' # a single peak in spectrum: entropy approaches 0
-#' getEntropy(c(rep(0, 255), 1, rep(0, 256)))
-#' # silent frame: entropy is NA
-#' getEntropy(rep(0, 512))
-#' # white noise: entropy = 1
-#' getEntropy(rep(1, 512))
-getEntropy = function(x, normalize = FALSE) {
+#' # Here are four simplified power spectra, each with 9 frequency bins:
+#' s = list(
+#'   c(rep(0, 4), 1, rep(0, 4)),       # a single peak in spectrum
+#'   c(0, 0, 1, 0, 0, .75, 0, 0, .5),  # perfectly periodic, with 3 harmonics
+#'   rep(0, 9),                        # a silent frame
+#'   rep(1, 9)                         # white noise
+#' )
+#'
+#' # Weiner entropy is ~0 for periodic, NA for silent, 1 for white noise
+#' sapply(s, function(x) round(soundgen:::getEntropy(x), 2))
+#'
+#' # Shannon entropy is ~0 for periodic with a single harmonic, moderate for
+#' # periodic with multiple harmonics, NA for silent, highest for white noise
+#' sapply(s, function(x) round(soundgen:::getEntropy(x, type = 'shannon'), 2))
+#'
+#' # Normalized Shannon entropy - same but forced to be 0 to 1
+#' sapply(s, function(x) round(soundgen:::getEntropy(x, type = 'shannon', normalize = TRUE), 2))
+getEntropy = function(x, type = c('weiner', 'shannon')[1], normalize = FALSE) {
   if (sum(x) == 0) return (NA)  # empty frames
-  x = ifelse (x==0, 1e-10, x)  # otherwise log0 gives NaN
-  geom_mean = exp(mean(log(x)))
-  ar_mean = mean(x)
-  return (geom_mean / ar_mean)
+  x = ifelse (x <= 0, 1e-10, x)  # otherwise log0 gives NaN
+  if (type == 'weiner') {
+    geom_mean = exp(mean(log(x)))
+    ar_mean = mean(x)
+    entropy = geom_mean / ar_mean
+  } else if (type == 'shannon') {
+    p = x / sum(x)
+    if (normalize) {
+      entropy = -sum(p * log2(p) / log(length(p)) * log(2))
+    } else {  # unnormalized
+      entropy = -sum(p * log2(p))
+    }
+  } else {
+    stop('Implemented entropy types: "shannon" or "weiner"')
+  }
+  return (entropy)
 }
 
 
