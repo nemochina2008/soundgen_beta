@@ -4,20 +4,18 @@
 \alias{spec}
 \title{Spectrogram}
 \usage{
-spec(x, frameBank = NULL, samplingRate = NULL, windowLength = 50,
-  step = 15, wn = "gaussian", zp = 0, median_smoothing_freq = 0,
-  median_smoothing_time = 0, denoise_median_time = 0, percentNoise = 0,
+spec(x, samplingRate = NULL, windowLength = 50, step = 15,
+  wn = "gaussian", zp = 0, median_smoothing_freq = 0,
+  median_smoothing_time = 0, denoise_median_time = 0, percentNoise = 10,
   noiseReduction = 0, contrast = 0.2, brightness = 0,
   method = c("spectrum", "spectralDerivative")[1], output = c("none",
   "original", "processed")[1], ylim = NULL, plot = TRUE, osc = F,
-  colorTheme = c("bw", "seewave", "...")[1], xlab = "", ...)
+  colorTheme = c("bw", "seewave", "...")[1], xlab = "", frameBank = NULL,
+  duration = NULL, ...)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
 samplingRate}
-
-\item{frameBank}{(alternative to \code{x}) a previously saved bank of
-individual frames as produced by function \code{\link{getFrameBank}}}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than a .wav file)}
@@ -26,9 +24,9 @@ individual frames as produced by function \code{\link{getFrameBank}}}
 
 \item{step}{fft step (ms)}
 
-\item{wn}{window type}
+\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
-\item{zp}{zero padding, points}
+\item{zp}{zero padding (points)}
 
 \item{median_smoothing_freq, median_smoothing_time}{length of the window, in
 data points (0 to +inf), for calculating a rolling median. Applies median
@@ -39,7 +37,7 @@ bin. For ex., if denoise_median_time = 0.5, the median of each frequency
 bin (over the entire sound duration) will be calculated and subtracted from
 each frame (see examples)}
 
-\item{percentNoise}{proportion of frames (0 to 1) used for calculating noise
+\item{percentNoise}{percentage of frames (0 to 100%) used for calculating noise
 spectrum}
 
 \item{noiseReduction}{how much noise to remove (0 to +inf, recommended 0 to
@@ -72,6 +70,10 @@ or another color theme (e.g. 'heat.colors')}
 
 \item{xlab}{label for x-axis}
 
+\item{frameBank}{ignore (only needed for pitch tracking)}
+
+\item{duration}{ignore (only needed for pitch tracking)}
+
 \item{...}{other graphical parameters}
 }
 \value{
@@ -87,9 +89,10 @@ plotting options, but with added routines for noise reduction, smoothing in
 time and frequency domains, and controlling contrast and brightness.
 }
 \examples{
-# synthesize a sound 1 s long, with a gradually increasing breathing noise
-sound = generateBout(sylDur_mean = 1000, samplingRate = 16000,
-  breathingAnchors = data.frame(time = c(0, 1200), value = c(-120, -10)))
+# synthesize a sound 1 s long, with gradually increasing hissing noise
+sound = generateBout(sylDur_mean = 1000, temperature = 0, breathingAnchors = list(
+  time = c(0, 1300), value = c(-120, 0)), exactFormants_unvoiced = list(
+  f1 = list(time = 0, freq = 5000, width = 10000, amp = 0)))
 # playme(sound, samplingRate = 16000)
 
 # basic spectrogram
@@ -106,8 +109,8 @@ spec(sound, samplingRate = 16000, denoise_median_time = 0.95)
 
 # detect 10\% of the noisiest frames based on entropy and remove the pattern
 # found in those frames (in this cases, breathing)
-spec(sound, samplingRate = 16000, percentNoise = 0.1,
-  noiseReduction = 1.2, brightness = -2) # breathing almost gone
+spec(sound, samplingRate = 16000,  noiseReduction = 1.1,
+  brightness = -2)  # white noise almost gone
 
 # apply median smoothing in both time and frequency domains
 spec(sound, samplingRate = 16000, median_smoothing_freq = 5,
@@ -117,7 +120,7 @@ spec(sound, samplingRate = 16000, median_smoothing_freq = 5,
 spec(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 
 # add bells and whistles
-spec(sound, samplingRate = 16000, osc = TRUE, contrast = 1,
+spec(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
   brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
   ylab = 'Frequency, kHz', ylim = c(0,5))
 }

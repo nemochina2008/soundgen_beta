@@ -443,19 +443,19 @@ divideIntoSyllables = function (nSyl,
   out = matrix(ncol = 2, nrow = 0)
   colnames(out) = c('start', 'end')
   if (nSyl == 1) {
-    out = rbind (out, c(0, sylDur_mean))
+    out = rbind(out, c(0, sylDur_mean))
   } else {
     # generate random lengths while respecting the constraints
     c = 0
     while (nrow(out) < nSyl) {
-      duration_ms_loop = rnorm_bounded (
+      duration_ms_loop = rnorm_bounded(
         n = 1,
         mean = sylDur_mean,
         low = sylDur_min,
         high = sylDur_max,
         sd = sylDur_mean * temperature
       )
-      pause_ms_loop = rnorm_bounded (
+      pause_ms_loop = rnorm_bounded(
         n = 1,
         mean = pauseDur_mean,
         low = pauseDur_min,
@@ -464,7 +464,7 @@ divideIntoSyllables = function (nSyl,
       )
       start = 1 + c # start time of syllable, in ms
       end = start + duration_ms_loop # end time of syllable, in ms
-      out = rbind (out, c(start, end))
+      out = rbind(out, c(start, end))
       c = end + pause_ms_loop
     }
   }

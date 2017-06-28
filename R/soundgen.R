@@ -1,5 +1,5 @@
-## TODO: check strange behavior of smooth contours: for breathing, strength of breathing doesn't change with time=c(0, 1000), amp = c(-120, 0)). For ampl, linear looks ok, but with anchors in between the ampl contour seems too steep. Check!!!
-# Export a nice fade-in/out function, with linear/exp/log/smooth fade. It could call getSmoothContour() for generating the contour.
+## TODO: Export a nice fade-in/out function, with linear/exp/log/smooth fade. It could call getSmoothContour() for generating the contour.
+# pitch post-processing: document pathfinder properly; check snake - maybe break once the curve stops changing to speed things up
 
 #' soundgen: A package for parametric synthesis of voice and acoustic analysis.
 #'
@@ -500,7 +500,7 @@ generateBout = function(repeatBout = 1,
         }
 
         # synthesize the unvoiced part
-        unvoiced[[s]] = generateNoise (
+        unvoiced[[s]] = generateNoise(
           len = unvoicedDur_syl,
           breathingAnchors = breathingAnchors_syl[[s]],
           rolloff_breathing = rolloff_breathing,
@@ -544,7 +544,7 @@ generateBout = function(repeatBout = 1,
         value_floor = 0,
         value_ceiling = -throwaway_dB,
         samplingRate = samplingRate
-      ) # plot(amplEnvelope)
+      )  # plot(amplEnvelope)
       sound = sound * amplEnvelope
     }
 

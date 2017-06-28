@@ -13,11 +13,13 @@ getFrameBank(sound, samplingRate, windowLength_points, wn, step, zp,
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than a .wav file)}
 
-\item{wn}{window type}
+\item{windowLength_points}{length of fft window (points)}
+
+\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
 
 \item{step}{fft step (ms)}
 
-\item{zp}{zero padding, points}
+\item{zp}{zero padding (points)}
 
 \item{filter}{fft window filter (defaults to NULL)}
 }

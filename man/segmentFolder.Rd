@@ -62,7 +62,7 @@ on each syllable and bursts (location, duration, amplitude, ...)}
 \item{savePath}{full path to the folder in which to save the plots. If you
 don't want to save the plots, set \code{savePath} to NA (default)}
 
-\item{verbose}{If TRUE, reports progress and estimated time left}
+\item{verbose}{if TRUE, reports progress and estimated time left}
 
 \item{...}{other graphical parameters}
 }
@@ -88,10 +88,10 @@ settings, running time should be about a second per minute of audio.
 myfolder = '~/Downloads/temp'  # 260 .wav files live here
 s = segmentFolder(myfolder, verbose = TRUE)
 
-# import manual counts of syllables in 260 sounds from Anikin & Persson (2017) (our "key")
+# Check accuracy: import a manual count of syllables (our "key")
 key = segment_manual  # a vector of 260 integers
 trial = as.numeric(s$nBursts)
-cor (key, trial, use = 'pairwise.complete.obs')
+cor(key, trial, use = 'pairwise.complete.obs')
 boxplot(trial ~ as.integer(key), xlab='key')
 abline(a=0, b=1, col='red')
 }

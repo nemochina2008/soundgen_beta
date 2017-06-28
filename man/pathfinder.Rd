@@ -8,6 +8,38 @@ pathfinder(pitchCands, pitchCert, certWeight = 0.5, interpolWindow = 3,
   interpolTolerance = 0.05, interpolCert = 0.3, runSnake = T,
   snakeSmoothingStep = 0.05, snakeIterMultiplier = 2, plotSnake = F)
 }
+\arguments{
+\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much do we
+prioritize the certainty of pitch candidates vs. the internal tension of
+the resulting pitch curve. High certWeight: we mostly pay attention to our
+certainty in particular pitch candidates; low certWeight: we are more
+concerned with avoiding rapid pitch fluctuations in our contour.}
+
+\item{interpolWindow}{control the behavior of
+interpolation algorithm when evaluating the costs of possible snake
+configurations. See \code{\link{pathfinder}} for details.}
+
+\item{interpolTolerance}{control the behavior of
+interpolation algorithm when evaluating the costs of possible snake
+configurations. See \code{\link{pathfinder}} for details.}
+
+\item{interpolCert}{control the behavior of
+interpolation algorithm when evaluating the costs of possible snake
+configurations. See \code{\link{pathfinder}} for details.}
+
+\item{runSnake}{if TRUE, uses a stochastic algorithm for adjusting the pitch
+contour to minimize both the internal tension of the curve and its
+deviation from high-certainty pitch candidates. See \code{\link{snake}} for
+details. NB: if the snake is run, the final contour may deviate from the
+actually measured pitch candidates!}
+
+\item{snakeSmoothingStep}{controls the speed of snake adaptation}
+
+\item{plotSnake}{if TRUE, plots the snake (pitch postprocessing)}
+}
+\value{
+Returns a numeric vector representing the best found path through pitch candidates.
+}
 \description{
 Internal soundgen function.
 }
@@ -15,7 +47,4 @@ Internal soundgen function.
 Internal helper function for postprocessing pitch contour. Starts with a
 reasonable guess and computes the more-or-less optimal pitch contour (not
 quite the very optimal - too computationally expensive).
-}
-\examples{
-
 }

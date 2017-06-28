@@ -221,7 +221,7 @@ segment = function(x,
 #'
 #' @param myfolder full path to target folder
 #' @inheritParams segment
-#' @param verbose If TRUE, reports progress and estimated time left
+#' @param verbose if TRUE, reports progress and estimated time left
 #' @return If \code{summary} is TRUE, returns a dataframe with one row per audio
 #'   file. If \code{summary} is FALSE, returns a list of detailed descriptives.
 #' @export
@@ -234,10 +234,10 @@ segment = function(x,
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
 #' s = segmentFolder(myfolder, verbose = TRUE)
 #'
-#' # import manual counts of syllables in 260 sounds from Anikin & Persson (2017) (our "key")
+#' # Check accuracy: import a manual count of syllables (our "key")
 #' key = segment_manual  # a vector of 260 integers
 #' trial = as.numeric(s$nBursts)
-#' cor (key, trial, use = 'pairwise.complete.obs')
+#' cor(key, trial, use = 'pairwise.complete.obs')
 #' boxplot(trial ~ as.integer(key), xlab='key')
 #' abline(a=0, b=1, col='red')
 #' }

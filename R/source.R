@@ -70,9 +70,6 @@ generateNoise = function(len,
                          samplingRate = 44100,
                          overlap = 75,
                          filter_breathing = NA) {
-  # convert anchor amplitudes from dB to linear multipliers
-  breathingAnchors$value = 2 ^ (breathingAnchors$value / 10)
-
   # convert anchors to a smooth contour of breathing amplitudes
   breathingStrength = getSmoothContour(
     len = len,
@@ -83,6 +80,10 @@ generateNoise = function(len,
     plot = FALSE
   )
   # plot(breathingStrength)
+
+  # convert anchor amplitudes from dB to linear multipliers
+  breathingStrength = 2 ^ (breathingStrength / 10)
+
   if (sum(is.na(breathingStrength)) > 0) {
     return (rep(0, len))
   }
@@ -420,8 +421,6 @@ generateHarmonics = function(pitch,
   # apply amplitude envelope and normalize to be on the same scale as breathing
   if (!is.na(amplAnchors) &&
       length(which(amplAnchors$value < -throwaway_dB)) > 0) {
-    # convert from dB to linear multiplier
-    amplAnchors$value = 2 ^ (amplAnchors$value / 10)
     amplEnvelope = getSmoothContour(
       anchors = amplAnchors,
       len = length(waveform),
@@ -429,6 +428,8 @@ generateHarmonics = function(pitch,
       samplingRate = samplingRate
     )
     # plot (amplEnvelope, type = 'l')
+    # convert from dB to linear multiplier
+    amplEnvelope = 2 ^ (amplEnvelope / 10)
     waveform = waveform * amplEnvelope
   }
   waveform = waveform / max(waveform)

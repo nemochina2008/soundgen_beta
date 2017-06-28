@@ -23,13 +23,13 @@ costJumps = function(cand1, cand2) {
 #'
 #' Internal helper function for postprocessing of pitch contour. Returns
 #' gradient of internal energy of a snake. See \code{\link{snake}}.
-#' @param path
-#' @param interpol
-#' @return Returns ???
+#' @param path numeric vector corresponding to a path through pitch candidates
+#' @param interpol the number of points to interpolate beyond each end of the path
+#' @return Returns a vector of the same length as input path giving its 4th derivative.
 findGrad = function(path, interpol = 3) {
   # interpolate 2 values before the first one and two after the last one based
-  # on /interpol/ number of points
-  # in case the path is shorter than the specified interpol:
+  # on /interpol/ number of points in case the path is shorter than the
+  # specified interpol:
   interpol = ifelse(interpol > length(path), length(path), interpol)
   if (interpol == 1) {
     path = c(rep(path[1], 2), path, rep(path[length(path)], 2))
@@ -127,11 +127,11 @@ snake = function (pitch,
 
   # optimization algorithm follows
   for (i in 1:maxIter) {
-    force = forcePerPath (pitch,
-                          pitchCands,
-                          pitchCert,
-                          pitchCenterGravity,
-                          certWeight)
+    force = forcePerPath(pitch,
+                         pitchCands,
+                         pitchCert,
+                         pitchCenterGravity,
+                         certWeight)
     pitch = pitch + snakeSmoothingStep * force
     if (plotSnake) {
       lines(seq(1, length(pitch)), pitch,
@@ -154,10 +154,10 @@ snake = function (pitch,
 #' Internal helper function for postprocessing pitch contour. Starts with a
 #' reasonable guess and computes the more-or-less optimal pitch contour (not
 #' quite the very optimal - too computationally expensive).
-#' @param
-#' @return
-#' @examples
-#'
+#' @param pitchCands
+#' @param pitchCert
+#' @inheritParams analyze
+#' @return Returns a numeric vector representing the best found path through pitch candidates.
 pathfinder = function(pitchCands,
                       pitchCert,
                       certWeight = 0.5,
@@ -197,7 +197,7 @@ pathfinder = function(pitchCands,
       pitchCands = rbind(pitchCands, rep(NA, ncol(pitchCands)))
       pitchCert = rbind (pitchCert, rep(NA, ncol(pitchCert)))
       pitchCands[nrow(pitchCands), f] =
-        median(pitchCenterGravity[left:right], na.rm = T)
+        median(pitchCenterGravity[left:right], na.rm = TRUE)
       pitchCert[nrow(pitchCert), f] = interpolCert # certainty assigned to interpolated frames
     }
   }
@@ -225,11 +225,11 @@ pathfinder = function(pitchCands,
 
   # get the "center of gravity" of pitch candidates in each frame (mean of all
   # pitch candidates weighted by their respective certainties)
-  pitchCenterGravity = apply (as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
+  pitchCenterGravity = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
     mean(
       pitchCands[, x],
       weights = pitchCert[, x] / sum(pitchCert[, x]),
-      na.rm = T
+      na.rm = TRUE
     )
   })
 
@@ -303,29 +303,32 @@ pathfinder = function(pitchCands,
 #'
 #' Internal soundgen function.
 #'
-#' Internal helper function for smoothing pitch contours or other contours. Only outliers are modified, so it's not like smoothing with a kernel. NB: the expected input is pitch, so deviance is calculated on a log-scale.
-#' @param df a matrix or something convertible to a matrix (each column is processed separately, so multiple contours can be fed into this function at once to speed things up)
+#' Internal helper function for smoothing pitch contours or other contours. Only
+#' outliers are modified, so it's not like smoothing with a kernel. NB: the
+#' expected input is pitch, so deviance is calculated on a log-scale.
+#' @param df a dataframe (each column is processed separately, so multiple
+#'   contours can be fed into this function at once to speed things up)
 #' @param smoothing_ww width of smoothing window (points)
 #' @param smoothing_threshold tolerated deviance from moving median (semitones)
-#' @return Returns a matrix of the same dimensions as df.
+#' @return Returns a dataframe of the same dimensions as df.
 #' @examples
 #' df = data.frame(a = rnorm(100, mean = 100, sd = 20),
 #'                 b = rnorm(100, mean = 100, sd = 10))
-#' df1 = medianSmoother(df, smoothing_ww = 5, smoothing_threshold = 1)
+#' df1 = soundgen:::medianSmoother(df, smoothing_ww = 5, smoothing_threshold = 1)
 #' plot(df[, 2], type='b')
 #' lines(df1[, 2], type='b', col='blue', pch=3)
 medianSmoother = function (df, smoothing_ww, smoothing_threshold) {
-  # internal helper function for smoothing pitch contours or other contours. Expects a matrix or something convertible to a matrix
-  # smoothing_ww specifies the number of points that are averaged
-  # smoothing_threshold specifies the tolerated deviance, in semitones
-  df = as.matrix(df)
   temp = df # to calculate median_over_window for original values
   hw = floor(smoothing_ww / 2) # smooth over ± half the smoothing_ww
   for (i in 1:nrow(df)) {
     window = c (max(i - hw, 1), min(i + hw, nrow(df))) # smoothing window
-    median_over_window = apply (as.matrix(temp[(window[1]:window[2]), ]), 2, function(x)
-      median(x, na.rm = T)) # NB: use either temp or df, for original or smoothed values to be used for calculating median_over_window
-    deviance = 12 * log2(df[i, ] / median_over_window) # difference from median pitch etc over window, in semitones
+    median_over_window = apply(as.matrix(temp[(window[1]:window[2]), ]), 2, function(x) {
+      median(unlist(x), na.rm = TRUE)  # w/o unlist returns NULL for NA vectors (weird...)
+      # NB: use either temp or df, for original or smoothed values to be used
+      # for calculating median_over_window
+    })
+    # difference from median pitch etc over window, in semitones
+    deviance = 12 * log2(as.numeric(df[i, ]) / median_over_window)
     cond = which(abs(deviance - 1) > smoothing_threshold)
     df[i, cond] = median_over_window[cond]
   }

@@ -6,8 +6,13 @@
 \usage{
 findGrad(path, interpol = 3)
 }
+\arguments{
+\item{path}{numeric vector corresponding to a path through pitch candidates}
+
+\item{interpol}{the number of points to interpolate beyond each end of the path}
+}
 \value{
-Returns ???
+Returns a vector of the same length as input path giving its 4th derivative.
 }
 \description{
 Internal soundgen function.

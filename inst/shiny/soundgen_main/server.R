@@ -46,7 +46,7 @@ server = function(input, output, session) {
 
   # this key function is EXTREMELY bug-prone - careful with what you change! The right order is crucial
   reset_all = reactive({
-    print('running reset_all()')
+    # print('running reset_all()')
     myPars$updateDur = FALSE # to prevent duration-related settings in myPars
     # from being updated by event listener observeEvent(input$sylDur_mean)
     # when a new preset is loaded

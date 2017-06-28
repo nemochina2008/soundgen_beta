@@ -161,7 +161,7 @@ spec = function (x,
   # FFT
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   # fft of each frame
-  z = apply(frameBank, 2, function(x) fft(x)[1:(floor(nrow(frameBank) / 2))])
+  z = apply(frameBank, 2, function(x) stats::fft(x)[1:(floor(nrow(frameBank) / 2))])
   X = seq(0, duration * 1000, length.out = ncol(z))  # time stamp
   Y = seq(0,
           (samplingRate / 2) - (samplingRate / windowLength_points),
