@@ -56,11 +56,12 @@
 #'   the resulting pitch curve. High certWeight: we mostly pay attention to our
 #'   certainty in particular pitch candidates; low certWeight: we are more
 #'   concerned with avoiding rapid pitch fluctuations in our contour.
-#' @param snakeSmoothingStep controls the speed of snake adaptation
+#' @param snake_convergence
+#' @param snake_step controls the speed of snake adaptation
 #' @param interpolWindow,interpolTolerance,interpolCert control the behavior of
 #'   interpolation algorithm when evaluating the costs of possible snake
 #'   configurations. See \code{\link{pathfinder}} for details.
-#' @param plotSnake if TRUE, plots the snake (pitch postprocessing)
+#' @param snake_plot if TRUE, plots the snake (pitch postprocessing)
 #' @param smooth if TRUE, contours of the specified variables (smooth_vars) are
 #'   smoothed. To control the amount of smoothing, use \code{smooth_idx}.
 #' @param smooth_vars apply a customized version of median smoothing to the
@@ -134,8 +135,8 @@ analyze = function (x,
                     interpolCert = 0.3,
                     certWeight = .5,
                     runSnake = T,
-                    snakeSmoothingStep = 0.05,
-                    plotSnake = F,
+                    snake_step = 0.05,
+                    snake_plot = F,
                     smooth_idx = 1,
                     smooth_vars = c('pitch', 'dom'),
                     plot = T,
@@ -213,9 +214,10 @@ analyze = function (x,
     output = 'original',
     ...
   )
-  autocorBank = apply (frameBank, 2, function(x)
-    acf(x, windowLength_points, plot = F)$acf / autoCorrelation_filter)
-  # plot (autocorBank[, 5], type = 'l')
+  autocorBank = apply(frameBank, 2, function(x) {
+    stats::acf(x, windowLength_points, plot = FALSE)$acf / autoCorrelation_filter
+  })
+  # plot(autocorBank[, 5], type = 'l')
   rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
 
   # calculate amplitude of each frame
@@ -360,8 +362,8 @@ analyze = function (x,
         interpolTolerance = interpolTolerance,
         interpolCert = interpolCert,
         runSnake = runSnake,
-        snakeSmoothingStep = snakeSmoothingStep,
-        plotSnake = plotSnake
+        snake_step = snake_step,
+        snake_plot = snake_plot
       )
     }
   }
@@ -505,8 +507,8 @@ analyzeFolder = function (myfolder,
                           interpolCert = 0.3,
                           certWeight = .5,
                           runSnake = T,
-                          snakeSmoothingStep = 0.05,
-                          plotSnake = F,
+                          snake_step = 0.05,
+                          snake_plot = F,
                           smooth_idx = 1,
                           smooth_vars = c('pitch', 'dom'),
                           plot = T,
@@ -551,8 +553,8 @@ analyzeFolder = function (myfolder,
     interpolCert = interpolCert,
     certWeight = certWeight,
     runSnake = runSnake,
-    snakeSmoothingStep = snakeSmoothingStep,
-    plotSnake = plotSnake,
+    snake_step = snake_step,
+    snake_plot = snake_plot,
     smooth_idx = smooth_idx,
     smooth_vars = smooth_vars,
     plot = plot,

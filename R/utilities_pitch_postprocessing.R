@@ -22,7 +22,7 @@ costJumps = function(cand1, cand2) {
 #' Internal soundgen function.
 #'
 #' Internal helper function for postprocessing of pitch contour. Returns
-#' gradient of internal energy of a snake. See \code{\link{snake}}.
+#' the elastic force acting on a snake. See \code{\link{snake}}.
 #' @param path numeric vector corresponding to a path through pitch candidates
 #' @param interpol the number of points to interpolate beyond each end of the path
 #' @return Returns a vector of the same length as input path giving its 4th derivative.
@@ -62,28 +62,34 @@ findGrad = function(path, interpol = 3) {
 #' total force acting on a snake (sum of internal and external gradients, i.e.
 #' of the elastic force trying to straighten the snake [internal] and of the
 #' force pushing the snake towards the most certain pitch estimates [external])
-#' @param
-#' @return Returns ???
-#' @examples
-#'
+#' @inheritParams snake
+#' @return Returns a numeric vector of the same length as \code{pitch} that
+#'   gives the total force acting on the snake at each point.
 forcePerPath = function (pitch,
                          pitchCands,
                          pitchCert,
                          pitchCenterGravity,
                          certWeight) {
-  ran = diff(range(pitchCands, na.rm = T))
-  # pitchForce = -(pitch_path - pitchCenterGravity) / ran
-  pitchForce = pitch # just a quick way to initialize a vector of the right length
+  ran = diff(range(pitchCands, na.rm = TRUE))
+  # external_force = -(pitch_path - pitchCenterGravity) / ran
+  external_force = pitch # just a quick way to initialize a vector of the right length
   for (i in 1:ncol(pitchCands)) {
     cands = na.omit(pitchCands[, i])
     certs = na.omit(pitchCert[, i])
     deltas = 1 / exp((cands - pitch[i]) ^ 2)
     forces = certs * deltas
-    forces = ifelse(cands > pitch[i], forces,-forces)
-    pitchForce[i] = sum(forces)
+    forces = ifelse(cands > pitch[i], forces, -forces)
+    external_force[i] = sum(forces)
   }
-  internalForce = -findGrad(pitch)
-  return(certWeight * pitchForce + (1 - certWeight) * internalForce)
+  # external_force is the "external" force - the attraction of high-certainty pitch candidates
+
+  internal_force = -findGrad(pitch)
+  # internal_force is the elastic force trying to make the curve smooth
+
+  total_force = certWeight * external_force + (1 - certWeight) * internal_force
+  # weighted average of internal and external forces
+
+  return(total_force)
 }
 
 
@@ -91,23 +97,30 @@ forcePerPath = function (pitch,
 #'
 #' Internal soundgen function.
 #'
-#' Internal helper function for postprocessing of pitch contour. Wiggles a snake along the gradient of internal + external forces. NB: if the snake is run, the final contour may deviate from the actually measured pitch candidates!
-#' @param
-#' @return
-#' @examples
-#'
+#' Internal helper function for postprocessing of pitch contour. Wiggles a snake
+#' along the gradient of internal + external forces. NB: if the snake is run,
+#' the final contour may deviate from the actually measured pitch candidates!
+#' @param pitch numeric vector representing our best guess for pitch contour,
+#'   which we are now attempting to improve by minimizing its elastic tension
+#' @param pitchCands a matrix of multiple pitch candidates per frame from
+#'   pathfinder
+#' @param pitchCert a matrix of the same dimensionality as pitchCands specifying
+#'   our certainty in pitch candidates
+#' @inheritParams analyze
+#' @return Returns optimized pitch contour (numeric vector of the same length as
+#'   \code{pitch}).
 snake = function (pitch,
                   pitchCands,
                   pitchCert,
                   certWeight,
-                  snakeSmoothingStep = 0.05,
-                  snakeIterMultiplier = 2,
-                  plotSnake = F) {
-  ran = diff(range(pitchCands, na.rm = T)) # range of pitch
-  maxIter = ran / snakeSmoothingStep * snakeIterMultiplier
+                  snake_step = 0.05,
+                  snake_plot = FALSE) {
+  ran = diff(range(pitchCands, na.rm = TRUE)) # range of pitch
+  maxIter = floor(ran / snake_step * 2)  # just heuristic, no theory behind this
 
   # plot for debugging or esthetic appreciation
-  if (plotSnake) {
+  if (snake_plot) {
+    # plot all pitch candidates and the initial path
     plot(
       seq(1, ncol(pitchCands)),
       pitch,
@@ -126,20 +139,29 @@ snake = function (pitch,
   }
 
   # optimization algorithm follows
-  for (i in 1:maxIter) {
+  i = 1
+  force_old = 1e10  # Inf causes NaN in force_delta
+  while (i < maxIter) {
     force = forcePerPath(pitch,
                          pitchCands,
                          pitchCert,
                          pitchCenterGravity,
                          certWeight)
-    pitch = pitch + snakeSmoothingStep * force
-    if (plotSnake) {
+    force_new = mean(abs(force))
+    force_delta = (force_old - force_new) / force_old
+    force_old = force_new
+    if (force_delta < snake_step) break
+    # wiggle the snake along the gradient of the total force acting on it
+    # (elastic + attraction of high-certainty pitch candidates)
+    pitch = pitch + snake_step * force
+    if (snake_plot) {
       lines(seq(1, length(pitch)), pitch,
             type = 'l', col = 'green', lty = 4)
     }
+    i = i + 1
   }
 
-  if (plotSnake) {
+  if (snake_plot) {
     lines(seq(1, length(pitch)), pitch,
           type = 'l', col = 'blue', lwd = 3)
   }
@@ -164,10 +186,9 @@ pathfinder = function(pitchCands,
                       interpolWindow = 3,
                       interpolTolerance = 0.05,
                       interpolCert = 0.3,
-                      runSnake = T,
-                      snakeSmoothingStep = 0.05,
+                      snake_step = 0.05,
                       snakeIterMultiplier = 2,
-                      plotSnake = F) {
+                      snake_plot = FALSE) {
   # take log to approximate human perception of pitch differences
   pitchCands[!is.na(pitchCands)] = log2(pitchCands[!is.na(pitchCands)])
 
@@ -178,47 +199,51 @@ pathfinder = function(pitchCands,
     # NB: in the loop b/c it has to be done recursively, taking interpolated
     # values into account for further interpolation. Unfortunate but can't be
     # helped
-    pitchCenterGravity = apply (as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
+    pitchCenterGravity = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
       mean(pitchCands[, x],
            weights = pitchCert[, x] / sum(pitchCert[, x]),
-           na.rm = T)
+           na.rm = TRUE)
     })
     left = max(1, f - interpolWindow)
     right = min(ncol(pitchCands), f + interpolWindow)
     # median over interpolation window (by default ±2 points)
-    med = median(pitchCenterGravity[left:right], na.rm = T)
+    med = median(pitchCenterGravity[left:right], na.rm = TRUE)
     sum_pitchCands = sum(
       pitchCands[, f] > (1 - interpolTolerance) * med &
         pitchCands[, f] < (1 + interpolTolerance) * med,
-      na.rm = T
+      na.rm = TRUE
     )
     if (sum_pitchCands == 0) {
-      # defaults to (0.95 * med, 1.05 * med)
+      # if there are no pitch candidates in the frequency range
+      # expected based on pitch candidates in the adjacent frames...
+      # ... add an empty row for a new, extrapolated pitch candidate
       pitchCands = rbind(pitchCands, rep(NA, ncol(pitchCands)))
-      pitchCert = rbind (pitchCert, rep(NA, ncol(pitchCert)))
+      pitchCert = rbind(pitchCert, rep(NA, ncol(pitchCert)))
+      # use median of adjacent frames for the new pitch cand
       pitchCands[nrow(pitchCands), f] =
         median(pitchCenterGravity[left:right], na.rm = TRUE)
-      pitchCert[nrow(pitchCert), f] = interpolCert # certainty assigned to interpolated frames
+      # certainty assigned to interpolated frames
+      pitchCert[nrow(pitchCert), f] = interpolCert
     }
   }
 
   # order pitch candidates and certainties in each frame from lowest to highest
   # pitch (helpful for further processing)
-  o = apply (as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
+  o = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
     order(pitchCands[, x])
   })
-  pitchCands = apply (as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
+  pitchCands = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
     pitchCands[o[, x], x]
   })
-  pitchCert = apply (as.matrix(1:ncol(pitchCert), nrow = 1), 1, function(x) {
+  pitchCert = apply(as.matrix(1:ncol(pitchCert), nrow = 1), 1, function(x) {
     pitchCert[o[, x], x]
   })
   # remove rows with all NA's
   pitchCands = pitchCands[rowSums(!is.na(pitchCands)) != 0, ]
   pitchCert = pitchCert[rowSums(!is.na(pitchCert)) != 0, ]
 
-  # special case: only a single pitch candidate for all frames in a syllable (no
-  # paths to chose among)
+  # special case: only a single pitch candidate for all frames in a syllable
+  # (no paths to chose among)
   if (class(pitchCands) == 'numeric') {
     return(2 ^ pitchCands)
   }
@@ -245,9 +270,13 @@ pathfinder = function(pitchCands,
   for (i in 2:ncol(pitchCands)) {
     cands = na.omit(pitchCands[, i])
     cost_cert = abs(cands - pitchCenterGravity[i])
-    cost_pitchJump = apply (as.matrix(1:length(cands), nrow = 1), 1, function(x) {
+    # get the cost of transition from the current point to each of the pitch
+    # candidates in the next frame
+    cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
       costJumps(point_current, cands[x])
     })
+    # get a weighted average of transition costs associated with the certainty
+    # of each estimate vs. the magnitude of pitch jumps
     costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
     path = c(path, pitchCands[which.min(costs), i])
     costPathForward = costPathForward + min(costs)
@@ -268,7 +297,7 @@ pathfinder = function(pitchCands,
   for (i in 2:ncol(pitchCands_rev)) {
     cands = na.omit(pitchCands_rev[, i])
     cost_cert = abs(cands - pitchCenterGravity_rev[i])
-    cost_pitchJump = apply (as.matrix(1:length(cands), nrow = 1), 1, function(x) {
+    cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
       costJumps(point_current, cands[x])
     })
     costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
@@ -282,15 +311,19 @@ pathfinder = function(pitchCands,
     pitch_final = rev(path_rev)
   }
 
-  if (runSnake) {
-    pitch_final = snake (
-      pitch_final,
-      pitchCands,
-      pitchCert,
-      certWeight,
-      snakeSmoothingStep,
-      snakeIterMultiplier,
-      plotSnake
+  # We have our best path through existing and interpolated pitch candidates.
+  # Now we can apply the snake algorithm to minimize the elastic forces acting
+  # on this pitch contour
+  if (!is.null(snake_step) &&
+      !is.na(snake_step) &&
+      snake_step > 0) {
+    pitch_final = snake(
+      pitch = pitch_final,
+      pitchCands = pitchCands,
+      pitchCert = pitchCert,
+      certWeight = certWeight,
+      snake_step = snake_step,
+      snake_plot = snake_plot
     )
   }
 
