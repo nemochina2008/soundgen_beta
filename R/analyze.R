@@ -46,18 +46,15 @@
 #'   unvoiced)
 #' @param shortest_pause the smallest gap between voiced syllables (ms) that
 #'   means they shouldn't be merged into one voiced syllable
-#' @param runSnake if TRUE, uses a stochastic algorithm for adjusting the pitch
-#'   contour to minimize both the internal tension of the curve and its
-#'   deviation from high-certainty pitch candidates. See \code{\link{snake}} for
-#'   details. NB: if the snake is run, the final contour may deviate from the
-#'   actually measured pitch candidates!
-#' @param certWeight (0 to 1) in pitch postprocessing, specifies how much do we
+#' @param postprocess method of postprocessing pitch candidates to find the
+#'   optimal pitch contour: 'slow' for annealing, 'fast' for a simple heuristic,
+#'   'none' for none. See \code{\link{pathfinder}} for details.
+#' @param certWeight (0 to 1) in pitch postprocessing, specifies how much we
 #'   prioritize the certainty of pitch candidates vs. the internal tension of
 #'   the resulting pitch curve. High certWeight: we mostly pay attention to our
 #'   certainty in particular pitch candidates; low certWeight: we are more
 #'   concerned with avoiding rapid pitch fluctuations in our contour.
-#' @param snake_convergence
-#' @param snake_step controls the speed of snake adaptation
+#' @param snake_step if \code{snake_step} is a positive number, the optimized path through pitch candidates is further processed to minimize the elastic force acting on pitch contour. Note that this imposes some smoothing and thus creates pitch values that were not among candidates. The exact value of \code{snake_step} controls the speed of snake adaptation.
 #' @param interpolWindow,interpolTolerance,interpolCert control the behavior of
 #'   interpolation algorithm when evaluating the costs of possible snake
 #'   configurations. See \code{\link{pathfinder}} for details.
@@ -130,6 +127,7 @@ analyze = function (x,
                     dom_threshold = 0.1,
                     shortest_syl = 20,
                     shortest_pause = 60,
+                    postprocess = c('none', 'fast', 'slow')[2],
                     interpolWindow = 3,
                     interpolTolerance = 0.3,
                     interpolCert = 0.3,
@@ -358,6 +356,7 @@ analyze = function (x,
         pitchCands = pitchCands[, myseq],
         pitchCert = pitchCert[, myseq],
         certWeight = certWeight,
+        postprocess = postprocess,
         interpolWindow = interpolWindow,
         interpolTolerance = interpolTolerance,
         interpolCert = interpolCert,

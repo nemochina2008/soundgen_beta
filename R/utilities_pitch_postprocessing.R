@@ -126,8 +126,8 @@ snake = function (pitch,
       pitch,
       type = 'n',
       ylim = c(
-        range(pitchCands, na.rm = T)[1] - .3 * ran,
-        range(pitchCands, na.rm = T)[2] + .3 * ran
+        range(pitchCands, na.rm = TRUE)[1] - .3 * ran,
+        range(pitchCands, na.rm = TRUE)[2] + .3 * ran
       )
     )
     for (r in 1:nrow(pitchCands)) {
@@ -169,6 +169,144 @@ snake = function (pitch,
 }
 
 
+postprocess_fast = function(pitchCands = pitchCands,
+                            pitchCert = pitchCert,
+                            pitchCenterGravity = pitchCenterGravity,
+                            certWeight = certWeight) {
+  # start at the beginning of the snake: find the most plausible starting pitch
+  # by taking median over the first few frames, weighted by certainty
+  p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))])
+  c = pitchCert[, 1] / abs(pitchCands[, 1] - p) # b/c there may be NA's,
+  # and they can't be excluded directly in which.max in the next line
+  point_current = pitchCands[which.max(c), 1]
+  path = point_current
+  costPathForward = 0
+
+  for (i in 2:ncol(pitchCands)) {
+    cands = na.omit(pitchCands[, i])
+    cost_cert = abs(cands - pitchCenterGravity[i])
+    # get the cost of transition from the current point to each of the pitch
+    # candidates in the next frame
+    cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
+      costJumps(point_current, cands[x])
+    })
+    # get a weighted average of transition costs associated with the certainty
+    # of each estimate vs. the magnitude of pitch jumps
+    costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
+    path = c(path, pitchCands[which.min(costs), i])
+    costPathForward = costPathForward + min(costs)
+  }
+
+  # run backwards
+  pitchCands_rev = pitchCands[, rev(1:ncol(pitchCands))]
+  pitchCert_rev = pitchCert[, rev(1:ncol(pitchCert))]
+  pitchCenterGravity_rev = rev(pitchCenterGravity)
+
+  p = median (pitchCenterGravity_rev[1:min(5, length(pitchCenterGravity_rev))])
+  c = na.omit (pitchCert_rev[, 1] / abs(pitchCands_rev[, 1] - p)) # b/c there may be NA's,
+  # and they can't be excluded directly in which.max in the next line
+  point_current = pitchCands_rev[which.max(c), 1]
+  path_rev = point_current
+  costPathBackward = 0
+
+  for (i in 2:ncol(pitchCands_rev)) {
+    cands = na.omit(pitchCands_rev[, i])
+    cost_cert = abs(cands - pitchCenterGravity_rev[i])
+    cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
+      costJumps(point_current, cands[x])
+    })
+    costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
+    path_rev = c(path_rev, pitchCands_rev[which.min(costs), i])
+    costPathBackward = costPathBackward + min(costs)
+  }
+
+  if (costPathForward < costPathBackward) {
+    bestPath = path
+  } else {
+    bestPath = rev(path_rev)
+  }
+  return (bestPath)
+}
+
+
+postprocess_slow = function(pitchCands = pitchCands,
+                            pitchCert = pitchCert,
+                            certWeight = certWeight,
+                            pitchCenterGravity = pitchCenterGravity,
+                            certWeight = certWeigth,
+                            control = list(maxit = 5000, temp = 1000)) {
+  # start with the pitch contour most faithful to center of gravity of pitch
+  # candidates for each frame
+  path_init = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
+    which.min(abs(pitchCands[, x] - pitchCenterGravity[x]))
+  })
+
+  # use annealing to wiggle the path, attempting to minimize its cost
+  o = optim(
+    par = path_init,
+    fn = costPerPath,
+    gr = generatePath,
+    pitchCands = pitchCands,
+    pitchCert = pitchCert,
+    certWeight = certWeight,
+    pitchCenterGravity = pitchCenterGravity,
+    method = 'SANN',
+    control = control
+  )
+
+  bestPath = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
+    pitchCands[o$par[x], x]
+  })
+  return(bestPath)
+}
+
+
+costPerPath = function(path,
+                       pitchCands,
+                       pitchCert,
+                       certWeight,
+                       pitchCenterGravity) {
+  # if there is nothing to wiggle, generatePath() returns NA and we want
+  # annealing to terminate quickly, so we return very high cost
+  if (is.na(path)) return(1e10)
+  # get the cost of transition from the current point to each of the pitch
+  # candidates in the next frame
+  cost_pitchJump = apply(as.matrix(1:(length(path) - 1), nrow = 1), 1, function(x) {
+    costJumps(pitchCands[path[x], x], pitchCands[path[x + 1], x + 1])
+  })
+  cost_pitchJump = mean(cost_pitchJump, na.rm = TRUE)
+
+  # get the cost of deviating from pitchCenterGravity
+  cost_cert = apply(as.matrix(1:length(path)), 1, function(x) {
+    abs(pitchCands[path[x], x] - pitchCenterGravity[x])
+  })
+  cost_cert = mean(cost_cert, na.rm = TRUE)
+
+  # get a weighted average of transition costs associated with the certainty
+  # of each estimate vs. the magnitude of pitch jumps
+  costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
+  return(costs)
+}
+# costPerPath(path_init, pitchCands, pitchCert, certWeight, pitchCenterGravity)
+
+
+generatePath = function(path, pitchCands, ...) {
+  i = 1
+  while (i < 100) {
+    point_to_wiggle = sample(1:length(path), 1)
+    idx = which(!is.na(pitchCands[, point_to_wiggle])) [-path[point_to_wiggle]]
+    if (length(idx) > 0 && is.numeric(idx)) {
+      path[point_to_wiggle] = idx[1]
+      return(path)
+    }
+    i = i + 1
+  }
+  return(NA)
+}
+# generatePath(path_init, pitchCands)
+
+
+
 #' Pathfinder
 #'
 #' Internal soundgen function.
@@ -183,6 +321,7 @@ snake = function (pitch,
 pathfinder = function(pitchCands,
                       pitchCert,
                       certWeight = 0.5,
+                      postprocess = c('none', 'fast', 'slow')[2],
                       interpolWindow = 3,
                       interpolTolerance = 0.05,
                       interpolCert = 0.3,
@@ -258,67 +397,35 @@ pathfinder = function(pitchCands,
     )
   })
 
-  # start at the beginning of the snake: find the most plausible starting pitch
-  # by taking median over the first few frames, weighted by certainty
-  p = median (pitchCenterGravity[1:min(5, length(pitchCenterGravity))])
-  c = pitchCert[, 1] / abs(pitchCands[, 1] - p) # b/c there may be NA's,
-  # and they can't be excluded directly in which.max in the next line
-  point_current = pitchCands[which.max(c), 1]
-  path = point_current
-  costPathForward = 0
-
-  for (i in 2:ncol(pitchCands)) {
-    cands = na.omit(pitchCands[, i])
-    cost_cert = abs(cands - pitchCenterGravity[i])
-    # get the cost of transition from the current point to each of the pitch
-    # candidates in the next frame
-    cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
-      costJumps(point_current, cands[x])
-    })
-    # get a weighted average of transition costs associated with the certainty
-    # of each estimate vs. the magnitude of pitch jumps
-    costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
-    path = c(path, pitchCands[which.min(costs), i])
-    costPathForward = costPathForward + min(costs)
-  }
-
-  # run backwards
-  pitchCands_rev = pitchCands[, rev(1:ncol(pitchCands))]
-  pitchCert_rev = pitchCert[, rev(1:ncol(pitchCert))]
-  pitchCenterGravity_rev = rev(pitchCenterGravity)
-
-  p = median (pitchCenterGravity_rev[1:min(5, length(pitchCenterGravity_rev))])
-  c = na.omit (pitchCert_rev[, 1] / abs(pitchCands_rev[, 1] - p)) # b/c there may be NA's,
-  # and they can't be excluded directly in which.max in the next line
-  point_current = pitchCands_rev[which.max(c), 1]
-  path_rev = point_current
-  costPathBackward = 0
-
-  for (i in 2:ncol(pitchCands_rev)) {
-    cands = na.omit(pitchCands_rev[, i])
-    cost_cert = abs(cands - pitchCenterGravity_rev[i])
-    cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
-      costJumps(point_current, cands[x])
-    })
-    costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
-    path_rev = c(path_rev, pitchCands_rev[which.min(costs), i])
-    costPathBackward = costPathBackward + min(costs)
-  }
-
-  if (costPathForward < costPathBackward) {
-    pitch_final = path
+  # find the best path through frame-by-frame pitch candidates
+  if (postprocess == 'fast') {
+    bestPath = postprocess_fast(
+      pitchCands = pitchCands,
+      pitchCert = pitchCert,
+      pitchCenterGravity = pitchCenterGravity,
+      certWeight = certWeigth,
+      control = list(maxit = 5000, temp = 1000)
+    )
+  } else if (postprocess == 'slow') {
+    bestPath = postprocess_slow(
+      pitchCands = pitchCands,
+      pitchCert = pitchCert,
+      certWeight = certWeight,
+      pitchCenterGravity = pitchCenterGravity,
+      certWeight = certWeigth,
+      control = list(maxit = 5000, temp = 1000)
+    )
   } else {
-    pitch_final = rev(path_rev)
+    bestPath = pitchCenterGravity
   }
 
-  # We have our best path through existing and interpolated pitch candidates.
-  # Now we can apply the snake algorithm to minimize the elastic forces acting
-  # on this pitch contour
+  # apply the snake algorithm to minimize the elastic forces acting on this
+  # pitch contour without deviating too far from high-certainty anchors
   if (!is.null(snake_step) &&
       !is.na(snake_step) &&
       snake_step > 0) {
     pitch_final = snake(
-      pitch = pitch_final,
+      pitch = bestPath,
       pitchCands = pitchCands,
       pitchCert = pitchCert,
       certWeight = certWeight,
