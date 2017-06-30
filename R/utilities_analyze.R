@@ -109,6 +109,7 @@ analyzeFrame = function (frame,
                          autoCorrelation = NULL,
                          samplingRate = 44100,
                          zpCep = 2 ^ 13,
+                         pitch_method = c('autocor', 'cep', 'spec', 'dom'),
                          cutoff_dom = 6000,
                          voiced_threshold_autocor = 0.75,
                          voiced_threshold_cep = 0.45,
@@ -199,7 +200,7 @@ analyzeFrame = function (frame,
     # least /dom_threshold/ % of the amplitude of peak frequency, but high
     # enough to be above pitch_floor
     dom = as.numeric(names(frame)[idx[idx > pitch_floor_idx][1]]) * 1000
-    dom_array = data.frame (
+    dom_array = data.frame(
       'pitchCand' = dom,
       'pitchAmpl' = frame[idx[1]],
       'source' = 'dom',
@@ -444,11 +445,24 @@ analyzeFrame = function (frame,
   }
   ## END OF PITCH_SPECTRAL
 
-  ## merge all pitch candidates in a single list
-  pitch_array = rbind (pitchAutocor_array,
-                       pitchCep_array,
-                       pitchSpec_array,
-                       dom_array)
+  ## merge all pitch candidates in a single dataframe
+  # initialize an empty dataframe
+  if ('dom' %in% pitch_method) {
+    pitch_array = dom_array
+  } else {
+    pitch_array = dom_array[-1, ]
+  }
+  # add all pitch estimates listed in pitch_method
+  if ('autocor' %in% pitch_method) {
+    pitch_array = rbind(pitch_array, pitchAutocor_array)
+  }
+  if ('cep' %in% pitch_method) {
+    pitch_array = rbind(pitch_array, pitchCep_array)
+  }
+  if ('spec' %in% pitch_method) {
+    pitch_array = rbind(pitch_array, pitchSpec_array)
+  }
+
   if (nrow(pitch_array) > 0) {
     pitch_array[, 1:2] = apply (pitch_array[, 1:2], 2, function(x) as.numeric (x))
     # otherwise they become characters after rbind

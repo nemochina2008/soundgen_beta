@@ -517,10 +517,13 @@ findGrad = function(path, interpol = 3) {
   if (interpol == 1) {
     path = c(rep(path[1], 2), path, rep(path[length(path)], 2))
   } else {
-    slopeLeft = summary(lm(path[1:interpol] ~ seq(1, interpol)))$coef[2, 1]
+    slopeLeft = suppressWarnings(summary(lm(
+      path[1:interpol] ~ seq(1, interpol)
+    ))$coef[2, 1])
     minus12 = path[1] - c(1, 2) * slopeLeft
-    slopeRight = summary(lm(path[(length(path) - interpol + 1):length(path)] ~
-                              seq(1, interpol)))$coef[2, 1]
+    slopeRight = suppressWarnings(summary(lm(
+      path[(length(path) - interpol + 1):length(path)] ~ seq(1, interpol)
+    ))$coef[2, 1])
     plus12 = path[length(path)] + c(1, 2) * slopeRight
     path = c (minus12[2], minus12[1], path, plus12[1], plus12[2])
   }

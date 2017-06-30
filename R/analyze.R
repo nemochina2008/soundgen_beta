@@ -12,6 +12,9 @@
 #' @param zpCep zero-padding of the spectrum used for cepstral pitch detection
 #'   (points). Improves the precision of cepstral pitch detection quite
 #'   noticeably.
+#' @param pitch_method methods of pitch estimation to consider for determining
+#'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
+#'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band
 #' @param pitch_floor,pitch_ceiling bounds for pitch candidates (Hz)
 #' @param max_pitch_cands maximum number of pitch candidates to return. NB: only
 #'   one dom and one pitchCep is returned, so the remaining candidates come from
@@ -85,24 +88,27 @@
 #'   (pitchSpec).
 #' @export
 #' @examples
-#' sound = generateBout(sylDur_mean = 900, pitchAnchors = list(
+#' sound1 = generateBout(sylDur_mean = 900, pitchAnchors = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
 #'   breathingAnchors = list(time = c(0, 900), value = c(-40, 00)),
 #'   temperature = 0)
-#' playme(sound, 16000)
-#' a = analyze(sound, samplingRate = 16000, plot = TRUE)
-#' median(a$pitch, na.rm = TRUE)  # 601 Hz
+#' playme(sound1, 16000)
+#' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
+#' # or, to improve the quality of post-processing:
+#' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
+#' median(a1$pitch, na.rm = TRUE)  # 625 Hz
 #'
-#' # with subharmonics and jitter
-#' sound = generateBout(sylDur_mean = 900, pitchAnchors = list(
+#' # the same pitch contour, but harder to analyze b/c of subharmonics and jitter
+#' sound2 = generateBout(sylDur_mean = 900, pitchAnchors = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
 #'   breathingAnchors = list(time = c(0, 900), value = c(-40, 20)),
 #'   sidebands_width = 200, jitterDep = 0.5, noiseAmount = 100, temperature = 0)
-#' playme(sound, 16000)
-#' a = analyze(sound, samplingRate = 16000, plot = TRUE)
+#' playme(sound2, 16000)
+#' a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
 #' # many pitch candidates are off, but the overall contour and estimate of
-#' # median pitch are very similar:
-#' median(a$pitch, na.rm = TRUE)  # 597 Hz
+#' # median pitch are pretty similar:
+#' median(a2$pitch, na.rm = TRUE)  # 595 Hz
+#' median(a2$HNR, na.rm = TRUE)  # HNR of 4 dB
 analyze = function (x,
                     samplingRate = NULL,
                     silence = 0.03,
@@ -112,6 +118,7 @@ analyze = function (x,
                     step = 25,
                     zp = 0,
                     zpCep = 2 ^ 13,
+                    pitch_method = c('autocor', 'cep', 'spec', 'dom'),
                     pitch_floor = 75,
                     pitch_ceiling = 3500,
                     max_pitch_cands = 4,
@@ -271,6 +278,7 @@ analyze = function (x,
       autoCorrelation = autocorBank[, i],
       samplingRate = samplingRate,
       zpCep = zpCep,
+      pitch_method = pitch_method,
       cutoff_dom = cutoff_dom,
       voiced_threshold_autocor = voiced_threshold_autocor,
       voiced_threshold_cep = voiced_threshold_cep,
@@ -468,7 +476,7 @@ analyze = function (x,
 #' # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
-#' s = analyzeFolder(myfolder, verbose = TRUE)
+#' s = analyzeFolder(myfolder, postprocess = 'slow', verbose = TRUE)
 #'
 #' # Check accuracy: import manually verified pitch values (our "key")
 #' key = pitch_manual  # a vector of 260 floats

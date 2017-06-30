@@ -198,7 +198,7 @@ Acoustic analysis of all .wav files in a folder.
 # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp'  # 260 .wav files live here
-s = analyzeFolder(myfolder, verbose = TRUE)
+s = analyzeFolder(myfolder, postprocess = 'slow', verbose = TRUE)
 
 # Check accuracy: import manually verified pitch values (our "key")
 key = pitch_manual  # a vector of 260 floats

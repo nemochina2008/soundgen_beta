@@ -5,7 +5,8 @@
 \title{Analyze fft frame}
 \usage{
 analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
-  zpCep = 2^13, cutoff_dom = 6000, voiced_threshold_autocor = 0.75,
+  zpCep = 2^13, pitch_method = c("autocor", "cep", "spec", "dom"),
+  cutoff_dom = 6000, voiced_threshold_autocor = 0.75,
   voiced_threshold_cep = 0.45, voiced_threshold_spec = 0.45,
   specPitchThreshold_nullNA = 0.8, pitchSpec_only_peak_weight = 0.6,
   slope_spec = 0.75, width_spec = 100, pitch_floor = 75,
@@ -23,6 +24,10 @@ analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
 \item{zpCep}{zero-padding of the spectrum used for cepstral pitch detection
 (points). Improves the precision of cepstral pitch detection quite
 noticeably.}
+
+\item{pitch_method}{methods of pitch estimation to consider for determining
+pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
+'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band}
 
 \item{cutoff_dom}{do not consider frequencies above cutoff_dom when
 calculating the lowest dominant frequency band (recommended if the original
