@@ -32,7 +32,8 @@ semitonesToHz = function(s) {
 #'
 #' Internal soundgen function.
 #' @param x a vector of floats between 0 and 1 (exclusive, i.e. these are ratios)
-#' @example to_dB(c(.1, .5, .75, .9, .95, .99, .999, .9999))
+#' @examples
+#' soundgen:::to_dB(c(.1, .5, .75, .9, .95, .99, .999, .9999))
 to_dB = function(x) {
   return(10 * log10(x / (1 - x)))
 }

@@ -1,181 +1,203 @@
-### UTILITIES FOR POSP-PROCESSING OF PITCH CONTOURS ###
+### UTILITIES FOR POST-PROCESSING OF PITCH CONTOURS ###
 
-#' Cost of jumps
+#' Pathfinder
 #'
 #' Internal soundgen function.
 #'
-#' Internal helper function for calculating the cost of transitions between
-#' pitch candidates. Needed for postprocessing of pitch contour - finding the
-#' optimal pitch contour.
-#' @param cand1,cand2 two candidate pitch values
-#' @examples
-#' a = seq(-3, 3, by = .01)
-#' b = 1 / (1 + 10 * exp(3 - 7 * abs(a)))
-#' plot(a, b, type = 'l')
-costJumps = function(cand1, cand2) {
-  return (1 / (1 + 10 * exp(3 - 7 * abs(cand1 - cand2))))
-}
-
-
-#' Find gradient
-#'
-#' Internal soundgen function.
-#'
-#' Internal helper function for postprocessing of pitch contour. Returns
-#' the elastic force acting on a snake. See \code{\link{snake}}.
-#' @param path numeric vector corresponding to a path through pitch candidates
-#' @param interpol the number of points to interpolate beyond each end of the path
-#' @return Returns a vector of the same length as input path giving its 4th derivative.
-findGrad = function(path, interpol = 3) {
-  # interpolate 2 values before the first one and two after the last one based
-  # on /interpol/ number of points in case the path is shorter than the
-  # specified interpol:
-  interpol = ifelse(interpol > length(path), length(path), interpol)
-  if (interpol == 1) {
-    path = c(rep(path[1], 2), path, rep(path[length(path)], 2))
-  } else {
-    slopeLeft = summary(lm(path[1:interpol] ~ seq(1, interpol)))$coef[2, 1]
-    minus12 = path[1] - c(1, 2) * slopeLeft
-    slopeRight = summary(lm(path[(length(path) - interpol + 1):length(path)] ~
-                              seq(1, interpol)))$coef[2, 1]
-    plus12 = path[length(path)] + c(1, 2) * slopeRight
-    path = c (minus12[2], minus12[1], path, plus12[1], plus12[2])
-  }
-
-  # take the 4th derivative of the path with interpolated values
-  # (so that we get d4f over the entire length of the original path)
-  grad = rep(0, length(path))
-  for (i in 3:(length(path) - 2)) {  # approximation
-    grad[i] = path[i - 2] - 4 * path[i - 1] + 6 * path[i] - 4 * path[i + 1] +
-      path[i + 2]
-  }
-  grad = grad[3:(length(grad) - 2)]
-  return (grad)
-}
-
-
-#' Force per path
-#'
-#' Internal soundgen function.
-#'
-#' Internal helper function for postprocessing of pitch contour. Returns the
-#' total force acting on a snake (sum of internal and external gradients, i.e.
-#' of the elastic force trying to straighten the snake [internal] and of the
-#' force pushing the snake towards the most certain pitch estimates [external])
-#' @inheritParams snake
-#' @return Returns a numeric vector of the same length as \code{pitch} that
-#'   gives the total force acting on the snake at each point.
-forcePerPath = function (pitch,
-                         pitchCands,
-                         pitchCert,
-                         pitchCenterGravity,
-                         certWeight) {
-  ran = diff(range(pitchCands, na.rm = TRUE))
-  # external_force = -(pitch_path - pitchCenterGravity) / ran
-  external_force = pitch # just a quick way to initialize a vector of the right length
-  for (i in 1:ncol(pitchCands)) {
-    cands = na.omit(pitchCands[, i])
-    certs = na.omit(pitchCert[, i])
-    deltas = 1 / exp((cands - pitch[i]) ^ 2)
-    forces = certs * deltas
-    forces = ifelse(cands > pitch[i], forces, -forces)
-    external_force[i] = sum(forces)
-  }
-  # external_force is the "external" force - the attraction of high-certainty pitch candidates
-
-  internal_force = -findGrad(pitch)
-  # internal_force is the elastic force trying to make the curve smooth
-
-  total_force = certWeight * external_force + (1 - certWeight) * internal_force
-  # weighted average of internal and external forces
-
-  return(total_force)
-}
-
-
-#' Snake
-#'
-#' Internal soundgen function.
-#'
-#' Internal helper function for postprocessing of pitch contour. Wiggles a snake
-#' along the gradient of internal + external forces. NB: if the snake is run,
-#' the final contour may deviate from the actually measured pitch candidates!
-#' @param pitch numeric vector representing our best guess for pitch contour,
-#'   which we are now attempting to improve by minimizing its elastic tension
-#' @param pitchCands a matrix of multiple pitch candidates per frame from
-#'   pathfinder
+#' Internal helper function for postprocessing pitch contour. Starts with a
+#' reasonable guess and computes the more-or-less optimal pitch contour (not
+#' quite the very optimal - too computationally expensive).
+#' @param pitchCands a matrix of multiple pitch candidates per fft frame. Each
+#'   column is one fft frame, each row is one candidate.
 #' @param pitchCert a matrix of the same dimensionality as pitchCands specifying
 #'   our certainty in pitch candidates
 #' @inheritParams analyze
-#' @return Returns optimized pitch contour (numeric vector of the same length as
-#'   \code{pitch}).
-snake = function (pitch,
-                  pitchCands,
-                  pitchCert,
-                  certWeight,
-                  snake_step = 0.05,
-                  snake_plot = FALSE) {
-  ran = diff(range(pitchCands, na.rm = TRUE)) # range of pitch
-  maxIter = floor(ran / snake_step * 2)  # just heuristic, no theory behind this
+#' @param interpolWindow when interpolating pitch candidates, the median is
+#'   calculated over \code{± interpolWindow}
+#' @param interpolTolerance when interpolating pitch candidates, the criterion
+#'   for needing to interpolate is the absense of pitch candidates with values
+#'   within \code{1 ± interpolTolerance} of the median of pitch center of
+#'   gravity over the interpolation window. For ex., if \code{interpolTolerance}
+#'   is .05, we look for values from 0.95 to 1.05 time the median value over
+#'   interpolation window.
+#' @param interpolCert when interpolating pitch candidates, all generated pitch
+#'   candidates are assigned a certainty equal to \code{interpolCert}
+#' @return Returns a numeric vector of pitch values representing the best found
+#'   path through pitch candidates.
+pathfinder = function(pitchCands,
+                      pitchCert,
+                      certWeight = 0.5,
+                      postprocess = c('none', 'fast', 'slow')[2],
+                      control_anneal = list(maxit = 5000, temp = 1000),
+                      interpolWindow = 3,
+                      interpolTolerance = 0.05,
+                      interpolCert = 0.3,
+                      snake_step = 0.05,
+                      snake_plot = FALSE) {
+  # take log to approximate human perception of pitch differences
+  pitchCands[!is.na(pitchCands)] = log2(pitchCands[!is.na(pitchCands)])
 
-  # plot for debugging or esthetic appreciation
-  if (snake_plot) {
-    # plot all pitch candidates and the initial path
-    plot(
-      seq(1, ncol(pitchCands)),
-      pitch,
-      type = 'n',
-      ylim = c(
-        range(pitchCands, na.rm = TRUE)[1] - .3 * ran,
-        range(pitchCands, na.rm = TRUE)[2] + .3 * ran
-      )
+  # get the "center of gravity" of pitch candidates in each frame (mean of all
+  # pitch candidates weighted by their respective certainties)
+  pitchCenterGravity = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
+    mean(
+      pitchCands[, x],
+      weights = pitchCert[, x] / sum(pitchCert[, x]),
+      na.rm = T
     )
-    for (r in 1:nrow(pitchCands)) {
-      points (seq(1, ncol(pitchCands)),
-              pitchCands[r, ],
-              cex = as.numeric(pitchCert[r, ]) * 2)
-    }
-    lines (seq(1, ncol(pitchCands)), pitch)
+  })
+
+  ## INTERPOLATION
+  # if a frame has no pitch candidate at all (NA) or no candidate
+  # between the most likely candidates for the adjacent frames, add such a
+  # candidate with ~low certainty
+  if (is.numeric(interpolWindow) && interpolWindow > 0) {
+    intplt = interpolate(pitchCands = pitchCands,
+                         pitchCert = pitchCert,
+                         pitchCenterGravity = pitchCenterGravity,
+                         interpolWindow = interpolWindow,
+                         interpolTolerance = interpolTolerance,
+                         interpolCert = interpolCert)
+    pitchCands = intplt$pitchCands
+    pitchCert = intplt$pitchCert
+    pitchCenterGravity = intplt$pitchCenterGravity
   }
 
-  # optimization algorithm follows
-  i = 1
-  force_old = 1e10  # Inf causes NaN in force_delta
-  while (i < maxIter) {
-    force = forcePerPath(pitch,
-                         pitchCands,
-                         pitchCert,
-                         pitchCenterGravity,
-                         certWeight)
-    force_new = mean(abs(force))
-    force_delta = (force_old - force_new) / force_old
-    force_old = force_new
-    if (force_delta < snake_step) break
-    # wiggle the snake along the gradient of the total force acting on it
-    # (elastic + attraction of high-certainty pitch candidates)
-    pitch = pitch + snake_step * force
-    if (snake_plot) {
-      lines(seq(1, length(pitch)), pitch,
-            type = 'l', col = 'green', lty = 4)
-    }
-    i = i + 1
+  # order pitch candidates and certainties in each frame from lowest to highest
+  # pitch (helpful for further processing)
+  o = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
+    order(pitchCands[, x])
+  })
+  pitchCands = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
+    pitchCands[o[, x], x]
+  })
+  pitchCert = apply(matrix(1:ncol(pitchCert)), 1, function(x) {
+    pitchCert[o[, x], x]
+  })
+  # remove rows with all NA's
+  pitchCands = pitchCands[rowSums(!is.na(pitchCands)) != 0, ]
+  pitchCert = pitchCert[rowSums(!is.na(pitchCert)) != 0, ]
+
+  # special case: only a single pitch candidate for all frames in a syllable
+  # (no paths to chose among)
+  if (class(pitchCands) == 'numeric') {
+    return(2 ^ pitchCands)
   }
 
-  if (snake_plot) {
-    lines(seq(1, length(pitch)), pitch,
-          type = 'l', col = 'blue', lwd = 3)
+  ## PATH-FINDING
+  # find the best path through frame-by-frame pitch candidates
+  if (postprocess == 'fast') {
+    bestPath = postprocess_fast(
+      pitchCands = pitchCands,
+      pitchCert = pitchCert,
+      pitchCenterGravity = pitchCenterGravity,
+      certWeight = certWeight
+    )
+  } else if (postprocess == 'slow') {
+    bestPath = postprocess_slow(
+      pitchCands = pitchCands,
+      pitchCert = pitchCert,
+      certWeight = certWeight,
+      pitchCenterGravity = pitchCenterGravity,
+      control_anneal = control_anneal
+    )
+  } else {
+    bestPath = pitchCenterGravity
   }
-  return (pitch)
+
+  ## SNAKE
+  # apply the snake algorithm to minimize the elastic forces acting on this
+  # pitch contour without deviating too far from high-certainty anchors
+  if (is.numeric(snake_step) && snake_step > 0) {
+    pitch_final = snake(
+      pitch = bestPath,
+      pitchCands = pitchCands,
+      pitchCert = pitchCert,
+      certWeight = certWeight,
+      pitchCenterGravity = pitchCenterGravity,
+      snake_step = snake_step,
+      snake_plot = snake_plot
+    )
+  }
+
+  return(2 ^ pitch_final)
 }
 
 
+#' Interpolate
+#'
+#' Internal soundgen function.
+#'
+#' Interpolation: if a frame has no pitch candidate at all (NA) or no candidate
+#' between the most likely candidates for the adjacent frames, add such a
+#' candidate with some (low) certainty.
+#' @inheritParams pathfinder
+#' @inheritParams analyze
+#' @param pitchCenterGravity numeric vector giving the mean of all pitch
+#'   candidates per fft frame weighted by our certainty in each of these
+#'   candidates
+#' @return Returns a modified pitchCands matrix.
+interpolate = function(pitchCands,
+                       pitchCert,
+                       pitchCenterGravity,
+                       interpolWindow = 3,
+                       interpolTolerance = 0.3,
+                       interpolCert = 0.3) {
+  for (f in 1:ncol(pitchCands)) {
+    left = max(1, f - interpolWindow)
+    right = min(ncol(pitchCands), f + interpolWindow)
+    # median over interpolation window (by default ±2 points)
+    med = median(pitchCenterGravity[left:right], na.rm = TRUE)
+    sum_pitchCands = sum(
+      pitchCands[, f] > (1 - interpolTolerance) * med &
+        pitchCands[, f] < (1 + interpolTolerance) * med,
+      na.rm = TRUE
+    )
+    if (sum_pitchCands == 0 & !is.na(med)) {
+      # if there are no pitch candidates in the frequency range
+      # expected based on pitch candidates in the adjacent frames...
+      # ... add an empty row for a new, interpolated pitch candidate
+      pitchCands = rbind(pitchCands, rep(NA, ncol(pitchCands)))
+      pitchCert = rbind(pitchCert, rep(NA, ncol(pitchCert)))
+      # use median of adjacent frames for the new pitch cand
+      pitchCands[nrow(pitchCands), f] = med
+      # certainty assigned to interpolated frames
+      pitchCert[nrow(pitchCert), f] = interpolCert
+      # update pitchCenterGravity for the interpolated frame
+      pitchCenterGravity[f] = mean(pitchCands[, f],
+                                   weights = pitchCert[, f] / sum(pitchCert[, f]),
+                                   na.rm = TRUE)
+    }
+  }
+  return(list(pitchCands = pitchCands,
+              pitchCert = pitchCert,
+              pitchCenterGravity = pitchCenterGravity))
+}
+
+
+#' Path through pitch candidates: fast
+#'
+#' Internal soundgen function.
+#'
+#' Uses a quick-and-simple heuristic to find a reasonable path though pitch
+#' candidates. The idea is to start at the median of the center of gravity of
+#' pitch candidates over the first/last few frames and then go over the path
+#' twice (forward and backward), minimizing the cost of transitions at each step
+#' in terms of pitch jumps and distance from high-certainty candidates. The best
+#' of these two paths is accepted.
+#' @inheritParams pathfinder
+#' @inheritParams analyze
+#' @param pitchCenterGravity numeric vector giving the mean of all pitch
+#'   candidates per fft frame weighted by our certainty in each of these
+#'   candidates
 postprocess_fast = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             pitchCenterGravity = pitchCenterGravity,
                             certWeight = certWeight) {
   # start at the beginning of the snake: find the most plausible starting pitch
   # by taking median over the first few frames, weighted by certainty
-  p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))])
+  p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))],
+             na.rm = TRUE)
   c = pitchCert[, 1] / abs(pitchCands[, 1] - p) # b/c there may be NA's,
   # and they can't be excluded directly in which.max in the next line
   point_current = pitchCands[which.max(c), 1]
@@ -229,12 +251,40 @@ postprocess_fast = function(pitchCands = pitchCands,
 }
 
 
+#' Cost of jumps
+#'
+#' Internal soundgen function.
+#'
+#' Internal helper function for calculating the cost of transitions between
+#' pitch candidates. Needed for postprocessing of pitch contour - finding the
+#' optimal pitch contour.
+#' @param cand1,cand2 two candidate pitch values
+#' @examples
+#' a = seq(-3, 3, by = .01)
+#' b = 1 / (1 + 10 * exp(3 - 7 * abs(a)))
+#' plot(a, b, type = 'l')
+costJumps = function(cand1, cand2) {
+  return (1 / (1 + 10 * exp(3 - 7 * abs(cand1 - cand2))))
+}
+
+
+#' Path through pitch candidates: slow
+#'
+#' Internal soundgen function.
+#'
+#' Optimizes the path through pitch candidates using simulated annealing with
+#' \code{\link[stats]{optim}}. This can be really slow, depending on control
+#' parameters.
+#' @inheritParams pathfinder
+#' @inheritParams analyze
+#' @param pitchCenterGravity numeric vector giving the mean of all pitch
+#'   candidates per fft frame weighted by our certainty in each of these
+#'   candidates
 postprocess_slow = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             certWeight = certWeight,
                             pitchCenterGravity = pitchCenterGravity,
-                            certWeight = certWeigth,
-                            control = list(maxit = 5000, temp = 1000)) {
+                            control_anneal = list(maxit = 5000, temp = 1000)) {
   # start with the pitch contour most faithful to center of gravity of pitch
   # candidates for each frame
   path_init = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
@@ -251,7 +301,7 @@ postprocess_slow = function(pitchCands = pitchCands,
     certWeight = certWeight,
     pitchCenterGravity = pitchCenterGravity,
     method = 'SANN',
-    control = control
+    control = control_anneal
   )
 
   bestPath = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
@@ -261,6 +311,20 @@ postprocess_slow = function(pitchCands = pitchCands,
 }
 
 
+#' Cost per path
+#'
+#' Internal soundgen function.
+#'
+#' Internal helper function for post-processing of pitch contours called by
+#' \code{\link{postprocess_slow}}. Calculates the cost of a particular path
+#' through pitch candidates based on pitch jumps and distance from
+#' high-certainty candidates.
+#' @param path evaluated path through pitch candidates (as integers specifying
+#'   the rows in pitchCands, not the actual values of pitch)
+#' @inheritParams pathfinder
+#' @param pitchCenterGravity numeric vector giving the mean of all pitch
+#'   candidates per fft frame weighted by our certainty in each of these
+#'   candidates
 costPerPath = function(path,
                        pitchCands,
                        pitchCert,
@@ -268,7 +332,7 @@ costPerPath = function(path,
                        pitchCenterGravity) {
   # if there is nothing to wiggle, generatePath() returns NA and we want
   # annealing to terminate quickly, so we return very high cost
-  if (is.na(path)) return(1e10)
+  if (is.na(path[1])) return(1e10)
   # get the cost of transition from the current point to each of the pitch
   # candidates in the next frame
   cost_pitchJump = apply(as.matrix(1:(length(path) - 1), nrow = 1), 1, function(x) {
@@ -287,9 +351,19 @@ costPerPath = function(path,
   costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
   return(costs)
 }
-# costPerPath(path_init, pitchCands, pitchCert, certWeight, pitchCenterGravity)
 
 
+#' Generate path
+#'
+#' Internal soundgen function.
+#'
+#' Internal helper function for post-processing of pitch contours called by
+#' \code{\link{postprocess_slow}}. Generates proposals for new paths through
+#' pitch candidates. It gives up and returns NA after 100 attempts, which stops
+#' annealing - so the adaptation of pitch contour doesn't happen if
+#' @param path currently evaluated path
+#' @inheritParams pathfinder
+#' @param ... nothing really, but otherwise optim() complains
 generatePath = function(path, pitchCands, ...) {
   i = 1
   while (i < 100) {
@@ -303,140 +377,164 @@ generatePath = function(path, pitchCands, ...) {
   }
   return(NA)
 }
-# generatePath(path_init, pitchCands)
 
 
-
-#' Pathfinder
+#' Snake
 #'
 #' Internal soundgen function.
 #'
-#' Internal helper function for postprocessing pitch contour. Starts with a
-#' reasonable guess and computes the more-or-less optimal pitch contour (not
-#' quite the very optimal - too computationally expensive).
-#' @param pitchCands
-#' @param pitchCert
+#' Internal helper function for postprocessing of pitch contour. Wiggles a snake
+#' along the gradient of internal + external forces. NB: if the snake is run,
+#' the final contour may deviate from the actually measured pitch candidates!
+#' @param pitch numeric vector representing our best guess at pitch contour,
+#'   which we are now attempting to improve by minimizing its elastic tension
+#' @inheritParams pathfinder
 #' @inheritParams analyze
-#' @return Returns a numeric vector representing the best found path through pitch candidates.
-pathfinder = function(pitchCands,
-                      pitchCert,
-                      certWeight = 0.5,
-                      postprocess = c('none', 'fast', 'slow')[2],
-                      interpolWindow = 3,
-                      interpolTolerance = 0.05,
-                      interpolCert = 0.3,
-                      snake_step = 0.05,
-                      snakeIterMultiplier = 2,
-                      snake_plot = FALSE) {
-  # take log to approximate human perception of pitch differences
-  pitchCands[!is.na(pitchCands)] = log2(pitchCands[!is.na(pitchCands)])
+#' @param pitchCenterGravity numeric vector giving the mean of all pitch
+#'   candidates per fft frame weighted by our certainty in each of these
+#'   candidates
+#' @return Returns optimized pitch contour (numeric vector of the same length as
+#'   \code{pitch}).
+snake = function (pitch,
+                  pitchCands,
+                  pitchCert,
+                  certWeight,
+                  pitchCenterGravity,
+                  snake_step = 0.05,
+                  snake_plot = FALSE) {
+  ran = diff(range(pitchCands, na.rm = TRUE)) # range of pitch
+  maxIter = floor(ran / snake_step * 2)  # just heuristic, no theory behind this
 
-  # Interpolation: if a frame has no pitch candidate at all (NA) or no candidate
-  # between the most likely candidates for the adjacent frames, add such a
-  # candidate with ~low certainty
-  for (f in 1:ncol(pitchCands)) {
-    # NB: in the loop b/c it has to be done recursively, taking interpolated
-    # values into account for further interpolation. Unfortunate but can't be
-    # helped
-    pitchCenterGravity = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
-      mean(pitchCands[, x],
-           weights = pitchCert[, x] / sum(pitchCert[, x]),
-           na.rm = TRUE)
-    })
-    left = max(1, f - interpolWindow)
-    right = min(ncol(pitchCands), f + interpolWindow)
-    # median over interpolation window (by default ±2 points)
-    med = median(pitchCenterGravity[left:right], na.rm = TRUE)
-    sum_pitchCands = sum(
-      pitchCands[, f] > (1 - interpolTolerance) * med &
-        pitchCands[, f] < (1 + interpolTolerance) * med,
-      na.rm = TRUE
+  # plot for debugging or esthetic appreciation
+  if (snake_plot) {
+    # plot all pitch candidates and the initial path
+    plot(
+      seq(1, ncol(pitchCands)),
+      pitch,
+      type = 'n',
+      ylim = c(
+        range(pitchCands, na.rm = TRUE)[1] - .3 * ran,
+        range(pitchCands, na.rm = TRUE)[2] + .3 * ran
+      )
     )
-    if (sum_pitchCands == 0) {
-      # if there are no pitch candidates in the frequency range
-      # expected based on pitch candidates in the adjacent frames...
-      # ... add an empty row for a new, extrapolated pitch candidate
-      pitchCands = rbind(pitchCands, rep(NA, ncol(pitchCands)))
-      pitchCert = rbind(pitchCert, rep(NA, ncol(pitchCert)))
-      # use median of adjacent frames for the new pitch cand
-      pitchCands[nrow(pitchCands), f] =
-        median(pitchCenterGravity[left:right], na.rm = TRUE)
-      # certainty assigned to interpolated frames
-      pitchCert[nrow(pitchCert), f] = interpolCert
+    for (r in 1:nrow(pitchCands)) {
+      points (seq(1, ncol(pitchCands)),
+              pitchCands[r, ],
+              cex = as.numeric(pitchCert[r, ]) * 2)
     }
+    lines (seq(1, ncol(pitchCands)), pitch)
   }
 
-  # order pitch candidates and certainties in each frame from lowest to highest
-  # pitch (helpful for further processing)
-  o = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
-    order(pitchCands[, x])
-  })
-  pitchCands = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
-    pitchCands[o[, x], x]
-  })
-  pitchCert = apply(as.matrix(1:ncol(pitchCert), nrow = 1), 1, function(x) {
-    pitchCert[o[, x], x]
-  })
-  # remove rows with all NA's
-  pitchCands = pitchCands[rowSums(!is.na(pitchCands)) != 0, ]
-  pitchCert = pitchCert[rowSums(!is.na(pitchCert)) != 0, ]
-
-  # special case: only a single pitch candidate for all frames in a syllable
-  # (no paths to chose among)
-  if (class(pitchCands) == 'numeric') {
-    return(2 ^ pitchCands)
+  # optimization algorithm follows
+  i = 1
+  force_old = 1e10  # Inf causes NaN in force_delta
+  while (i < maxIter) {
+    force = forcePerPath(pitch = pitch,
+                         pitchCands = pitchCands,
+                         pitchCert = pitchCert,
+                         pitchCenterGravity = pitchCenterGravity,
+                         certWeight = certWeight)
+    force_new = mean(abs(force))
+    force_delta = (force_old - force_new) / force_old
+    force_old = force_new
+    if (force_delta < snake_step) break
+    # wiggle the snake along the gradient of the total force acting on it
+    # (elastic + attraction of high-certainty pitch candidates)
+    pitch = pitch + snake_step * force
+    if (snake_plot) {
+      lines(seq(1, length(pitch)), pitch,
+            type = 'l', col = 'green', lty = 4)
+    }
+    i = i + 1
   }
 
-  # get the "center of gravity" of pitch candidates in each frame (mean of all
-  # pitch candidates weighted by their respective certainties)
-  pitchCenterGravity = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
-    mean(
-      pitchCands[, x],
-      weights = pitchCert[, x] / sum(pitchCert[, x]),
-      na.rm = TRUE
-    )
-  })
-
-  # find the best path through frame-by-frame pitch candidates
-  if (postprocess == 'fast') {
-    bestPath = postprocess_fast(
-      pitchCands = pitchCands,
-      pitchCert = pitchCert,
-      pitchCenterGravity = pitchCenterGravity,
-      certWeight = certWeigth,
-      control = list(maxit = 5000, temp = 1000)
-    )
-  } else if (postprocess == 'slow') {
-    bestPath = postprocess_slow(
-      pitchCands = pitchCands,
-      pitchCert = pitchCert,
-      certWeight = certWeight,
-      pitchCenterGravity = pitchCenterGravity,
-      certWeight = certWeigth,
-      control = list(maxit = 5000, temp = 1000)
-    )
-  } else {
-    bestPath = pitchCenterGravity
+  if (snake_plot) {
+    lines(seq(1, length(pitch)), pitch,
+          type = 'l', col = 'blue', lwd = 3)
   }
-
-  # apply the snake algorithm to minimize the elastic forces acting on this
-  # pitch contour without deviating too far from high-certainty anchors
-  if (!is.null(snake_step) &&
-      !is.na(snake_step) &&
-      snake_step > 0) {
-    pitch_final = snake(
-      pitch = bestPath,
-      pitchCands = pitchCands,
-      pitchCert = pitchCert,
-      certWeight = certWeight,
-      snake_step = snake_step,
-      snake_plot = snake_plot
-    )
-  }
-
-  return(2 ^ pitch_final)
+  return (pitch)
 }
 
+
+#' Force per path
+#'
+#' Internal soundgen function.
+#'
+#' Internal helper function for postprocessing of pitch contour. Returns the
+#' total force acting on a snake (sum of internal and external gradients, i.e.
+#' of the elastic force trying to straighten the snake [internal] and of the
+#' force pushing the snake towards the most certain pitch estimates [external])
+#' @inheritParams snake
+#' @inheritParams pathfinder
+#' @inheritParams analyze
+#' @param pitchCenterGravity numeric vector giving the mean of all pitch
+#'   candidates per fft frame weighted by our certainty in each of these
+#'   candidates
+#' @return Returns a numeric vector of the same length as \code{pitch} that
+#'   gives the total force acting on the snake at each point.
+forcePerPath = function (pitch,
+                         pitchCands,
+                         pitchCert,
+                         pitchCenterGravity,
+                         certWeight) {
+  ran = diff(range(pitchCands, na.rm = TRUE))
+  # external_force = -(pitch_path - pitchCenterGravity) / ran
+  external_force = pitch # just a quick way to initialize a vector of the right length
+  for (i in 1:ncol(pitchCands)) {
+    cands = na.omit(pitchCands[, i])
+    certs = na.omit(pitchCert[, i])
+    deltas = 1 / exp((cands - pitch[i]) ^ 2)
+    forces = certs * deltas
+    forces = ifelse(cands > pitch[i], forces, -forces)
+    external_force[i] = sum(forces)
+  }
+  # external_force is the "external" force - the attraction of high-certainty pitch candidates
+
+  internal_force = -findGrad(pitch)
+  # internal_force is the elastic force trying to make the curve smooth
+
+  total_force = certWeight * external_force + (1 - certWeight) * internal_force
+  # weighted average of internal and external forces
+
+  return(total_force)
+}
+
+
+#' Find gradient
+#'
+#' Internal soundgen function.
+#'
+#' Internal helper function for postprocessing of pitch contour. Returns
+#' the elastic force acting on a snake. See \code{\link{snake}}.
+#' @param path numeric vector
+#' @param interpol the number of points to interpolate beyond each end of the path
+#' @return Returns a vector of the same length as input path giving its 4th derivative.
+findGrad = function(path, interpol = 3) {
+  # interpolate 2 values before the first one and two after the last one based
+  # on /interpol/ number of points in case the path is shorter than the
+  # specified interpol:
+  interpol = ifelse(interpol > length(path), length(path), interpol)
+  if (interpol == 1) {
+    path = c(rep(path[1], 2), path, rep(path[length(path)], 2))
+  } else {
+    slopeLeft = summary(lm(path[1:interpol] ~ seq(1, interpol)))$coef[2, 1]
+    minus12 = path[1] - c(1, 2) * slopeLeft
+    slopeRight = summary(lm(path[(length(path) - interpol + 1):length(path)] ~
+                              seq(1, interpol)))$coef[2, 1]
+    plus12 = path[length(path)] + c(1, 2) * slopeRight
+    path = c (minus12[2], minus12[1], path, plus12[1], plus12[2])
+  }
+
+  # take the 4th derivative of the path with interpolated values
+  # (so that we get d4f over the entire length of the original path)
+  grad = rep(0, length(path))
+  for (i in 3:(length(path) - 2)) {  # approximation
+    grad[i] = path[i - 2] - 4 * path[i - 1] + 6 * path[i] - 4 * path[i + 1] +
+      path[i + 2]
+  }
+  grad = grad[3:(length(grad) - 2)]
+  return (grad)
+}
 
 
 #' Median smoothing
@@ -446,7 +544,7 @@ pathfinder = function(pitchCands,
 #' Internal helper function for smoothing pitch contours or other contours. Only
 #' outliers are modified, so it's not like smoothing with a kernel. NB: the
 #' expected input is pitch, so deviance is calculated on a log-scale.
-#' @param df a dataframe (each column is processed separately, so multiple
+#' @param df dataframe (each column is processed separately, so multiple
 #'   contours can be fed into this function at once to speed things up)
 #' @param smoothing_ww width of smoothing window (points)
 #' @param smoothing_threshold tolerated deviance from moving median (semitones)

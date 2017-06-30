@@ -4,41 +4,57 @@
 \alias{pathfinder}
 \title{Pathfinder}
 \usage{
-pathfinder(pitchCands, pitchCert, certWeight = 0.5, interpolWindow = 3,
-  interpolTolerance = 0.05, interpolCert = 0.3, runSnake = T,
-  snakeSmoothingStep = 0.05, snakeIterMultiplier = 2, plotSnake = F)
+pathfinder(pitchCands, pitchCert, certWeight = 0.5, postprocess = c("none",
+  "fast", "slow")[2], control_anneal = list(maxit = 5000, temp = 1000),
+  interpolWindow = 3, interpolTolerance = 0.05, interpolCert = 0.3,
+  snake_step = 0.05, snake_plot = FALSE)
 }
 \arguments{
-\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much do we
-prioritize the certainty of pitch candidates vs. the internal tension of
-the resulting pitch curve. High certWeight: we mostly pay attention to our
-certainty in particular pitch candidates; low certWeight: we are more
-concerned with avoiding rapid pitch fluctuations in our contour.}
+\item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
+column is one fft frame, each row is one candidate.}
 
-\item{interpolWindow}{control the behavior of
-interpolation algorithm when evaluating the costs of possible snake
-configurations. See \code{\link{pathfinder}} for details.}
+\item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
+our certainty in pitch candidates}
 
-\item{interpolTolerance}{control the behavior of
-interpolation algorithm when evaluating the costs of possible snake
-configurations. See \code{\link{pathfinder}} for details.}
+\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
+prioritize the certainty of pitch candidates vs. pitch jumps / the internal
+tension of the resulting pitch curve. High certWeight: we mostly pay
+attention to our certainty in particular pitch candidates; low certWeight:
+we are more concerned with avoiding rapid pitch fluctuations in our
+contour.}
 
-\item{interpolCert}{control the behavior of
-interpolation algorithm when evaluating the costs of possible snake
-configurations. See \code{\link{pathfinder}} for details.}
+\item{postprocess}{method of postprocessing pitch candidates to find the
+optimal pitch contour: 'slow' for annealing, 'fast' for a simple heuristic,
+'none' for none. See \code{\link{pathfinder}} for details.}
 
-\item{runSnake}{if TRUE, uses a stochastic algorithm for adjusting the pitch
-contour to minimize both the internal tension of the curve and its
-deviation from high-certainty pitch candidates. See \code{\link{snake}} for
-details. NB: if the snake is run, the final contour may deviate from the
-actually measured pitch candidates!}
+\item{control_anneal}{a list of control parameters for post-processing of
+pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
+only relevant if \code{postprocess} is 'slow'}
 
-\item{snakeSmoothingStep}{controls the speed of snake adaptation}
+\item{interpolWindow}{when interpolating pitch candidates, the median is
+calculated over \code{± interpolWindow}}
 
-\item{plotSnake}{if TRUE, plots the snake (pitch postprocessing)}
+\item{interpolTolerance}{when interpolating pitch candidates, the criterion
+for needing to interpolate is the absense of pitch candidates with values
+within \code{1 ± interpolTolerance} of the median of pitch center of
+gravity over the interpolation window. For ex., if \code{interpolTolerance}
+is .05, we look for values from 0.95 to 1.05 time the median value over
+interpolation window.}
+
+\item{interpolCert}{when interpolating pitch candidates, all generated pitch
+candidates are assigned a certainty equal to \code{interpolCert}}
+
+\item{snake_step}{if \code{snake_step} is a positive number, the optimized
+path through pitch candidates is further processed to minimize the elastic
+force acting on pitch contour. Note that this imposes some smoothing and
+thus creates pitch values that were not among candidates. The exact value
+of \code{snake_step} controls the speed of snake adaptation.}
+
+\item{snake_plot}{if TRUE, plots the snake (pitch postprocessing)}
 }
 \value{
-Returns a numeric vector representing the best found path through pitch candidates.
+Returns a numeric vector of pitch values representing the best found
+  path through pitch candidates.
 }
 \description{
 Internal soundgen function.

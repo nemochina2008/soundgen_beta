@@ -46,26 +46,27 @@
 #'   unvoiced)
 #' @param shortest_pause the smallest gap between voiced syllables (ms) that
 #'   means they shouldn't be merged into one voiced syllable
+#' @param interpolWindow,interpolTolerance,interpolCert control the behavior of
+#'   interpolation algorithm when post-processing pitch candidates. See
+#'   \code{\link{pathfinder}} for details.
 #' @param postprocess method of postprocessing pitch candidates to find the
 #'   optimal pitch contour: 'slow' for annealing, 'fast' for a simple heuristic,
 #'   'none' for none. See \code{\link{pathfinder}} for details.
+#' @param control_anneal a list of control parameters for post-processing of
+#'   pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
+#'   only relevant if \code{postprocess} is 'slow'
 #' @param certWeight (0 to 1) in pitch postprocessing, specifies how much we
-#'   prioritize the certainty of pitch candidates vs. the internal tension of
-#'   the resulting pitch curve. High certWeight: we mostly pay attention to our
-#'   certainty in particular pitch candidates; low certWeight: we are more
-#'   concerned with avoiding rapid pitch fluctuations in our contour.
-#' @param snake_step if \code{snake_step} is a positive number, the optimized path through pitch candidates is further processed to minimize the elastic force acting on pitch contour. Note that this imposes some smoothing and thus creates pitch values that were not among candidates. The exact value of \code{snake_step} controls the speed of snake adaptation.
-#' @param interpolWindow,interpolTolerance,interpolCert control the behavior of
-#'   interpolation algorithm when evaluating the costs of possible snake
-#'   configurations. See \code{\link{pathfinder}} for details.
+#'   prioritize the certainty of pitch candidates vs. pitch jumps / the internal
+#'   tension of the resulting pitch curve. High certWeight: we mostly pay
+#'   attention to our certainty in particular pitch candidates; low certWeight:
+#'   we are more concerned with avoiding rapid pitch fluctuations in our
+#'   contour.
+#' @param snake_step if \code{snake_step} is a positive number, the optimized
+#'   path through pitch candidates is further processed to minimize the elastic
+#'   force acting on pitch contour. Note that this imposes some smoothing and
+#'   thus creates pitch values that were not among candidates. The exact value
+#'   of \code{snake_step} controls the speed of snake adaptation.
 #' @param snake_plot if TRUE, plots the snake (pitch postprocessing)
-#' @param smooth if TRUE, contours of the specified variables (smooth_vars) are
-#'   smoothed. To control the amount of smoothing, use \code{smooth_idx}.
-#' @param smooth_vars apply a customized version of median smoothing to the
-#'   contours of the variables in \code{smooth_vars} (defaults to
-#'   \code{c('pitch', 'dom')}). Modifies only the values that deviate
-#'   considerably from the moving median and preserves all other values (so this
-#'   is a bit different from applying a moving median or kernel smoothing)
 #' @param smooth_idx,smooth_vars if \code{smooth_idx} is a positive number,
 #'   contours of the variables in \code{smooth_vars} are smoothed using a
 #'   customized version of median smoothing. Modifies only the values that
@@ -89,7 +90,7 @@
 #'   breathingAnchors = list(time = c(0, 900), value = c(-40, 00)),
 #'   temperature = 0)
 #' playme(sound, 16000)
-#' a = analyze(sound, samplingRate = 16000, plot = T)
+#' a = analyze(sound, samplingRate = 16000, plot = TRUE)
 #' median(a$pitch, na.rm = TRUE)  # 601 Hz
 #'
 #' # with subharmonics and jitter
@@ -100,7 +101,7 @@
 #' playme(sound, 16000)
 #' a = analyze(sound, samplingRate = 16000, plot = TRUE)
 #' # many pitch candidates are off, but the overall contour and estimate of
-#' median pitch are very similar:
+#' # median pitch are very similar:
 #' median(a$pitch, na.rm = TRUE)  # 597 Hz
 analyze = function (x,
                     samplingRate = NULL,
@@ -127,17 +128,17 @@ analyze = function (x,
                     dom_threshold = 0.1,
                     shortest_syl = 20,
                     shortest_pause = 60,
-                    postprocess = c('none', 'fast', 'slow')[2],
                     interpolWindow = 3,
                     interpolTolerance = 0.3,
                     interpolCert = 0.3,
+                    postprocess = c('none', 'fast', 'slow')[2],
+                    control_anneal = list(maxit = 5000, temp = 1000),
                     certWeight = .5,
-                    runSnake = T,
                     snake_step = 0.05,
-                    snake_plot = F,
+                    snake_plot = FALSE,
                     smooth_idx = 1,
                     smooth_vars = c('pitch', 'dom'),
-                    plot = T,
+                    plot = TRUE,
                     savePath = NA,
                     contrast = .2,
                     brightness = 0,
@@ -176,15 +177,15 @@ analyze = function (x,
   # Set up filter for calculating pitchAutocor
   filter = ftwindow_modif(2 * windowLength_points, wn = wn) # plot(filter, type='l')
   powerSpectrum_filter = abs(fft(filter)) ^ 2
-  autoCorrelation_filter = abs(fft(powerSpectrum_filter, inverse = T)) ^ 2
+  autoCorrelation_filter = abs(fft(powerSpectrum_filter, inverse = TRUE)) ^ 2
   autoCorrelation_filter = autoCorrelation_filter[1:windowLength_points]
   autoCorrelation_filter = autoCorrelation_filter / max(autoCorrelation_filter)
   # plot(autoCorrelation_filter, type = 'l')
 
   ## fft and acf per frame
   if (!is.na(savePath)) {
-    plot = T
-    jpeg(file = paste0 (savePlotPath, plotname, ".jpg"), 1200, 800)
+    plot = TRUE
+    jpeg(filename = paste0 (savePath, plotname, ".jpg"), 1200, 800)
   }
   frameBank = getFrameBank(
     sound = sound,
@@ -213,7 +214,7 @@ analyze = function (x,
     ...
   )
   autocorBank = apply(frameBank, 2, function(x) {
-    stats::acf(x, windowLength_points, plot = FALSE)$acf / autoCorrelation_filter
+    acf(x, windowLength_points, plot = FALSE)$acf / autoCorrelation_filter
   })
   # plot(autocorBank[, 5], type = 'l')
   rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
@@ -246,7 +247,7 @@ analyze = function (x,
       'pitchCand' = NA,
       'pitchAmpl' = NA,
       'source' = NA,
-      stringsAsFactors = F,
+      stringsAsFactors = FALSE,
       row.names = NULL
     ),
     'summaries' = data.frame (
@@ -287,7 +288,7 @@ analyze = function (x,
 
   # Store the descriptives provided by function analyzeFrame in a dataframe
   result = lapply(frameInfo, function(y) y[['summaries']])
-  result = data.frame(matrix(unlist(result), nrow=length(frameInfo), byrow=T))
+  result = data.frame(matrix(unlist(result), nrow=length(frameInfo), byrow=TRUE))
   colnames(result) = names(frameInfo[[1]]$summaries)
   # NB: sapply allows to do this in 1 line, but then result$HNR returns a list
   # instead of a vector! Annoying
@@ -310,9 +311,9 @@ analyze = function (x,
   pitchCert = lapply(pitch_list, function(y) as.data.frame(t(y[['pitchAmpl']])))
   pitchCert = t(plyr::rbind.fill(pitchCert)) # a matrix of our certainty in pitch candidates
   pitchSource = lapply(pitch_list, function(y) {
-    # NB: without StringsAsFactors=F, the first row becomes "1"
+    # NB: without StringsAsFactors=FALSE, the first row becomes "1"
     # because of wrong NA recognition
-    as.data.frame(t(y[['source']]), stringsAsFactors = F)
+    as.data.frame(t(y[['source']]), stringsAsFactors = FALSE)
   })
   pitchSource = t(plyr::rbind.fill(pitchSource)) # a matrix of the sources of pitch candidates
 
@@ -357,10 +358,10 @@ analyze = function (x,
         pitchCert = pitchCert[, myseq],
         certWeight = certWeight,
         postprocess = postprocess,
+        control_anneal = control_anneal,
         interpolWindow = interpolWindow,
         interpolTolerance = interpolTolerance,
         interpolCert = interpolCert,
-        runSnake = runSnake,
         snake_step = snake_step,
         snake_plot = snake_plot
       )
@@ -504,13 +505,14 @@ analyzeFolder = function (myfolder,
                           interpolWindow = 3,
                           interpolTolerance = 0.3,
                           interpolCert = 0.3,
+                          postprocess = c('none', 'fast', 'slow')[2],
+                          control_anneal = list(maxit = 5000, temp = 1000),
                           certWeight = .5,
-                          runSnake = T,
                           snake_step = 0.05,
-                          snake_plot = F,
+                          snake_plot = FALSE,
                           smooth_idx = 1,
                           smooth_vars = c('pitch', 'dom'),
-                          plot = T,
+                          plot = TRUE,
                           savePath = NA,
                           contrast = .2,
                           brightness = 0,
@@ -536,7 +538,7 @@ analyzeFolder = function (myfolder,
     max_pitch_cands = max_pitch_cands,
     voiced_threshold_autocor = voiced_threshold_autocor,
     voiced_threshold_cep = voiced_threshold_cep,
-    voiced_threshold_spec = voiced_threshold_spec,
+    voiced_threshold_spec =voiced_threshold_spec,
     specPitchThreshold_nullNA = specPitchThreshold_nullNA,
     slope_spec = slope_spec,
     width_spec = width_spec,
@@ -550,8 +552,9 @@ analyzeFolder = function (myfolder,
     interpolWindow = interpolWindow,
     interpolTolerance = interpolTolerance,
     interpolCert = interpolCert,
+    postprocess = postprocess,
+    control_anneal = control_anneal,
     certWeight = certWeight,
-    runSnake = runSnake,
     snake_step = snake_step,
     snake_plot = snake_plot,
     smooth_idx = smooth_idx,

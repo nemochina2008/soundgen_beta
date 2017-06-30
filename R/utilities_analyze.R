@@ -8,7 +8,8 @@
 #' faster than \code{\link[seewave]{fpeaks}}.
 #' @param x input vector
 #' @param threshold threshold for peak detection
-#' @example soundgen:::isCentral.localMax(c(1,1,3,2,1), 2.5)
+#' @examples
+#' soundgen:::isCentral.localMax(c(1,1,3,2,1), 2.5)
 isCentral.localMax = function(x, threshold) {
   middle = ceiling(length(x) / 2)
   return(which.max(x) == middle & x[middle] > threshold)
@@ -99,6 +100,7 @@ findVoicedSegments = function(pitchCands,
 #' @param autoCorrelation pre-calculated autocorrelation of the input frame
 #'   (computationally more efficient than to do it here)
 #' @param samplingRate sampling rate (Hz)
+#' @param maxNoCands maximum number of pitch candidates in each class (autocor / cep / BaNa)
 #' @inheritParams analyze
 #' @return Returns a list with two components: $pitch_array contains pitch
 #'   candidates for the frame, and $summaries contains other acoustic predictors
@@ -387,8 +389,8 @@ analyzeFrame = function (frame,
       # for each ratio that falls within the limits specified outside this
       # function in a dataframe called "ratios", calculate the corresponding
       # pitch. If several ratios suggest the same pitch, that's our best guess
-      divLow = ratios$divide_lower_by[temp$AtoB_ratio[i] > ratios$value_low &
-                                      temp$AtoB_ratio[i] < ratios$value_high]
+      divLow = BaNa_ratios$divide_lower_by[temp$AtoB_ratio[i] > BaNa_ratios$value_low &
+                                           temp$AtoB_ratio[i] < BaNa_ratios$value_high]
       pitchCand = c(pitchCand,
                     as.numeric(specPeaks$freq[temp$harmonicB[i]] / divLow))
     }

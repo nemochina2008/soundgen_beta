@@ -7,7 +7,7 @@
 findGrad(path, interpol = 3)
 }
 \arguments{
-\item{path}{numeric vector corresponding to a path through pitch candidates}
+\item{path}{numeric vector}
 
 \item{interpol}{the number of points to interpolate beyond each end of the path}
 }
@@ -19,5 +19,5 @@ Internal soundgen function.
 }
 \details{
 Internal helper function for postprocessing of pitch contour. Returns
-gradient of internal energy of a snake. See \code{\link{snake}}.
+the elastic force acting on a snake. See \code{\link{snake}}.
 }

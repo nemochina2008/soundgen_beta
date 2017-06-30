@@ -73,6 +73,8 @@ to catch weak harmonics (BaNa - spectral pitch tracking)}
 \item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least
 dom_threshold}
+
+\item{maxNoCands}{maximum number of pitch candidates in each class (autocor / cep / BaNa)}
 }
 \value{
 Returns a list with two components: $pitch_array contains pitch

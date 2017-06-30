@@ -4,15 +4,47 @@
 \alias{snake}
 \title{Snake}
 \usage{
-snake(pitch, pitchCands, pitchCert, certWeight, snakeSmoothingStep = 0.05,
-  snakeIterMultiplier = 2, plotSnake = F)
+snake(pitch, pitchCands, pitchCert, certWeight, pitchCenterGravity,
+  snake_step = 0.05, snake_plot = FALSE)
+}
+\arguments{
+\item{pitch}{numeric vector representing our best guess at pitch contour,
+which we are now attempting to improve by minimizing its elastic tension}
+
+\item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
+column is one fft frame, each row is one candidate.}
+
+\item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
+our certainty in pitch candidates}
+
+\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
+prioritize the certainty of pitch candidates vs. pitch jumps / the internal
+tension of the resulting pitch curve. High certWeight: we mostly pay
+attention to our certainty in particular pitch candidates; low certWeight:
+we are more concerned with avoiding rapid pitch fluctuations in our
+contour.}
+
+\item{pitchCenterGravity}{numeric vector giving the mean of all pitch
+candidates per fft frame weighted by our certainty in each of these
+candidates}
+
+\item{snake_step}{if \code{snake_step} is a positive number, the optimized
+path through pitch candidates is further processed to minimize the elastic
+force acting on pitch contour. Note that this imposes some smoothing and
+thus creates pitch values that were not among candidates. The exact value
+of \code{snake_step} controls the speed of snake adaptation.}
+
+\item{snake_plot}{if TRUE, plots the snake (pitch postprocessing)}
+}
+\value{
+Returns optimized pitch contour (numeric vector of the same length as
+  \code{pitch}).
 }
 \description{
 Internal soundgen function.
 }
 \details{
-Internal helper function for postprocessing of pitch contour. Wiggles a snake along the gradient of internal + external forces. NB: if the snake is run, the final contour may deviate from the actually measured pitch candidates!
-}
-\examples{
-
+Internal helper function for postprocessing of pitch contour. Wiggles a snake
+along the gradient of internal + external forces. NB: if the snake is run,
+the final contour may deviate from the actually measured pitch candidates!
 }

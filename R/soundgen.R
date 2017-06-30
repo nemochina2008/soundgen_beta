@@ -11,10 +11,7 @@
 #'
 #' @docType package
 #' @name soundgen
-#' @importFrom graphics abline axis layout lines par points rect text persp segments
-#' @importFrom stats approx dgamma dnorm fft loess median na.omit predict quantile rbinom rgamma rnorm runif spline var dist cor sd optim
-#' @importFrom utils head tail
-#' @importFrom grDevices gray rainbow dev.off jpeg
+#' @import stats graphics utils grDevices
 NULL
 
 

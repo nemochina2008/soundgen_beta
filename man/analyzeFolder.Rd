@@ -14,10 +14,11 @@ analyzeFolder(myfolder, samplingRate = NULL, silence = 0.03,
   prior_mean = NA, prior_sd = NA, cutoff_dom = 6000,
   dom_threshold = 0.1, shortest_syl = 20, shortest_pause = 60,
   interpolWindow = 3, interpolTolerance = 0.3, interpolCert = 0.3,
-  certWeight = 0.5, runSnake = T, snakeSmoothingStep = 0.05,
-  plotSnake = F, smooth_idx = 1, smooth_vars = c("pitch", "dom"),
-  plot = T, savePath = NA, contrast = 0.2, brightness = 0, ylim = c(0,
-  5), summary = TRUE, verbose = TRUE)
+  postprocess = c("none", "fast", "slow")[2], control_anneal = list(maxit =
+  5000, temp = 1000), certWeight = 0.5, snake_step = 0.05,
+  snake_plot = FALSE, smooth_idx = 1, smooth_vars = c("pitch", "dom"),
+  plot = TRUE, savePath = NA, contrast = 0.2, brightness = 0,
+  ylim = c(0, 5), summary = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
@@ -115,32 +116,39 @@ unvoiced)}
 means they shouldn't be merged into one voiced syllable}
 
 \item{interpolWindow}{control the behavior of
-interpolation algorithm when evaluating the costs of possible snake
-configurations. See \code{\link{pathfinder}} for details.}
+interpolation algorithm when post-processing pitch candidates. See
+\code{\link{pathfinder}} for details.}
 
 \item{interpolTolerance}{control the behavior of
-interpolation algorithm when evaluating the costs of possible snake
-configurations. See \code{\link{pathfinder}} for details.}
+interpolation algorithm when post-processing pitch candidates. See
+\code{\link{pathfinder}} for details.}
 
 \item{interpolCert}{control the behavior of
-interpolation algorithm when evaluating the costs of possible snake
-configurations. See \code{\link{pathfinder}} for details.}
+interpolation algorithm when post-processing pitch candidates. See
+\code{\link{pathfinder}} for details.}
 
-\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much do we
-prioritize the certainty of pitch candidates vs. the internal tension of
-the resulting pitch curve. High certWeight: we mostly pay attention to our
-certainty in particular pitch candidates; low certWeight: we are more
-concerned with avoiding rapid pitch fluctuations in our contour.}
+\item{postprocess}{method of postprocessing pitch candidates to find the
+optimal pitch contour: 'slow' for annealing, 'fast' for a simple heuristic,
+'none' for none. See \code{\link{pathfinder}} for details.}
 
-\item{runSnake}{if TRUE, uses a stochastic algorithm for adjusting the pitch
-contour to minimize both the internal tension of the curve and its
-deviation from high-certainty pitch candidates. See \code{\link{snake}} for
-details. NB: if the snake is run, the final contour may deviate from the
-actually measured pitch candidates!}
+\item{control_anneal}{a list of control parameters for post-processing of
+pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
+only relevant if \code{postprocess} is 'slow'}
 
-\item{snakeSmoothingStep}{controls the speed of snake adaptation}
+\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
+prioritize the certainty of pitch candidates vs. pitch jumps / the internal
+tension of the resulting pitch curve. High certWeight: we mostly pay
+attention to our certainty in particular pitch candidates; low certWeight:
+we are more concerned with avoiding rapid pitch fluctuations in our
+contour.}
 
-\item{plotSnake}{if TRUE, plots the snake (pitch postprocessing)}
+\item{snake_step}{if \code{snake_step} is a positive number, the optimized
+path through pitch candidates is further processed to minimize the elastic
+force acting on pitch contour. Note that this imposes some smoothing and
+thus creates pitch values that were not among candidates. The exact value
+of \code{snake_step} controls the speed of snake adaptation.}
+
+\item{snake_plot}{if TRUE, plots the snake (pitch postprocessing)}
 
 \item{smooth_idx}{if \code{smooth_idx} is a positive number,
 contours of the variables in \code{smooth_vars} are smoothed using a
@@ -151,11 +159,14 @@ smoothing). \code{smooth_idx} controls both the tolerated deviance and the
 size of the window for calculating a moving median. \code{smooth_idx} of 1
 corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.}
 
-\item{smooth_vars}{apply a customized version of median smoothing to the
-contours of the variables in \code{smooth_vars} (defaults to
-\code{c('pitch', 'dom')}). Modifies only the values that deviate
-considerably from the moving median and preserves all other values (so this
-is a bit different from applying a moving median or kernel smoothing)}
+\item{smooth_vars}{if \code{smooth_idx} is a positive number,
+contours of the variables in \code{smooth_vars} are smoothed using a
+customized version of median smoothing. Modifies only the values that
+deviate considerably from the moving median and preserves all other values
+(so this is a bit different from applying a moving median or kernel
+smoothing). \code{smooth_idx} controls both the tolerated deviance and the
+size of the window for calculating a moving median. \code{smooth_idx} of 1
+corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 

@@ -7,7 +7,7 @@
 medianSmoother(df, smoothing_ww, smoothing_threshold)
 }
 \arguments{
-\item{df}{a dataframe (each column is processed separately, so multiple
+\item{df}{dataframe (each column is processed separately, so multiple
 contours can be fed into this function at once to speed things up)}
 
 \item{smoothing_ww}{width of smoothing window (points)}
