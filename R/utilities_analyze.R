@@ -68,7 +68,7 @@ findVoicedSegments = function(pitchCands,
     # find end
     if (length(segmentEnd) < length(segmentStart)) {
       while (i < (length(putativelyVoiced) - noToleratedNA + 1)) {
-        if (sum(putativelyVoiced[i:(i + noToleratedNA)], na.rm = T) == 0) {
+        if (sum(putativelyVoiced[i:(i + noToleratedNA)], na.rm = TRUE) == 0) {
           segmentEnd = c(segmentEnd, i - 1)
           i = i - 1
           break
@@ -128,14 +128,14 @@ analyzeFrame = function (frame,
     'pitchCand' = NA,
     'pitchAmpl' = NA,
     'source' = NA,
-    stringsAsFactors = F,
+    stringsAsFactors = FALSE,
     row.names = NULL
   )
   pitchAutocor_array = pitchCep_array = pitchSpec_array = dom_array = data.frame (
     'pitchCand' = numeric(),
     'pitchAmpl' = numeric(),
     'source' = character(),
-    stringsAsFactors = F,
+    stringsAsFactors = FALSE,
     row.names = NULL
   )
   summaries = data.frame (
@@ -204,7 +204,7 @@ analyzeFrame = function (frame,
       'pitchCand' = dom,
       'pitchAmpl' = frame[idx[1]],
       'source' = 'dom',
-      stringsAsFactors = F,
+      stringsAsFactors = FALSE,
       row.names = NULL
     )
   }
@@ -218,7 +218,7 @@ analyzeFrame = function (frame,
                   'amp' = autoCorrelation)
   rownames(a) = NULL
   a = a[a$freq > pitch_floor &
-          a$freq < pitch_ceiling, , drop = F] # plot(a[,2], type='l')
+          a$freq < pitch_ceiling, , drop = FALSE] # plot(a[,2], type='l')
   HNR = max(a$amp) # HNR is here defined as the maximum autocorrelation
   # within the specified pitch range. It is also measured for the frames which
   # are later classified as unvoiced (i.e. HNR can be <voiced_threshold)
@@ -243,7 +243,7 @@ analyzeFrame = function (frame,
       autocorPeaks = try(autocorPeaks[autocorPeaks$freq > bestFreq / 1.8,
                                       , drop = FALSE], silent = TRUE)
       # otherwise we get false subharmonics
-      autocorPeaks = try(autocorPeaks[order(autocorPeaks$amp, decreasing = T),
+      autocorPeaks = try(autocorPeaks[order(autocorPeaks$amp, decreasing = TRUE),
                                       , drop = FALSE], silent = TRUE)
     }
     if (class(autocorPeaks) != 'try-error') {
@@ -255,7 +255,7 @@ analyzeFrame = function (frame,
           'pitchAmpl' = autocorPeaks[1:min(nrow(autocorPeaks), maxNoCands), 2],
           # save amplitudes corresponding to each pitchAutocor candidate
           'source' = 'autocor',
-          stringsAsFactors = F,
+          stringsAsFactors = FALSE,
           row.names = NULL
         )
       }
@@ -273,7 +273,7 @@ analyzeFrame = function (frame,
   if (zpCep < length(frame)) {
     frameZP = frame
   } else {
-    frameZP = c (frame, rep(0, (zpCep - length(frame))))
+    frameZP = c(frame, rep(0, (zpCep - length(frame))))
   }
 
   # fft of fft, whatever you call it - cepstrum or smth else
@@ -313,7 +313,7 @@ analyzeFrame = function (frame,
       'pitchCand' = cepstrumPeaks$freq[1],
       'pitchAmpl' = cepstrumPeaks$amp[1],
       'source' = 'cepstrum',
-      stringsAsFactors = F,
+      stringsAsFactors = FALSE,
       row.names = NULL
     )
     # because cepstrum really stinks for frequencies above ~1 kHz, mostly
@@ -356,7 +356,7 @@ analyzeFrame = function (frame,
         'pitchCand' = pitchSpec,
         'pitchAmpl' = pitchSpec_only_peak_weight,
         'source' = 'spec',
-        stringsAsFactors = F,
+        stringsAsFactors = FALSE,
         row.names = NULL
       )
     }
@@ -405,7 +405,7 @@ analyzeFrame = function (frame,
         'pitchCand' = pitchCand,
         'specAmplIdx' = 1,
         'source' = 'spec',
-        stringsAsFactors = F,
+        stringsAsFactors = FALSE,
         row.names = NULL
       )
       c = 1
@@ -432,7 +432,7 @@ analyzeFrame = function (frame,
       # (1 - pitchSpec_only_peak_weight)
       # plot(a, b, type = 'l')
       pitchSpec_array = pitchSpec_array[
-        order(pitchSpec_array$pitchAmpl,  decreasing = T),
+        order(pitchSpec_array$pitchAmpl,  decreasing = TRUE),
         c('pitchCand', 'pitchAmpl', 'source')
       ]
     }

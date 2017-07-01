@@ -147,11 +147,11 @@ harpness}
 \item{...}{other graphical parameters passed to \code{\link{spec}}}
 }
 \value{
-Returns ... The best guess at the pitch contour considering all
-  available information is stored in the variable called "pitch". In
-  addition, the output contains pitch estimates based on three separate
-  algorithms: autocorrelation (pitchAutocor), cepstrum (pitchCep), and BaNa
-  (pitchSpec).
+Returns a dataframe with one row per FFT frame and one column per acoustic variable.
+  The best guess at the pitch contour considering all available information
+  is stored in the variable called "pitch". In addition, the output contains
+  pitch estimates based on three separate algorithms: autocorrelation
+  (pitchAutocor), cepstrum (pitchCep), and BaNa (pitchSpec).
 }
 \description{
 Acoustic analysis of a single sound file.

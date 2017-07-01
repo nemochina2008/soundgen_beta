@@ -167,39 +167,3 @@ findBursts = function(envelope,
 }
 
 
-#' Evaluate segmentation quality
-#'
-#' Internal soundgen function.
-#'
-#' Called by \code{\link{optimizeSegment}}.
-#' @param p numeric vector of evaluated values of parameters to optimize
-#' @param pars_to_optimize the names of parameters to optimize (character
-#'   vector)
-#' @param pars_bounds a list of bounds within which pars are to stay. Anything
-#'   outside the bounds is not evaluated (the function returns 1). For ex., if
-#'   we optimize \code{smooth_ms} and \code{smooth_overlap}, reasonable
-#'   pars_bounds might be list(low = c(5, 0), high = c(500, 95))
-#' @inheritParams optimizeSegment
-#' @return Returns Pearson's correlation between fitness measure (nBursts or
-#'   nSyllables) and the key.
-evaluate_params = function(p,
-                           pars_to_optimize,
-                           pars_bounds,
-                           fitness_measure,
-                           myfolder,
-                           key) {
-  # if the pars go beyond the bounds, don't even evaluate
-  if (sum(p < pars_bounds$low) > 0 |
-      sum(p > pars_bounds$high) > 0) {
-    return(1)
-  }
-  params = as.list(p)
-  names(params) = pars_to_optimize
-  s = try(do.call(segmentFolder, c(params, myfolder = myfolder, verbose = FALSE)))
-  if (class(s) == 'try-error') {
-    stop('error in segmentFolder')
-  } else {
-    trial = as.numeric(s[, fitness_measure])
-    return (1 - cor (key, trial, use = 'pairwise.complete.obs'))
-  }
-}

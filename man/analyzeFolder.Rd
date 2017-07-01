@@ -204,7 +204,7 @@ s = analyzeFolder(myfolder, postprocess = 'slow', verbose = TRUE)
 key = pitch_manual  # a vector of 260 floats
 trial = s$pitch_median
 cor(key, trial, use = 'pairwise.complete.obs')
-cor(key, trial)
+plot(log(key), log(trial))
 abline(a=0, b=1, col='red')
 }
 }

@@ -81,11 +81,11 @@
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
 #' @param savePath if a valid path is specified, the plot is saved in this folder (defaults to NA)
 #' @param ... other graphical parameters passed to \code{\link{spec}}
-#' @return Returns ... The best guess at the pitch contour considering all
-#'   available information is stored in the variable called "pitch". In
-#'   addition, the output contains pitch estimates based on three separate
-#'   algorithms: autocorrelation (pitchAutocor), cepstrum (pitchCep), and BaNa
-#'   (pitchSpec).
+#' @return Returns a dataframe with one row per FFT frame and one column per acoustic variable.
+#'   The best guess at the pitch contour considering all available information
+#'   is stored in the variable called "pitch". In addition, the output contains
+#'   pitch estimates based on three separate algorithms: autocorrelation
+#'   (pitchAutocor), cepstrum (pitchCep), and BaNa (pitchSpec).
 #' @export
 #' @examples
 #' sound1 = generateBout(sylDur_mean = 900, pitchAnchors = list(
@@ -482,7 +482,7 @@ analyze = function (x,
 #' key = pitch_manual  # a vector of 260 floats
 #' trial = s$pitch_median
 #' cor(key, trial, use = 'pairwise.complete.obs')
-#' cor(key, trial)
+#' plot(log(key), log(trial))
 #' abline(a=0, b=1, col='red')
 #' }
 analyzeFolder = function (myfolder,

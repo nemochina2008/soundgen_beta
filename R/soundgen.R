@@ -15,6 +15,8 @@
 #' @import stats graphics utils grDevices
 NULL
 
+# devtools::use_data(BaNa_ratios, notes_dict, internal = TRUE, overwrite = TRUE)
+
 
 
 #' Generate a sound

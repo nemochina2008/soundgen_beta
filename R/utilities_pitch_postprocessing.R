@@ -109,7 +109,7 @@ pathfinder = function(pitchCands,
   # apply the snake algorithm to minimize the elastic forces acting on this
   # pitch contour without deviating too far from high-certainty anchors
   if (is.numeric(snake_step) && snake_step > 0) {
-    pitch_final = snake(
+    bestPath = snake(
       pitch = bestPath,
       pitchCands = pitchCands,
       pitchCert = pitchCert,
@@ -120,7 +120,7 @@ pathfinder = function(pitchCands,
     )
   }
 
-  return(2 ^ pitch_final)
+  return(2 ^ bestPath)
 }
 
 
@@ -437,7 +437,7 @@ snake = function (pitch,
     force_new = mean(abs(force))
     force_delta = (force_old - force_new) / force_old
     force_old = force_new
-    if (force_delta < snake_step) break
+    if (is.na(force_delta) || force_delta < snake_step) break
     # wiggle the snake along the gradient of the total force acting on it
     # (elastic + attraction of high-certainty pitch candidates)
     pitch = pitch + snake_step * force
