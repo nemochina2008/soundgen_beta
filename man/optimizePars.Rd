@@ -5,9 +5,11 @@
 \title{Optimize parameters for acoustic analysis}
 \usage{
 optimizePars(myfolder, key, myfun, pars_to_optimize, pars_bounds = NULL,
-  fitness_measure, nIter = 10, wiggle_init = 0.2, control = list(maxit =
-  50, reltol = 0.01, trace = 0), otherPars = list(plot = FALSE, verbose =
-  FALSE))
+  fitness_par, fitness_crit = function(x) 1 - cor(x, key, use =
+  "pairwise.complete.obs"), nIter = 10, wiggle_init = 0.2,
+  control = list(maxit = 50, reltol = 0.01, trace = 0),
+  otherPars = list(plot = FALSE, verbose = FALSE), mygrid = NULL,
+  verbose = TRUE)
 }
 \arguments{
 \item{myfolder}{path to where the .wav files live}
@@ -26,7 +28,9 @@ values of optimized parameters. For ex., if we optimize \code{smooth_ms}
 and \code{smooth_overlap}, reasonable pars_bounds might be list(low = c(5,
 0), high = c(500, 95))}
 
-\item{fitness_measure}{the name of output variable that we are comparing with the key, e.g. 'nBursts' or 'pitch_median'}
+\item{fitness_par}{the name of output variable that we are comparing with the key, e.g. 'nBursts' or 'pitch_median'}
+
+\item{fitness_crit}{the function used to evaluate how well the output of \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a good fitness criterion is \code{function(x) 1 - cor(log(x), key, use = 'pairwise.complete.obs')}, where \code{key} is already log-transformed.}
 
 \item{nIter}{repeat the optimization several times to check convergence}
 
@@ -36,10 +40,16 @@ random deviation of initial values from the defaults}
 
 \item{control}{a list of control parameters passed on to
 \code{\link[stats]{optim}}. The method used is "Nelder-Mead"}
+
+\item{mygrid}{a dataframe with one column per parameter to optimize, with
+each row specifying the values to try. If not NULL, \code{optimizePars}
+simply evaluates each combination of parameter values (see examples).}
+
+\item{verbose}{if TRUE, reports the values of parameters evaluated and fitness}
 }
 \value{
 Returns a matrix with one row per iteration, containing Pearson's
-  correlation between the key and \code{fitness_measure} in the first column
+  correlation between the key and \code{fitness_par} in the first column
   and the best values of each of the optimized parameters in the remaining
   columns.
 }
@@ -76,9 +86,9 @@ myfolder = '~/Downloads/temp'  # 260 .wav files live here
 key = segment_manual  # a vector of 260 integers
 # run optimization loop several times with random initial values to check convergence
 # NB: with 260 sounds and default settings, this might take ~20 min per iteration!
-res = optimizeSegment(myfolder = myfolder, myfun = 'segmentFolder', key = key,
+res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = key,
   pars_to_optimize = c('shortest_syl', 'shortest_pause', 'syl_to_global_mean'),
-  fitness_measure = 'nBursts',
+  fitness_par = 'nBursts',
   nIter = 2, control = list(maxit = 50, reltol = .01, trace = 0))
 
 # examine the results
@@ -88,8 +98,16 @@ for (c in 2:ncol(res)) {
 }
 pars = as.list(res[1, 2:ncol(res)])  # top candidate (best pars)
 s = do.call(segmentFolder, c(myfolder, pars))  # segment with best pars
-cor(key, as.numeric(s[, fitness_measure]))
-boxplot(as.numeric(s[, fitness_measure]) ~ as.integer(key), xlab='key')
+cor(key, as.numeric(s[, fitness_par]))
+boxplot(as.numeric(s[, fitness_par]) ~ as.integer(key), xlab='key')
 abline(a=0, b=1, col='red')
+
+# Try a grid with particular parameter values instead of formal optimization
+res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = segment_manual,
+  pars_to_optimize = c('shortest_syl', 'shortest_pause'),
+  fitness_par = 'nBursts',
+  mygrid = expand.grid(shortest_syl = c(30, 40),
+                       shortest_pause = c(30, 40, 50)))
+1 - res$fit  # correlations with key
 }
 }

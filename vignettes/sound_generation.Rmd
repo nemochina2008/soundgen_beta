@@ -1,0 +1,106 @@
+---
+title: "Sound generation with soundgen"
+author: "Andrey Anikin"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Sound generation with soundgen}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+## Purpose
+The functions for sound synthesis in soundgen are intended for synthesis of non-linguistic vocalizations of both humans and other animals: sighs, moans, screams, etc. They can also be used for the creation of non-biological sounds that require precise control over spectral and temporal modulations, such as special effects and noises for scientific experiments. Soundgen is NOT meant to be used for text-to-speech conversion. It can be adapted for this purpose, but existing specialized tools will probably serve better.
+
+Soundgen uses a parametric algorithm, which means that sounds are synthesized de nove using control parameters, as opposed to concatenating or modifying existing audio recordings. Under the hood, the current version of soundgen generates and filters two sources of excitation: sine waves for harmonics for tonal sounds and white noise for non-harmonic sounds. 
+
+The rest of this vignette will unpack this last statement and demonstrate how soundgen can be used in practice. To simplify setting the control parameters and visualizing the output, soundgen library includes an interactive Shiny app. To start the app, call `soundgen_app()` from R or try it online at cogsci.se/soundgen.html. To generate sounds from the console, use the function `generateBout`. Each section of the vignette describes a particular aspect of sound generation, both describing the relevant arguments of `generateBout` and explaining how they can be specified in the app.
+
+## Before you proceed: consider the alternatives
+Soundgen is a fairly complicated tool, with a steep learning curve. If your task is fairly simple, you may want to look at some alternatives. In R, there are at least three other packages that offer sound synthesis: `tuneR`, `seewave`, and `phonTools`. Both `seewave` and `tuneR` implement straightforward ways to synthesize noises with adjustable (linear) spectral slope as well as pulses and square, triangular, or sine waves. Furthermore, you can create multiple harmonics and add both amplitude and frequency modulation with the `seewave` functions `synth()` and `synth2()`. There is even a function available for adding formants and thus creating different vowels: `vowelsynth()` from the `phonTools` package. If you think this covers your needs, try those packages first. 
+
+So why bother with soundgen at all? For the same reasons it was develloped in the first place. First, it goes furtherst with the customization and flexibility of sound synthesis. You will appreciate this flexibility if your aim is to produce convincing biological sounds. And second, it's a much higher-level tool with dedicated separate subroutines for things like controlling the rolloff (relative energy of different harmonics), adding moving formants and antiformants, mixing harmonic and noise components, controlling voice changes over multiple syllables, adding stochasticity to imitate unpredictable voice changes common in biological sound production, and more. In other words, it offers the power of a text-to-speech engine, but with the benefit of having transparent, meaningful high-level control parameters intended for the creation of whole bouts of vocalizing, rather than individual phonemes.
+
+## Basic principles of sound synthesis in soundgen
+The idea is to start with a few control parameters (e.g., the intonation contour, the amount of noise, the number of syllables and their duration, etc.) and to generate a corresponding audio stream, which will sound like a biological vocalization (a moan, a laugh, etc). Ignoring dependencies between control parameters and the procedure for the creation of polysyllabic vocalizations, the algorithm for generating a single voiced segment implements the standard source-filter model, which is the cornerstone of phonetics (Fant 1971). More specifically, the proposed algorithm generates the voiced component as a sum of sine waves and the noise component as filtered white noise, which are then passed through a frequency filter simulating the effect of human vocal tract. This process can be conceptually divided into three stages
+
+1.  Generation of the harmonic component (glottal source).
+    At this crucial stage, we "paint" the spectrogram of the glottal source based on the desired intonation contour and spectral envelope by specifying the frequencies, phases, and amplitudes of a number of sine waves, one for each harmonic of the fundamental frequency. If needed, we also add stochastic and non-linear effects at this stage: jitter and shimmer (random fluctuation in frequency and amplitude), subharmonics, slower random drift of control parameters, etc. Once the spectrogram "painting" is complete, we synthesize the corresponding waveform by generating and adding up as many sine waves as there are harmonics in the spectrum. 
+    Note that soundgen currently implements only sine wave synthesis. This is different from modeling glottal cycles themselves, as in phonetic models and some popular text-to-speech engines (e.g. Klatt 1980). In future versions of soundgen there may be an option to use a particular parametric model of the glottal cycle as excitation source as an alternative to generating a separate sine wave for each harmonic.
+
+1.  Generation of the noise component (aspiration, etc.).
+    In addition to harmonic oscillations of the vocal cords, there are other sources of excitation, which may be generated as some form of noise. For example, aspiration noise may be synthesized as white noise with rolloff -6 dB/octave (Klatt 1990) and added to the glottal source before formant filtering. It is similarly straightforward to add other types of noise, which may originate higher up in the vocal tract and thus display a different formant structure from the glottal source (e.g., high-frequency hissing, broadband clicks for tongue smacking, etc.) 
+    Some form of noise is synthesized in most sound generators. In soundgen noise is created in the frequency domain (i.e., as a spectrogram) and then converted into a time sequence via inverse FFT.
+    
+1.  Spectral filtering (formants and lip radiation).
+    The vocal tract acts as a resonator that modifies the source spectrum by amplifying certain frequencies and dampening others. In speech, changing resonance frequencies (formants) are responsible particularly for the distinctions between different vowels, but formants are also ubiquitous in animal vocalizations. Just as we "painted" a spectrogram for the acoustic source in (1), we now "paint" a spectral filter with a specified number of stationary or moving formants. We then take a fast Fourier transform (FFT) of the generated waveform to convert it back to a spectrogram, multiply the latter by our filter, and then take an inverse FFT to go back to the time domain. This filtering can be applied to harmonic and noise components separately or - for noise sources close to the glottis - the harmonic component and the noise component can be added first and then filtered together. 
+    Note that this FFT-mediated method of adding formants is different from the more traditional convolution, but with multiple formants it is both considerably faster and (arguably) more intuitive.
+
+Having briefly looked at the fundamental principles of sound generation, we proceed to control parameters. For further information, you may find the vignettes in `seewave` very helpful, and look out for the upcoming book on sound synthesis in R by Jerome Sueur, the author of the `seewave` package!
+
+## Syllables
+If you need to generate a single syllable without pauses, the only parameter you have to set is `sylDur_mean` ("Syllable length, ms" in the app). For a bout containing several syllables, you have two options:
+
+1.  Set `nSyl` ("Number of syllables" in the app). Breathing is then allowed to fill in the pauses (if breathing is longer than the voiced part), and you can specify an amplitude contour, intonation contour, and formant transitions that will span the entire bout. For ex., if the vowel sequence in a three-syllable bout is “uai”, the output will be approximately “[u] – pause – [a] – pause – [i]”. 
+```{r}
+generateBout(exactFormants = 'uai', nSyl = 3, play = TRUE)
+```
+1.  Set `repeatBout` ("Repeat bout # times" in the app). This is the same as calling `generateBout` repeatedly with the same settings or clicking the Generate button three times. If temperature = 0, you will get exactly the same sound repeated three times, otherwise some variation will be introduced. For the same “uai” example, the output will be “[uai] – pause – [uai] – pause – [uai]”.
+```{r}
+generateBout(exactFormants = 'uai', repeatBout = 3, play = TRUE)
+```
+
+## Intonation
+When we hear a tonal sound such as someone singing, one of its most salient characteristic is intonation or, more technically, the contour of fundamental frequency (F0), or, even more technically, the contour of the spectral band which is perceived to correspond to the fundamental frequency (pitch). Soundgen literally generates a sine wave corresponding to F0 and several higher harmonics, so F0 is straightforward to understand. However, how can its contour be specified with as few parameters as possible? The solution adopted in the current version is to take one or more anchors as input and generate a smooth contour that passes through all anchors. 
+
+The function that generates these smooth contours is `getSmoothContour`. You do not have to call it directly, but it can be helpful to visualize the curve implied by your anchors. Anchors are points defined by their time (ms) and value (in the case of pitch, this is frequency in Hz). Time anchors can range 0 to 1, or they can be specified in ms – it makes no difference since the sound is rescaled to match the duration.  TODO: export getSmoothContour()!!!
+
+ADD EXAMPLES OF getSmoothContour() and generateBout() with different intonations!!!
+
+To draw F0 contour in the app, use the Main / Intonation syllable tab and click the intonation plot to add anchors. Soundgen then generates a smooth curve through these anchors. If you click the plot close to an existing anchor, it moves to where you clicked; if you click far from any existing anchor, a new anchor is added. To remove an anchor, double-click close to it. To go back to a straight line, click the button labeled “Flatten pitch contour”.
+
+TIP Anchors are adjusted automatically if you change syllable duration. For example, the only difference between Figures 3a and 3b is that the syllable is 300 ms long in 3a and 940 ms long in 3b. Time anchors were adjusted automatically, but the shape of the curve changed, because the smoothing function (in this case loess) is sensitive to the length of the contour. Double-check that all your contours still look reasonable if you change the duration! 
+TODO: add an ex. with getSmoothContour
+
+TIP The same principles apply to all contour plots in the app (amplitude, mouth opening, and breathing contours). Note also that all contours are rescaled when the duration changes, with the single exception of negative breathing time anchors (i.e. the length of pre-syllable aspiration does not depend on syllable duration).
+
+You can also specify the overall intonation over several syllables (app: Main / Intonation global). The global intonation contour specifies the deviation of pitch per syllable (in semitones, i.e. 12 semitones = 1 octave) from the main pitch contour. In other words, it shows how much higher or lower the average pitch of each syllable is compared to the rest. For ex., we can generate five seagull-like sounds, which have the same intonation contour within each syllable, but which vary in average pitch spanning about an octave in an inverse-U-shaped curve:
+```{r}
+generateBout(nSyl = 5, sylDur_mean = 200, pauseDur_mean = 140, pitchAnchors = data.frame(time = c(0, 0.65, 1), value = c(977, 1540, 826)), pitchAnchors_global = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)), play = T)
+```
+generateBout (nSyl=5, sylDur_mean=200, pauseDur_mean=140, pitchAnchors=data.frame(time=c(0,0.65,1), ampl=c(977,1540,826)), pitchAnchors_global=data.frame(time=c(0,.5,1),ampl=c(-6,7,0)), play=T). Your browser does not support the audio element. Time anchors can range 0 to 1, or they can be specified in ms – it makes no difference since the sound is rescaled to match the duration. And please don't ask me why frequency anchors are called “ampl”...
+
+
+## Hyper-parameters
+# Stochasticity = “temperature”
+A basic principle of SoundGen 4.0 is that it allows you to introduce random variation in the generated sound. This behavior is controlled by a single high-level parameter called temperature. If temperature = 0, you will get exactly the same sound by executing the same call to `generateBout` repeatedly. If temperature > 0, each generated sound will be somewhat different, even if all the control parameters are exactly the same. In particular, positive temperature introduces fluctuations in syllable structure, all contours (intonation, breathing, amplitude, mouth opening), and many effects (jitter, subharmonics, etc). It also wiggles user-specified formants and adds new formants above the specified ones at a distance calculated from the vocal tract length.
+
+If you don't want stochastic behavior, set temperature to zero. But note that some effects, notably jitter and subharmonics, will then be added in an all-or-nothing manner: either to the entire sound or not at all. Note also that you can change the extent to which temperature affects different parameters in the source code, but not in the app itself (e.g., if you want more variation in intonation and less variation in syllable structure).
+
+Code example : 
+```{r}
+# the sound is a bit different each time, because temperature is above zero
+for (i in 1:3) {
+  generateBout(temperature = 0.3, play = T)
+}
+```
+
+# Other hypers
+To simplify usage, there are a few other hyper-parameters that are not strictly necessary to produce the full range of sounds, but provide convenient shortcuts by making it possible to control several low-level parameters at once in a coordinated manner. Male/female, breathy-croaky TODO - EXPAND!!!! Hyper-parameters are marked "hyper" in the Shiny app. 
+
+
+## Breathing
+
+TIP The interactive app `soundgen_app()` gives you the exact R code for calling `generateBout`, which you can copy-paste into your R environment and generate manually the same sound as the one you have created in the app. If you find yourself in doubt about the right format for specifying a parameter for generateBout(), I suggest you use the app first, then copy-paste the code into your R console and modify as needed.
+
+
+
+## Workflow 
+To create a sound in the app, follow the sequence shown in Figure ???:
+1.  Set parameters in the tabs on the left (see the sections below for details). You can also start with a preset that resembles the sound you want and then fine-tune control parameters.
+1.  Check the preview plots, tables of anchors, etc. to ensure you get what you want.
+1.  Click Generate to create a WAV file, play it, and display a spectrogram of the generated sound. Play back as many times as you like using html controls.
+1.  Export by saving the WAV file and/or R code or go back to (1) to make further adjustments. 
+TIP The current app version is really not meant for hand-held devices – work on a large screen if possible!
+
+

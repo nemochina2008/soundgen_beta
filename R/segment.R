@@ -1,3 +1,5 @@
+## FINDING SYLLABLES AND VOCAL BURSTS ##
+
 #' Segment a sound
 #'
 #' Finds syllables and bursts. Syllables are defined as continous segments with
@@ -261,6 +263,7 @@ segmentFolder = function (myfolder,
   time_start = proc.time()  # timing
   # open all .wav files in folder
   filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
+  filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
   result = list()
 
   for (i in 1:length(filenames)) {
@@ -284,11 +287,8 @@ segmentFolder = function (myfolder,
 
     if (verbose) {
       if (i %% 10 == 0) {
-        time_diff = as.numeric((proc.time() - time_start)[3])
-        time_left = time_diff / i * (length(filenames) - i)
-        time_left_hms = convert_sec_to_hms(time_left)
-        print(paste0('Done ', i, ' / ', length(filenames),
-                     '; Estimated time left: ', time_left_hms))
+        reportTime(i = i, nIter = length(filenames),
+                   time_start = time_start, jobs = filesizes)
       }
     }
   }
@@ -305,10 +305,5 @@ segmentFolder = function (myfolder,
     names(output) = filenames
   }
 
-  if (verbose) {
-    total_time = as.numeric((proc.time() - time_start)[3])
-    total_time_hms = convert_sec_to_hms(total_time)
-    print(paste0('Analyzed ', i, ' files in ', total_time_hms))
-  }
   return (output)
 }

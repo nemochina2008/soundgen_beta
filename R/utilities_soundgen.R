@@ -2,6 +2,46 @@
 
 ## TODO: check upsample (maybe we should not hold pitch constant in the last gc); non-linear cross-fade; fine-tune saveme for compatibility
 
+#' Report time
+#'
+#' Internal soudgen function.
+#'
+#' Based on the current iteration, total number of iterations, and time when the loop started running, prints estimated time left or a summary upon completion.
+#' @param i current iteration
+#' @param nIter total number of iterations
+#' @param time_start time when the loop started running
+#' @param jobs vector of length \code{nIter} specifying the relative difficulty
+#'   of each iteration. If not NULL, estimated time left takes into account
+#'   whether the jobs ahead will take more or less time than the jobs already
+#'   completed
+#' @examples
+#' \dontrun{
+#' time_start = proc.time()
+#' for (i in 1:5) {
+#'   Sys.sleep(i ^ 2 / 10)
+#'   reportTime(i = i, nIter = 5, time_start = time_start, jobs = (1:5) ^ 2 / 10)
+#' }
+#' }
+reportTime = function(i, nIter, time_start, jobs = NULL) {
+  time_diff = as.numeric((proc.time() - time_start)[3])
+  if (i == nIter) {
+    time_total = convert_sec_to_hms(time_diff)
+    print(paste0('Completed ', i, ' iterations in ', time_total, '.'))
+  } else {
+    if (is.null(jobs)) {
+      # simply count iterations
+      time_left = time_diff / i * (nIter - i)
+    } else {
+      # take into account the expected time for each iteration
+      speed = time_diff / sum(jobs[1:i])
+      time_left = speed * sum(jobs[min((i + 1), nIter):nIter])
+    }
+    time_left_hms = convert_sec_to_hms(time_left)
+    print(paste0('Done ', i, ' / ', nIter, '; Estimated time left: ', time_left_hms))
+  }
+}
+
+
 #' Print time
 #'
 #' Internal soundgen function.
@@ -17,12 +57,12 @@
 convert_sec_to_hms = function(time_s) {
   hours = time_s %/% 3600
   minutes = time_s %/% 60 - hours * 60
-  seconds = round (time_s %% 60, 0)
+  seconds = round(time_s %% 60, 0)
 
   output = ''
   if (hours > 0) output = paste0(output, hours, ' h ')
   if (minutes > 0) output = paste0(output, minutes, ' min ')
-  if (seconds > 0) output = paste0(output, seconds, ' s')
+  output = paste0(output, seconds, ' s')
 
   # remove the last space, if any
   if (substr(output, nchar(output), nchar(output)) == ' ') {

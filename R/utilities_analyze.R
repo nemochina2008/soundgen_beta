@@ -320,9 +320,9 @@ analyzeFrame = function (frame,
     # picking up formants or just plain noise, we discount confidence in
     # high-pitch cepstral estimates
     pitchCep_array$pitchAmpl = pitchCep_array$pitchAmpl /
-      (1 + 5 / (1 + exp(14 - 3 * log2(pitchCep_array$pitchCand / pitch_floor))))
+      (1 + 5 / (1 + exp(2 - .25 * HzToSemitones(pitchCep_array$pitchCand / pitch_floor))))
     # visualization: a = seq(pitch_floor, pitch_ceiling, length.out = 100)
-    # b = 1 + 5 / (1 + exp(14 - 3 * log2(a / pitch_floor)))
+    # b = 1 + 5 / (1 + exp(2 - .25 * HzToSemitones(a / pitch_floor)))
     # plot (a, b, type = 'l')
   }
   ## END OF PITCH_CEPSTRAL
@@ -427,7 +427,7 @@ analyzeFrame = function (frame,
       pitchSpec_array$pitchAmpl = pitchSpec_only_peak_weight + (1 /
         (1 + exp(-(pitchSpec_array$specAmplIdx - 1))) - 0.5) * 2 *
         (1 - pitchSpec_only_peak_weight) # normalization. Visualization:
-      # a=1:15
+      # a = 1:15
       # b = pitchSpec_only_peak_weight + (1 / (1 + exp(-(a - 1))) - 0.5) * 2 *
       # (1 - pitchSpec_only_peak_weight)
       # plot(a, b, type = 'l')

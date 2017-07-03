@@ -1,30 +1,5 @@
 ## OPTIMIZE PARAMETERS FOR ACOUSTIC ANALYSIS ##
 
-# myfolder = '/home/allgoodguys/Documents/Studying/Lund_PhD/epistles/001_article_ratings/260sounds_wav'
-# key = segment_manual
-# myfun = 'segmentFolder'
-# pars_to_optimize = c('shortest_syl', 'shortest_pause')
-# fitness_measure = 'nBursts'
-# pars_bounds = list(low = c(0,0), high=c(Inf,Inf))
-#
-# pm = read.csv('/home/allgoodguys/Documents/Studying/Lund_PhD/epistles/004_real-fake/analysis/590.csv')
-# pitch_manual = pm$pitch_manually
-#
-# myfolder = '/home/allgoodguys/Downloads/temp'
-# files = list.files(myfolder)
-# file_n = apply(as.matrix(files), 1, function(x) substr(x, 1, 3))
-# key = pitch_manual[as.numeric(file_n)]
-
-
-res = optimizePars(myfolder = '/home/allgoodguys/Downloads/temp', myfun = 'analyzeFolder', key = key,
-                   pars_to_optimize = c('silence', 'entropy_threshold'),
-                   fitness_measure = 'pitch_median', pars_bounds = list(low = c(0,0), high=c(1,1)),
-                   nIter = 2, otherPars = list(plot = FALSE, verbose = FALSE))
-
-# r    silence entropy_threshold
-# V1 0.9396199 0.07935274         0.7982454
-# V2 0.9395767 0.07806231         0.9191816
-
 #' Optimize parameters for acoustic analysis
 #'
 #' This customized wrapper for \code{\link[stat]{optim}} attemps to optimize the
@@ -55,15 +30,20 @@ res = optimizePars(myfolder = '/home/allgoodguys/Downloads/temp', myfun = 'analy
 #'   values of optimized parameters. For ex., if we optimize \code{smooth_ms}
 #'   and \code{smooth_overlap}, reasonable pars_bounds might be list(low = c(5,
 #'   0), high = c(500, 95))
-#' @param fitness_measure the name of output variable that we are comparing with the key, e.g. 'nBursts' or 'pitch_median'
+#' @param fitness_par the name of output variable that we are comparing with the key, e.g. 'nBursts' or 'pitch_median'
+#' @param fitness_crit the function used to evaluate how well the output of \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a good fitness criterion is \code{function(x) 1 - cor(log(x), key, use = 'pairwise.complete.obs')}, where \code{key} is already log-transformed.
 #' @param nIter repeat the optimization several times to check convergence
 #' @param wiggle_init each optimization begins with a random seed, and
 #'   \code{wiggle_init} specifies the SD of normal distribution used to generate
 #'   random deviation of initial values from the defaults
 #' @param control a list of control parameters passed on to
 #'   \code{\link[stats]{optim}}. The method used is "Nelder-Mead"
+#' @param mygrid a dataframe with one column per parameter to optimize, with
+#'   each row specifying the values to try. If not NULL, \code{optimizePars}
+#'   simply evaluates each combination of parameter values (see examples).
+#' @param verbose if TRUE, reports the values of parameters evaluated and fitness
 #' @return Returns a matrix with one row per iteration, containing Pearson's
-#'   correlation between the key and \code{fitness_measure} in the first column
+#'   correlation between the key and \code{fitness_par} in the first column
 #'   and the best values of each of the optimized parameters in the remaining
 #'   columns.
 #' @export
@@ -80,9 +60,9 @@ res = optimizePars(myfolder = '/home/allgoodguys/Downloads/temp', myfun = 'analy
 #' key = segment_manual  # a vector of 260 integers
 #' # run optimization loop several times with random initial values to check convergence
 #' # NB: with 260 sounds and default settings, this might take ~20 min per iteration!
-#' res = optimizeSegment(myfolder = myfolder, myfun = 'segmentFolder', key = key,
+#' res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = key,
 #'   pars_to_optimize = c('shortest_syl', 'shortest_pause', 'syl_to_global_mean'),
-#'   fitness_measure = 'nBursts',
+#'   fitness_par = 'nBursts',
 #'   nIter = 2, control = list(maxit = 50, reltol = .01, trace = 0))
 #'
 #' # examine the results
@@ -92,26 +72,58 @@ res = optimizePars(myfolder = '/home/allgoodguys/Downloads/temp', myfun = 'analy
 #' }
 #' pars = as.list(res[1, 2:ncol(res)])  # top candidate (best pars)
 #' s = do.call(segmentFolder, c(myfolder, pars))  # segment with best pars
-#' cor(key, as.numeric(s[, fitness_measure]))
-#' boxplot(as.numeric(s[, fitness_measure]) ~ as.integer(key), xlab='key')
+#' cor(key, as.numeric(s[, fitness_par]))
+#' boxplot(as.numeric(s[, fitness_par]) ~ as.integer(key), xlab='key')
 #' abline(a=0, b=1, col='red')
+#'
+#' # Try a grid with particular parameter values instead of formal optimization
+#' res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = segment_manual,
+#'   pars_to_optimize = c('shortest_syl', 'shortest_pause'),
+#'   fitness_par = 'nBursts',
+#'   mygrid = expand.grid(shortest_syl = c(30, 40),
+#'                        shortest_pause = c(30, 40, 50)))
+#' 1 - res$fit  # correlations with key
 #' }
 optimizePars = function(myfolder,
                         key,
                         myfun,
                         pars_to_optimize,
                         pars_bounds = NULL,
-                        fitness_measure,
+                        fitness_par,
+                        fitness_crit = function(x) 1 - cor(x, key, use = 'pairwise.complete.obs'),
                         nIter = 10,
                         wiggle_init = .2,
                         control = list(maxit = 50, reltol = .01, trace = 0),
-                        otherPars = list(plot = FALSE, verbose = FALSE)) {
+                        otherPars = list(plot = FALSE, verbose = FALSE),
+                        mygrid = NULL,
+                        verbose = TRUE) {
   if (is.null(pars_bounds)) {
     pars_bounds = list(low = rep(-Inf, length(pars_to_optimize)),
                        high = rep(Inf, length(pars_to_optimize)))
   }
   defaults = as.list(args(get(myfun)))
 
+  ## Option 1: grid optimization (just evaluate the fitness for each combination of pars)
+  if (!is.null(mygrid)) {
+    if (!identical(colnames(mygrid)[1:length(pars_to_optimize)], pars_to_optimize)) {
+      stop('mygrid should be either NULL or a dataframe with one column per parameter')
+    }
+    mygrid$fit = NA
+    for (i in 1:nrow(mygrid)) {
+      mygrid$fit[i] = evaluatePars(p = as.numeric(mygrid[i, 1:length(pars_to_optimize)]),
+                                   pars_to_optimize = pars_to_optimize,
+                                   myfun  = myfun,
+                                   key = key,
+                                   fitness_par = fitness_par,
+                                   fitness_crit = fitness_crit,
+                                   myfolder = myfolder,
+                                   otherPars = otherPars,
+                                   verbose = verbose)
+    }
+    return(mygrid)
+  }
+
+  ## Option 2: use optim() to find the best values of pars
   pars_to_optimize_defaults = defaults[names(defaults) %in% pars_to_optimize]
   optimal_pars = list()
   time_start = proc.time()
@@ -131,26 +143,19 @@ optimizePars = function(myfolder,
       myfun = myfun,
       pars_to_optimize = pars_to_optimize,
       pars_bounds = pars_bounds,
-      fitness_measure = fitness_measure,
+      fitness_par = fitness_par,
+      fitness_crit = fitness_crit,
       otherPars = otherPars,
       myfolder = myfolder,
       key = key,
       method = 'Nelder-Mead',
-      control = control
+      control = control,
+      verbose = verbose
     )
     my_r = 1 - myOptim$value # the best achievable correlation with these predictors
     my_pars = myOptim$par # optimal pars
     optimal_pars[[i]] = c(my_r, my_pars)
-
-    time_diff = as.numeric((proc.time() - time_start)[3])
-    if (i == nIter) {
-      time_total = convert_sec_to_hms(time_diff)
-      print(paste0('Completed ', i, ' iterations in ', time_total, '.'))
-    } else {
-      time_left = time_diff / i * (nIter - i)
-      time_left_hms = convert_sec_to_hms(time_left)
-      print(paste0('Done ', i, ' / ', nIter, '; Estimated time left: ', time_left_hms))
-    }
+    reportTime(i = i, nIter = nIter, time_start = time_start)
   }
   res = as.data.frame(sapply(optimal_pars, cbind))
   rownames(res) = c('r', pars_to_optimize)
@@ -172,11 +177,13 @@ optimizePars = function(myfolder,
 evaluatePars = function(p,
                         pars_to_optimize,
                         myfun,
-                        pars_bounds,
-                        fitness_measure,
+                        pars_bounds = NULL,
+                        fitness_par,
+                        fitness_crit = function(x) 1 - cor(x, key, use = 'pairwise.complete.obs'),
                         myfolder,
                         key,
-                        otherPars) {
+                        otherPars = list(plot = FALSE, verbose = FALSE),
+                        verbose = TRUE) {
   # if the pars go beyond the bounds, don't even evaluate
   if (sum(p < pars_bounds$low) > 0 |
       sum(p > pars_bounds$high) > 0) {
@@ -188,7 +195,11 @@ evaluatePars = function(p,
   if (class(s) == 'try-error') {
     stop('Error in myfun')
   } else {
-    trial = as.numeric(s[, fitness_measure])
-    return (1 - cor (key, trial, use = 'pairwise.complete.obs'))
+    trial = as.numeric(s[, fitness_par])
+    out = fitness_crit(trial)
+    if (verbose) {
+      print(paste0('Tried pars ', paste(round(p, 3), collapse = ', '), '; fit = ', round(out, 4)))
+    }
+    return (out)
   }
 }

@@ -1,3 +1,5 @@
+### MAIN FUNCTIONS FOR ACOUSTIC ANALYSIS ###
+
 #' Analyze sound
 #'
 #' Acoustic analysis of a single sound file.
@@ -37,7 +39,11 @@
 #'   much we trust the BaNa estimate vs. the autocorrelation estimate of f0.
 #' @param prior_mean,prior_sd specifies the mean and sd of gamma distribution
 #'   describing our prior knowledge about the most likely pitch values for this
-#'   file (defaults to NA)
+#'   file. NB: prior values are specified in semitones above C0, and prior
+#'   densities are calculated on the musical scale, not in Hz! Ex.:
+#'   \code{prior_mean = HzToSemitones(300), prior_sd = 6} gives a prior with
+#'   mean = 300 Hz and SD of 6 semitones (half an octave)
+#' @param plot_prior if TRUE, produces a separate plot of prior
 #' @param cutoff_dom do not consider frequencies above cutoff_dom when
 #'   calculating the lowest dominant frequency band (recommended if the original
 #'   sampling rate varies across different analyzed audio files)
@@ -111,8 +117,8 @@
 #' median(a2$HNR, na.rm = TRUE)  # HNR of 4 dB
 analyze = function (x,
                     samplingRate = NULL,
-                    silence = 0.03,
-                    entropy_threshold = 0.9,
+                    silence = 0.04,
+                    entropy_threshold = 0.6,
                     windowLength = 50,
                     wn = 'gaussian',
                     step = 25,
@@ -129,8 +135,9 @@ analyze = function (x,
                     slope_spec = 0.1,
                     width_spec = 150,
                     pitchSpec_only_peak_weight = 0.51,
-                    prior_mean = NA,
-                    prior_sd = NA,
+                    prior_mean = HzToSemitones(300),
+                    prior_sd = 6,
+                    plot_prior = FALSE,
                     cutoff_dom = 6000,
                     dom_threshold = 0.1,
                     shortest_syl = 20,
@@ -273,7 +280,7 @@ analyze = function (x,
     # for each frame that satisfies our condition, do spectral analysis (NB: we
     # do NOT analyze frames that are too quiet or have very high entropy, so we
     # only get NA's for those frames, no meanFreq, dom etc!)
-    frameInfo [[i]] = analyzeFrame(
+    frameInfo[[i]] = analyzeFrame(
       frame = s[, i],
       autoCorrelation = autocorBank[, i],
       samplingRate = samplingRate,
@@ -324,25 +331,29 @@ analyze = function (x,
     as.data.frame(t(y[['source']]), stringsAsFactors = FALSE)
   })
   pitchSource = t(plyr::rbind.fill(pitchSource)) # a matrix of the sources of pitch candidates
+  pitch_na = which(is.na(pitchCands))
+  pitchCert[pitch_na] = NA
+  pitchSource[pitch_na] = NA
 
   # PRIOR for adjusting the estimated pitch certainties. For ex., if primarily
   # working with speech, we could prioritize pitch candidates in the expected
   # pitch range (100-1000 Hz) and dampen candidates with very high or very low
   # frequency as unlikely but still remotely possible in everyday vocalizing
   # contexts (think a soft pitch ceiling)
-  if (!is.na(prior_mean) & !is.na(prior_sd)) {
-    shape = log2(prior_mean) ^ 2 / log2(prior_sd) ^ 2
-    rate = log2(prior_mean) / log2(prior_sd) ^ 2
+  if (is.numeric(prior_mean) & is.numeric(prior_sd)) {
+    shape = prior_mean ^ 2 / prior_sd ^ 2
+    rate = prior_mean / prior_sd ^ 2
     prior_normalizer = max(dgamma(
-      log2(seq(pitch_floor, pitch_ceiling, length.out = 100)),
+      seq(HzToSemitones(pitch_floor), HzToSemitones(pitch_ceiling), length.out = 100),
       shape = shape,
       rate = rate
     ))
-    pitchCert = pitchCert * dgamma (
-      log2(pitchCands),
+    pitchCert_multiplier = dgamma(
+      HzToSemitones(pitchCands),
       shape = shape,
       rate = rate
     ) / prior_normalizer
+    pitchCert = pitchCert * pitchCert_multiplier
   }
 
   # divide the file into continuous voiced syllables
@@ -450,6 +461,13 @@ analyze = function (x,
     dev.off()
   }
 
+  if (plot_prior) {
+    freqs = seq(1, HzToSemitones(samplingRate / 2), length.out = 1000)
+    prior = dgamma(freqs, shape = shape, rate = rate) / prior_normalizer
+    plot(semitonesToHz(freqs), prior, type = 'l', xlab = 'Freq, Hz',
+         ylab = 'Multiplier of certainty', main = 'Prior beliefs in pitch values')
+  }
+
   result = result[c('duration', 'time', 'voiced', 'ampl', 'ampl_voiced',
                     'entropy', 'HNR', 'dom', 'meanFreq', 'peakFreq', 'peakFreq_cut',
                     'pitch', 'pitchAutocor', 'pitchCepstrum', 'pitchSpec',
@@ -487,8 +505,8 @@ analyze = function (x,
 #' }
 analyzeFolder = function (myfolder,
                           samplingRate = NULL,
-                          silence = 0.03,
-                          entropy_threshold = 0.9,
+                          silence = 0.04,
+                          entropy_threshold = 0.6,
                           windowLength = 50,
                           wn = 'gaussian',
                           step = 25,
@@ -504,8 +522,8 @@ analyzeFolder = function (myfolder,
                           slope_spec = 0.1,
                           width_spec = 150,
                           pitchSpec_only_peak_weight = 0.51,
-                          prior_mean = NA,
-                          prior_sd = NA,
+                          prior_mean = HzToSemitones(300),
+                          prior_sd = 6,
                           cutoff_dom = 6000,
                           dom_threshold = 0.1,
                           shortest_syl = 20,
@@ -579,12 +597,8 @@ analyzeFolder = function (myfolder,
     for (i in 1:length(filenames)) {
       out[[i]] = do.call(analyze, c(filenames[i], myPars))
       if (verbose) {
-        time_diff = as.numeric((proc.time() - time_start)[3])
-        speed = time_diff / sum(filesizes[1:i])
-        time_left = speed * sum(filesizes[min((i + 1), length(filesizes)):length(filesizes)])
-        time_left_hms = convert_sec_to_hms(time_left)
-        print(paste0('Done ', i, ' / ', length(filenames),
-                     '; Estimated time left: ', time_left_hms))
+        reportTime(i = i, nIter = length(filenames),
+                   time_start = time_start, jobs = filesizes)
       }
     }
   } else if (summary == TRUE) {
@@ -619,20 +633,11 @@ analyzeFolder = function (myfolder,
       }
 
       if (verbose) {
-        time_diff = as.numeric((proc.time() - time_start)[3])
-        speed = time_diff / sum(filesizes[1:i])
-        time_left = speed * sum(filesizes[min((i + 1), length(filesizes)):length(filesizes)])
-        time_left_hms = convert_sec_to_hms(time_left)
-        print(paste0('Done ', i, ' / ', length(filenames),
-                     '; Estimated time left: ', time_left_hms))
+        reportTime(i = i, nIter = length(filenames),
+                   time_start = time_start, jobs = filesizes)
       }
     }
   }
 
-  if (verbose) {
-    total_time = as.numeric((proc.time() - time_start)[3])
-    total_time_hms = convert_sec_to_hms(total_time)
-    print(paste0('Analyzed ', i, ' files in ', total_time_hms))
-  }
   return (out)
 }

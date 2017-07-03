@@ -4,14 +4,14 @@
 \alias{analyzeFolder}
 \title{Analyze sound}
 \usage{
-analyzeFolder(myfolder, samplingRate = NULL, silence = 0.03,
-  entropy_threshold = 0.9, windowLength = 50, wn = "gaussian",
+analyzeFolder(myfolder, samplingRate = NULL, silence = 0.04,
+  entropy_threshold = 0.6, windowLength = 50, wn = "gaussian",
   step = 25, zp = 0, zpCep = 2^13, pitch_floor = 75,
   pitch_ceiling = 3500, max_pitch_cands = 4,
   voiced_threshold_autocor = 0.75, voiced_threshold_cep = 0.45,
   voiced_threshold_spec = 0.5, specPitchThreshold_nullNA = 0.5,
   slope_spec = 0.1, width_spec = 150, pitchSpec_only_peak_weight = 0.51,
-  prior_mean = NA, prior_sd = NA, cutoff_dom = 6000,
+  prior_mean = HzToSemitones(300), prior_sd = 6, cutoff_dom = 6000,
   dom_threshold = 0.1, shortest_syl = 20, shortest_pause = 60,
   interpolWindow = 3, interpolTolerance = 0.3, interpolCert = 0.3,
   postprocess = c("none", "fast", "slow")[2], control_anneal = list(maxit =
@@ -94,11 +94,17 @@ much we trust the BaNa estimate vs. the autocorrelation estimate of f0.}
 
 \item{prior_mean}{specifies the mean and sd of gamma distribution
 describing our prior knowledge about the most likely pitch values for this
-file (defaults to NA)}
+file. NB: prior values are specified in semitones above C0, and prior
+densities are calculated on the musical scale, not in Hz! Ex.:
+\code{prior_mean = HzToSemitones(300), prior_sd = 6} gives a prior with
+mean = 300 Hz and SD of 6 semitones (half an octave)}
 
 \item{prior_sd}{specifies the mean and sd of gamma distribution
 describing our prior knowledge about the most likely pitch values for this
-file (defaults to NA)}
+file. NB: prior values are specified in semitones above C0, and prior
+densities are calculated on the musical scale, not in Hz! Ex.:
+\code{prior_mean = HzToSemitones(300), prior_sd = 6} gives a prior with
+mean = 300 Hz and SD of 6 semitones (half an octave)}
 
 \item{cutoff_dom}{do not consider frequencies above cutoff_dom when
 calculating the lowest dominant frequency band (recommended if the original

@@ -7,11 +7,8 @@
 semitonesToHz(s)
 }
 \arguments{
-\item{s}{vector of frequencies (semitones above C0)}
+\item{s}{vector or matrix of frequencies (semitones above C0)}
 }
 \description{
-Internal soundgen function.
-}
-\details{
 Converts from semitones above C0 (~16.4 Hz) to Hz
 }
