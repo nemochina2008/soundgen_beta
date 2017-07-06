@@ -12,7 +12,7 @@
 #' hand. If you have an annotated sample of the sort of audio you are planning
 #' to analyze, with syllables or bursts counted manually, you can use it for
 #' automatic optimization of control parameters (see
-#' \code{\link{optimizeSegment}}). The defaults are the results of just such
+#' \code{\link{optimizePars}}. The defaults are the results of just such
 #' optimization against 260 human vocalizations in Anikin, A. & Persson, T.
 #' (2017). Non-linguistic vocalizations from online amateur videos for emotion
 #' research: a validated corpus. Behavior Research Methods, 49(2): 758-771.

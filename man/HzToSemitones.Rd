@@ -10,5 +10,11 @@ HzToSemitones(h)
 \item{h}{vector or matrix of frequencies (Hz)}
 }
 \description{
-Converts from Hz to semitones above C0 (~16.4 Hz).
+Converts from Hz to semitones above C0 (~16.4 Hz). This may not seem very useful, but note that (1) this gives you a nice logarithmic scale for generating natual pitch transitions (2) with the added benefit of getting musical notation for free from \code{notes_dict} (see examples).
+}
+\examples{
+s = HzToSemitones(c(440, 293, 115))
+# to convert to musical notation
+notes_dict$note[1 + round(s)]
+# note the "1 +": semitones ABOVE C0, i.e. notes_dict[1, ] is C0
 }

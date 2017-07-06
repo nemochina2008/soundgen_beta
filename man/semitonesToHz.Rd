@@ -10,5 +10,5 @@ semitonesToHz(s)
 \item{s}{vector or matrix of frequencies (semitones above C0)}
 }
 \description{
-Converts from semitones above C0 (~16.4 Hz) to Hz
+Converts from semitones above C0 (~16.4 Hz) to Hz. See \code{\link{HzToSemitones}}
 }

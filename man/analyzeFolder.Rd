@@ -176,15 +176,8 @@ corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 
-\item{savePath}{if a valid path is specified, the plot is saved in this folder (defaults to NA)}
-
-\item{contrast}{spectrum is exponentiated by contrast (-inf to +inf,
-recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases
-harpness}
-
-\item{brightness}{how much to "lighten" the image (>0 = lighter, <0 = darker)}
-
-\item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
+\item{savePath}{if a valid path is specified, the plot is saved in this
+folder (defaults to NA)}
 
 \item{summary}{if TRUE, summarizes acoustics per file}
 

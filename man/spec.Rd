@@ -120,7 +120,7 @@ spec(sound, samplingRate = 16000, median_smoothing_freq = 5,
 spec(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 
 # add bells and whistles
-spec(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
+spec(sound, samplingRate = 16000, osc = T, noiseReduction = 1.1,
   brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
   ylab = 'Frequency, kHz', ylim = c(0,5))
 }

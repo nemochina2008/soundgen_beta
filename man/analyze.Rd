@@ -18,7 +18,11 @@ analyze(x, samplingRate = NULL, silence = 0.04, entropy_threshold = 0.6,
   control_anneal = list(maxit = 5000, temp = 1000), certWeight = 0.5,
   snake_step = 0.05, snake_plot = FALSE, smooth_idx = 1,
   smooth_vars = c("pitch", "dom"), plot = TRUE, savePath = NA,
-  contrast = 0.2, brightness = 0, ylim = c(0, 5), ...)
+  plot_spec_pars = list(contrast = 0.2, brightness = 0, ylim = c(0, 5)),
+  plot_pitch_pars = list(col = "blue", lwd = 3),
+  plot_pitchCands_pars = list(levels = c("autocor", "cepstrum", "spec",
+  "dom"), col = c("green", "violet", "red", "orange"), pch = c(16, 7, 2, 3), cex
+  = 2))
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -84,7 +88,7 @@ densities are calculated on the musical scale, not in Hz! Ex.:
 \code{prior_mean = HzToSemitones(300), prior_sd = 6} gives a prior with
 mean = 300 Hz and SD of 6 semitones (half an octave)}
 
-\item{plot_prior}{if TRUE, produces a separate plot of prior}
+\item{plot_prior}{if TRUE, produces a separate plot of the prior}
 
 \item{cutoff_dom}{do not consider frequencies above cutoff_dom when
 calculating the lowest dominant frequency band (recommended if the original
@@ -139,27 +143,31 @@ corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 
-\item{savePath}{if a valid path is specified, the plot is saved in this folder (defaults to NA)}
+\item{savePath}{if a valid path is specified, the plot is saved in this
+folder (defaults to NA)}
 
-\item{contrast}{spectrum is exponentiated by contrast (-inf to +inf,
-recommended -1 to +1). Contrast >0 increases sharpness, <0 decreases
-harpness}
+\item{plot_spec_pars}{a list of graphical parameters passed on to
+\code{\link{spec}}. Set to \code{NULL} or \code{NA} to suppress plotting
+the spectrogram}
 
-\item{brightness}{how much to "lighten" the image (>0 = lighter, <0 = darker)}
+\item{plot_pitch_pars}{a list of graphical parameters for displaying the
+final pitch contour. Set to \code{NULL} or \code{NA} to suppress}
 
-\item{ylim}{frequency range to plot, kHz (defaults to 0 to Nyquist frequency)}
-
-\item{...}{other graphical parameters passed to \code{\link{spec}}}
+\item{plot_pitchCands_pars}{a list of graphical parameters for displaying
+individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress}
 }
 \value{
-Returns a dataframe with one row per FFT frame and one column per acoustic variable.
-  The best guess at the pitch contour considering all available information
-  is stored in the variable called "pitch". In addition, the output contains
-  pitch estimates based on three separate algorithms: autocorrelation
-  (pitchAutocor), cepstrum (pitchCep), and BaNa (pitchSpec).
+Returns a dataframe with one row per FFT frame and one column per
+  acoustic variable. The best guess at the pitch contour considering all
+  available information is stored in the variable called "pitch". In
+  addition, the output contains pitch estimates based on three separate
+  algorithms: autocorrelation (pitchAutocor), cepstrum (pitchCep), and BaNa
+  (pitchSpec).
 }
 \description{
-Acoustic analysis of a single sound file.
+Acoustic analysis of a single sound file: pitch tracking and basic spectral
+characteristics. The default values of arguments are optimized for human
+non-linguistic vocalizations. See the vignette for details.
 }
 \examples{
 sound1 = generateBout(sylDur_mean = 900, pitchAnchors = list(
@@ -170,7 +178,11 @@ playme(sound1, 16000)
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
 # or, to improve the quality of post-processing:
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
-median(a1$pitch, na.rm = TRUE)  # 625 Hz
+median(a1$pitch, na.rm = TRUE)  # 613 Hz
+# (can vary, since postprocessing is stochastic)
+# compare to the true value:
+median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
+  value = c(300, 900, 400, 2300)), len = 1000))  # 611 Hz
 
 # the same pitch contour, but harder to analyze b/c of subharmonics and jitter
 sound2 = generateBout(sylDur_mean = 900, pitchAnchors = list(
@@ -181,6 +193,15 @@ playme(sound2, 16000)
 a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
 # many pitch candidates are off, but the overall contour and estimate of
 # median pitch are pretty similar:
-median(a2$pitch, na.rm = TRUE)  # 595 Hz
-median(a2$HNR, na.rm = TRUE)  # HNR of 4 dB
+median(a2$pitch, na.rm = TRUE)  # 581 Hz (can vary, since post-processing is stochastic)
+median(a2$HNR, na.rm = TRUE)  # HNR of 3-4 dB
+
+# Fancy plotting options:
+a = analyze(sound2, samplingRate = 16000, plot = TRUE,
+  plot_spec_pars = list(xlab = 'Time, ms', colorTheme = 'seewave', contrast = .8),
+  plot_pitchCands_pars = list(cex = 3, col = c('gray70', 'yellow', 'purple', 'maroon')),
+  plot_pitch_pars = list(col = 'black', lty = 3, lwd = 3))
+
+# Plot pitch candidates w/o a spectrogram
+a = analyze(sound, samplingRate = 16000, plot = TRUE, plot_spec_pars = NA)
 }

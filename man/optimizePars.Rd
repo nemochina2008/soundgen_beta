@@ -41,6 +41,8 @@ random deviation of initial values from the defaults}
 \item{control}{a list of control parameters passed on to
 \code{\link[stats]{optim}}. The method used is "Nelder-Mead"}
 
+\item{otherPars}{a list of additional arguments to \code{myfun}}
+
 \item{mygrid}{a dataframe with one column per parameter to optimize, with
 each row specifying the values to try. If not NULL, \code{optimizePars}
 simply evaluates each combination of parameter values (see examples).}
@@ -54,7 +56,7 @@ Returns a matrix with one row per iteration, containing Pearson's
   columns.
 }
 \description{
-This customized wrapper for \code{\link[stat]{optim}} attemps to optimize the
+This customized wrapper for \code{\link[stats]{optim}} attemps to optimize the
 parameters of \code{\link{segmentFolder}} or \code{\link{analyzeFolder}} by
 comparing the results with a manually annotated "key". This optimization
 function uses a single measurement per audio file (e.g., median pitch or the

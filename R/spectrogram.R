@@ -83,7 +83,7 @@
 #' spec(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 #'
 #' # add bells and whistles
-#' spec(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
+#' spec(sound, samplingRate = 16000, osc = T, noiseReduction = 1.1,
 #'   brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
 #'   ylab = 'Frequency, kHz', ylim = c(0,5))
 spec = function (x,
@@ -256,7 +256,7 @@ spec = function (x,
       xlab = ''
     }
     seewave::filled.contour.modif2 (x = X, y = Y, z = Z1, levels = seq(0, 1, length = 30),
-                                    color.palette = color.palette, ylim = ylim, ...)
+                                    color.palette = color.palette, ylim = ylim, xlab = xlab, ...)
     # restore original pars
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
   }

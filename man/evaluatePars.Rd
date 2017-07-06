@@ -32,6 +32,8 @@ and \code{smooth_overlap}, reasonable pars_bounds might be list(low = c(5,
 \item{key}{a vector containing the "correct" measurement that we are aiming
 to reproduce}
 
+\item{otherPars}{a list of additional arguments to \code{myfun}}
+
 \item{verbose}{if TRUE, reports the values of parameters evaluated and fitness}
 }
 \value{

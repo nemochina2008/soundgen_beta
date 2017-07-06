@@ -1,4 +1,6 @@
-## TODO: add choice of pitch detection algorithms (defaults to all)
+## TODO: analyze() describe new plotting pars
+# spec() xlab not added if osc = FALSE
+# add choice of pitch detection algorithms (defaults to all)
 # Export a nice fade-in/out function, with linear/exp/log/smooth fade. It could call getSmoothContour() for generating the contour.
 # pitch post-processing: document pathfinder properly; check snake - maybe break once the curve stops changing to speed things up
 

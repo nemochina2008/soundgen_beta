@@ -2,7 +2,9 @@
 
 #' Analyze sound
 #'
-#' Acoustic analysis of a single sound file.
+#' Acoustic analysis of a single sound file: pitch tracking and basic spectral
+#' characteristics. The default values of arguments are optimized for human
+#' non-linguistic vocalizations. See the vignette for details.
 #'
 #' @inheritParams spec
 #' @param silence (0 to 1) frames with mean abs amplitude below silence
@@ -43,7 +45,7 @@
 #'   densities are calculated on the musical scale, not in Hz! Ex.:
 #'   \code{prior_mean = HzToSemitones(300), prior_sd = 6} gives a prior with
 #'   mean = 300 Hz and SD of 6 semitones (half an octave)
-#' @param plot_prior if TRUE, produces a separate plot of prior
+#' @param plot_prior if TRUE, produces a separate plot of the prior
 #' @param cutoff_dom do not consider frequencies above cutoff_dom when
 #'   calculating the lowest dominant frequency band (recommended if the original
 #'   sampling rate varies across different analyzed audio files)
@@ -85,13 +87,21 @@
 #'   size of the window for calculating a moving median. \code{smooth_idx} of 1
 #'   corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
-#' @param savePath if a valid path is specified, the plot is saved in this folder (defaults to NA)
-#' @param ... other graphical parameters passed to \code{\link{spec}}
-#' @return Returns a dataframe with one row per FFT frame and one column per acoustic variable.
-#'   The best guess at the pitch contour considering all available information
-#'   is stored in the variable called "pitch". In addition, the output contains
-#'   pitch estimates based on three separate algorithms: autocorrelation
-#'   (pitchAutocor), cepstrum (pitchCep), and BaNa (pitchSpec).
+#' @param savePath if a valid path is specified, the plot is saved in this
+#'   folder (defaults to NA)
+#' @param plot_spec_pars a list of graphical parameters passed on to
+#'   \code{\link{spec}}. Set to \code{NULL} or \code{NA} to suppress plotting
+#'   the spectrogram
+#' @param plot_pitchCands_pars a list of graphical parameters for displaying
+#'   individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress
+#' @param plot_pitch_pars a list of graphical parameters for displaying the
+#'   final pitch contour. Set to \code{NULL} or \code{NA} to suppress
+#' @return Returns a dataframe with one row per FFT frame and one column per
+#'   acoustic variable. The best guess at the pitch contour considering all
+#'   available information is stored in the variable called "pitch". In
+#'   addition, the output contains pitch estimates based on three separate
+#'   algorithms: autocorrelation (pitchAutocor), cepstrum (pitchCep), and BaNa
+#'   (pitchSpec).
 #' @export
 #' @examples
 #' sound1 = generateBout(sylDur_mean = 900, pitchAnchors = list(
@@ -102,7 +112,11 @@
 #' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
 #' # or, to improve the quality of post-processing:
 #' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
-#' median(a1$pitch, na.rm = TRUE)  # 625 Hz
+#' median(a1$pitch, na.rm = TRUE)  # 613 Hz
+#' # (can vary, since postprocessing is stochastic)
+#' # compare to the true value:
+#' median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
+#'   value = c(300, 900, 400, 2300)), len = 1000))  # 611 Hz
 #'
 #' # the same pitch contour, but harder to analyze b/c of subharmonics and jitter
 #' sound2 = generateBout(sylDur_mean = 900, pitchAnchors = list(
@@ -113,51 +127,71 @@
 #' a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
 #' # many pitch candidates are off, but the overall contour and estimate of
 #' # median pitch are pretty similar:
-#' median(a2$pitch, na.rm = TRUE)  # 595 Hz
-#' median(a2$HNR, na.rm = TRUE)  # HNR of 4 dB
-analyze = function (x,
-                    samplingRate = NULL,
-                    silence = 0.04,
-                    entropy_threshold = 0.6,
-                    windowLength = 50,
-                    wn = 'gaussian',
-                    step = 25,
-                    zp = 0,
-                    zpCep = 2 ^ 13,
-                    pitch_method = c('autocor', 'cep', 'spec', 'dom'),
-                    pitch_floor = 75,
-                    pitch_ceiling = 3500,
-                    max_pitch_cands = 4,
-                    voiced_threshold_autocor = 0.75,
-                    voiced_threshold_cep = 0.45,
-                    voiced_threshold_spec = 0.5,
-                    specPitchThreshold_nullNA = 0.5,
-                    slope_spec = 0.1,
-                    width_spec = 150,
-                    pitchSpec_only_peak_weight = 0.51,
-                    prior_mean = HzToSemitones(300),
-                    prior_sd = 6,
-                    plot_prior = FALSE,
-                    cutoff_dom = 6000,
-                    dom_threshold = 0.1,
-                    shortest_syl = 20,
-                    shortest_pause = 60,
-                    interpolWindow = 3,
-                    interpolTolerance = 0.3,
-                    interpolCert = 0.3,
-                    postprocess = c('none', 'fast', 'slow')[2],
-                    control_anneal = list(maxit = 5000, temp = 1000),
-                    certWeight = .5,
-                    snake_step = 0.05,
-                    snake_plot = FALSE,
-                    smooth_idx = 1,
-                    smooth_vars = c('pitch', 'dom'),
-                    plot = TRUE,
-                    savePath = NA,
-                    contrast = .2,
-                    brightness = 0,
-                    ylim = c(0, 5),
-                    ...) {
+#' median(a2$pitch, na.rm = TRUE)  # 581 Hz (can vary, since post-processing is stochastic)
+#' median(a2$HNR, na.rm = TRUE)  # HNR of 3-4 dB
+#'
+#' # Fancy plotting options:
+#' a = analyze(sound2, samplingRate = 16000, plot = TRUE,
+#'   plot_spec_pars = list(xlab = 'Time, ms', colorTheme = 'seewave', contrast = .8),
+#'   plot_pitchCands_pars = list(cex = 3, col = c('gray70', 'yellow', 'purple', 'maroon')),
+#'   plot_pitch_pars = list(col = 'black', lty = 3, lwd = 3))
+#'
+#'# Plot pitch candidates w/o a spectrogram
+#' a = analyze(sound, samplingRate = 16000, plot = TRUE, plot_spec_pars = NA)
+analyze = function(x,
+                   samplingRate = NULL,
+                   silence = 0.04,
+                   entropy_threshold = 0.6,
+                   windowLength = 50,
+                   wn = 'gaussian',
+                   step = 25,
+                   zp = 0,
+                   zpCep = 2 ^ 13,
+                   pitch_method = c('autocor', 'cep', 'spec', 'dom'),
+                   pitch_floor = 75,
+                   pitch_ceiling = 3500,
+                   max_pitch_cands = 4,
+                   voiced_threshold_autocor = 0.75,
+                   voiced_threshold_cep = 0.45,
+                   voiced_threshold_spec = 0.5,
+                   specPitchThreshold_nullNA = 0.5,
+                   slope_spec = 0.1,
+                   width_spec = 150,
+                   pitchSpec_only_peak_weight = 0.51,
+                   prior_mean = HzToSemitones(300),
+                   prior_sd = 6,
+                   plot_prior = FALSE,
+                   cutoff_dom = 6000,
+                   dom_threshold = 0.1,
+                   shortest_syl = 20,
+                   shortest_pause = 60,
+                   interpolWindow = 3,
+                   interpolTolerance = 0.3,
+                   interpolCert = 0.3,
+                   postprocess = c('none', 'fast', 'slow')[2],
+                   control_anneal = list(maxit = 5000, temp = 1000),
+                   certWeight = .5,
+                   snake_step = 0.05,
+                   snake_plot = FALSE,
+                   smooth_idx = 1,
+                   smooth_vars = c('pitch', 'dom'),
+                   plot = TRUE,
+                   savePath = NA,
+                   plot_spec_pars = list(
+                     contrast = .2,
+                     brightness = 0,
+                     ylim = c(0, 5)
+                   ),
+                   plot_pitch_pars = list(
+                     col = 'blue',
+                     lwd = 3
+                     ),
+                   plot_pitchCands_pars = list(
+                     levels = c('autocor', 'cepstrum', 'spec', 'dom'),
+                     col = c('green', 'violet', 'red', 'orange'),
+                     pch = c(16, 7, 2, 3),
+                     cex = 2
+                   )) {
   ## preliminaries
   # import a sound
   if (class(x) == 'character') {
@@ -197,9 +231,9 @@ analyze = function (x,
   # plot(autoCorrelation_filter, type = 'l')
 
   ## fft and acf per frame
-  if (!is.na(savePath)) {
+  if (is.character(savePath)) {
     plot = TRUE
-    jpeg(filename = paste0 (savePath, plotname, ".jpg"), 1200, 800)
+    jpeg(filename = paste0(savePath, plotname, ".jpg"), 1200, 800)
   }
   frameBank = getFrameBank(
     sound = sound,
@@ -210,23 +244,30 @@ analyze = function (x,
     zp = zp,
     filter = NULL
   )
-  s = spec(
-    x = NULL,
-    frameBank = frameBank,
-    duration = duration,
-    samplingRate = samplingRate,
-    ylim = ylim,
-    windowLength = windowLength,
-    zp = zp,
-    wn = wn,
-    contrast = contrast,
-    brightness = brightness,
-    step = step,
-    main = plotname,
-    plot = plot,
-    output = 'original',
-    ...
-  )
+
+  if (plot == TRUE && is.list(plot_spec_pars)) {
+    plot_spec = TRUE
+  } else {
+    plot_spec = FALSE
+    plot_spec_pars = list()  # otherwise can't run do.call('spec') below
+  }
+
+  s = do.call('spec', c(
+    list(
+      x = NULL,
+      frameBank = frameBank,
+      duration = duration,
+      samplingRate = samplingRate,
+      windowLength = windowLength,
+      zp = zp,
+      wn = wn,
+      step = step,
+      main = plotname,
+      plot = plot_spec,
+      output = 'original'
+    ),
+    plot_spec_pars
+  ))
   autocorBank = apply(frameBank, 2, function(x) {
     acf(x, windowLength_points, plot = FALSE)$acf / autoCorrelation_filter
   })
@@ -438,29 +479,56 @@ analyze = function (x,
 
   ## Add pitch contours to the spectrogram
   if (plot) {
-    mylevels = c('autocor', 'cepstrum', 'spec', 'dom')
-    mycols = c('green', 'violet', 'red', 'orange')
-    mypch = c(16, 7, 2, 3)
-    # pitchSource_1234 = apply(pitchSource, 2, function(x) match(x, mylevels))
-    pitchSource_1234 = matrix(match(pitchSource, mylevels), ncol = ncol(pitchSource))
-    for (r in 1:nrow(pitchCands)) {
-      points (
-        result$time,
-        pitchCands[r, ] / 1000,
-        col = mycols[pitchSource_1234[r, ]],
-        pch = mypch[pitchSource_1234[r, ]],
-        cex = pitchCert[r, ] * 2
+    # if plot_spec is FALSE, we first have to set up an empty plot
+    if (plot_spec == FALSE) {
+      m = max(pitchCands, na.rm = TRUE) / 1000  # for ylim on the empty plot
+      if (is.na(m)) m = samplingRate / 2 / 1000
+      plot(x = result$time,
+           y = rep(0, nrow(result)),
+           type = 'n',
+           ylim = c(0, m), xlab = '', ylab = '')
+    }
+    # add pitch candidates to the plot
+    if (is.list(plot_pitchCands_pars)) {
+      if (is.null(plot_pitchCands_pars$levels)) {
+        plot_pitchCands_pars$levels = c('autocor', 'cepstrum', 'spec', 'dom')
+      }
+      if (is.null(plot_pitchCands_pars$col)) {
+        plot_pitchCands_pars$col = c('green', 'violet', 'red', 'orange')
+      }
+      if (is.null(plot_pitchCands_pars$pch)) {
+        plot_pitchCands_pars$pch = c(16, 7, 2, 3)
+      }
+      if (is.null(plot_pitchCands_pars$cex)) {
+        plot_pitchCands_pars$cex = 2
+      }
+      pitchSource_1234 = matrix(match(pitchSource, plot_pitchCands_pars$levels),
+                                ncol = ncol(pitchSource))
+      for (r in 1:nrow(pitchCands)) {
+        points(
+          x = result$time,
+          y = pitchCands[r, ] / 1000,
+          col = plot_pitchCands_pars$col[pitchSource_1234[r, ]],
+          pch = plot_pitchCands_pars$pch[pitchSource_1234[r, ]],
+          cex = pitchCert[r, ] * plot_pitchCands_pars$cex
+        )
+      }
+    }
+    # add the final pitch contour to the plot
+    if (is.list(plot_pitch_pars)) {
+      do.call('lines', c(list(
+        x = result$time,
+        y = result$pitch / 1000
+      ),
+      plot_pitch_pars)
       )
     }
-    lines (result$time,
-           result$pitch / 1000,
-           col = 'blue',
-           lwd = 3)
   }
-  if (!is.na(savePath)) {
+  if (is.character(savePath)) {
     dev.off()
   }
 
+  # a separate plot of the prior
   if (plot_prior) {
     freqs = seq(1, HzToSemitones(samplingRate / 2), length.out = 1000)
     prior = dgamma(freqs, shape = shape, rate = rate) / prior_normalizer
