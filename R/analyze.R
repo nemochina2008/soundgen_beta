@@ -16,13 +16,15 @@
 #' @param zpCep zero-padding of the spectrum used for cepstral pitch detection
 #'   (points). Improves the precision of cepstral pitch detection quite
 #'   noticeably.
-#' @param pitch_method methods of pitch estimation to consider for determining
+#' @param pitch_methods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 #'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band
+#' @param min_voiced_cands minimum number of pitch candidates that have to be
+#'   defined to consider a frame voiced (defaults to 2 if \code{dom} is among
+#'   the candidates and 1 otherwise)
 #' @param pitch_floor,pitch_ceiling bounds for pitch candidates (Hz)
-#' @param max_pitch_cands maximum number of pitch candidates to return. NB: only
-#'   one dom and one pitchCep is returned, so the remaining candidates come from
-#'   the autocorrelation and spectral pitch candidates.
+#' @param nCands maximum number of pitch candidates to use per method (dom and
+#'   cepstrum always use only one candidate each).
 #' @param voiced_threshold_autocor,voiced_threshold_cep,voiced_threshold_spec (0
 #'   to 1) separate thresholds for detecting pitch candidates with three
 #'   different methods: autocorrelation, cepstrum, and BaNa algorithm (see
@@ -35,6 +37,8 @@
 #' to catch weak harmonics (BaNa - spectral pitch tracking)
 #' @param width_spec the width of window for detecting peaks in the spectrum
 #'   (BaNa - spectral pitch tracking)
+#' @param merge_semitones pitch candidates within \code{merge_semitones} are
+#'   merged with boosted certainty (BaNa - spectral pitch tracking)
 #' @param pitchSpec_only_peak_weight (0 to 1) if only one pitchSpec candidate is
 #'   found, its weight (certainty) is taken to be
 #'   \code{pitchSpec_only_peak_weight}. This mainly has implications for how
@@ -46,9 +50,9 @@
 #'   \code{prior_mean = HzToSemitones(300), prior_sd = 6} gives a prior with
 #'   mean = 300 Hz and SD of 6 semitones (half an octave)
 #' @param plot_prior if TRUE, produces a separate plot of the prior
-#' @param cutoff_dom do not consider frequencies above cutoff_dom when
-#'   calculating the lowest dominant frequency band (recommended if the original
-#'   sampling rate varies across different analyzed audio files)
+#' @param cutoff_freq repeat the calculation of spectral descriptives after
+#'   discarding all info above \code{cutoff_freq} (Hz). Recommended if the
+#'   original sampling rate varies across different analyzed audio files
 #' @param dom_threshold (0 to 1) to find the lowest dominant frequency band, we
 #'   do short-term FFT and take the lowest frequency with amplitude at least
 #'   dom_threshold
@@ -112,7 +116,7 @@
 #' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
 #' # or, to improve the quality of post-processing:
 #' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
-#' median(a1$pitch, na.rm = TRUE)  # 613 Hz
+#' median(a1$pitch, na.rm = TRUE)  # 614 Hz
 #' # (can vary, since postprocessing is stochastic)
 #' # compare to the true value:
 #' median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
@@ -127,7 +131,7 @@
 #' a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
 #' # many pitch candidates are off, but the overall contour and estimate of
 #' # median pitch are pretty similar:
-#' median(a2$pitch, na.rm = TRUE)  # 581 Hz (can vary, since post-processing is stochastic)
+#' median(a2$pitch, na.rm = TRUE)  # 622 Hz (can vary, since post-processing is stochastic)
 #' median(a2$HNR, na.rm = TRUE)  # HNR of 3-4 dB
 #'
 #' # Fancy plotting options:
@@ -147,22 +151,26 @@ analyze = function(x,
                    step = 25,
                    zp = 0,
                    zpCep = 2 ^ 13,
-                   pitch_method = c('autocor', 'cep', 'spec', 'dom'),
+                   pitch_methods = c('autocor', 'cep', 'spec', 'dom'),
+                   min_voiced_cands = 'autom',
                    pitch_floor = 75,
                    pitch_ceiling = 3500,
-                   max_pitch_cands = 4,
-                   voiced_threshold_autocor = 0.75,
+                   nCands = 1,
+                   dom_threshold = 0.1,
+                   dom_smoothing_width = NULL,
+                   voiced_threshold_autocor = 0.7,
+                   autocor_smoothing_width = NULL,
                    voiced_threshold_cep = 0.45,
                    voiced_threshold_spec = 0.5,
                    specPitchThreshold_nullNA = 0.5,
                    slope_spec = 0.1,
                    width_spec = 150,
+                   merge_semitones = 1,
                    pitchSpec_only_peak_weight = 0.51,
                    prior_mean = HzToSemitones(300),
                    prior_sd = 6,
                    plot_prior = FALSE,
-                   cutoff_dom = 6000,
-                   dom_threshold = 0.1,
+                   cutoff_freq = 6000,
                    shortest_syl = 20,
                    shortest_pause = 60,
                    interpolWindow = 3,
@@ -183,7 +191,7 @@ analyze = function(x,
                      ylim = c(0, 5)
                    ),
                    plot_pitch_pars = list(
-                     col = 'blue',
+                     col = rgb(0, 0, 1, .75),
                      lwd = 3
                      ),
                    plot_pitchCands_pars = list(
@@ -219,8 +227,6 @@ analyze = function(x,
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   # windowLength_points = 2^round (log(windowLength * samplingRate /1000)/log(2), 0) # to ensure that the window length in points is a power of 2, say 2048 or 1024
   duration = length(sound) / samplingRate
-  maxNoCands = (max_pitch_cands - 2) %/% 2 # one for dom, one for pitchCep,
-  # the rest shared between pitchAutocor and pitchSpec
 
   # Set up filter for calculating pitchAutocor
   filter = ftwindow_modif(2 * windowLength_points, wn = wn) # plot(filter, type='l')
@@ -232,6 +238,9 @@ analyze = function(x,
 
   ## fft and acf per frame
   if (is.character(savePath)) {
+    # make sure the last character of savePath is "/"
+    last_char = substr(savePath, nchar(savePath), nchar(savePath))
+    if(last_char != '/') savePath = paste0(savePath, '/')
     plot = TRUE
     jpeg(filename = paste0(savePath, plotname, ".jpg"), 1200, 800)
   }
@@ -271,7 +280,7 @@ analyze = function(x,
   autocorBank = apply(frameBank, 2, function(x) {
     acf(x, windowLength_points, plot = FALSE)$acf / autoCorrelation_filter
   })
-  # plot(autocorBank[, 5], type = 'l')
+  # plot(autocorBank[, 13], type = 'l')
   rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
 
   # calculate amplitude of each frame
@@ -326,19 +335,22 @@ analyze = function(x,
       autoCorrelation = autocorBank[, i],
       samplingRate = samplingRate,
       zpCep = zpCep,
-      pitch_method = pitch_method,
-      cutoff_dom = cutoff_dom,
+      pitch_methods = pitch_methods,
+      cutoff_freq = cutoff_freq,
       voiced_threshold_autocor = voiced_threshold_autocor,
+      autocor_smoothing_width = autocor_smoothing_width,
       voiced_threshold_cep = voiced_threshold_cep,
       voiced_threshold_spec = voiced_threshold_spec,
       specPitchThreshold_nullNA = specPitchThreshold_nullNA,
       slope_spec = slope_spec,
       width_spec = width_spec,
+      merge_semitones = merge_semitones,
       pitch_floor = pitch_floor,
       pitch_ceiling = pitch_ceiling,
       dom_threshold = dom_threshold,
+      dom_smoothing_width = dom_smoothing_width,
       pitchSpec_only_peak_weight = pitchSpec_only_peak_weight,
-      maxNoCands = maxNoCands
+      nCands = nCands
     )
   }
 
@@ -398,10 +410,20 @@ analyze = function(x,
   }
 
   # divide the file into continuous voiced syllables
+  if (!is.numeric(min_voiced_cands)) {
+    if ('dom' %in% pitch_methods && length(pitch_methods) > 1) {
+      # since dom is usually defined, we want at least one more pitch candidate
+      # (unless dom is the ONLY method that the user wants for pitch tracking)
+      min_voiced_cands = 2
+    } else {
+      min_voiced_cands = 1
+    }
+  }
   analFrames = findVoicedSegments(
     pitchCands,
     shortest_syl = shortest_syl,
     shortest_pause = shortest_pause,
+    min_voiced_cands = min_voiced_cands,
     step = step,
     samplingRate = samplingRate
   )
@@ -414,8 +436,8 @@ analyze = function(x,
       myseq = analFrames$segmentStart[syl]:analFrames$segmentEnd[syl]
       # compute the optimal path through pitch candidates
       pitchFinal[myseq] = pathfinder(
-        pitchCands = pitchCands[, myseq],
-        pitchCert = pitchCert[, myseq],
+        pitchCands = pitchCands[, myseq, drop = FALSE],
+        pitchCert = pitchCert[, myseq, drop = FALSE],
         certWeight = certWeight,
         postprocess = postprocess,
         control_anneal = control_anneal,
@@ -489,39 +511,41 @@ analyze = function(x,
            ylim = c(0, m), xlab = '', ylab = '')
     }
     # add pitch candidates to the plot
-    if (is.list(plot_pitchCands_pars)) {
-      if (is.null(plot_pitchCands_pars$levels)) {
-        plot_pitchCands_pars$levels = c('autocor', 'cepstrum', 'spec', 'dom')
+    if (nrow(pitchCands) > 0) {
+      if (is.list(plot_pitchCands_pars)) {
+        if (is.null(plot_pitchCands_pars$levels)) {
+          plot_pitchCands_pars$levels = c('autocor', 'cepstrum', 'spec', 'dom')
+        }
+        if (is.null(plot_pitchCands_pars$col)) {
+          plot_pitchCands_pars$col = c('green', 'violet', 'red', 'orange')
+        }
+        if (is.null(plot_pitchCands_pars$pch)) {
+          plot_pitchCands_pars$pch = c(16, 7, 2, 3)
+        }
+        if (is.null(plot_pitchCands_pars$cex)) {
+          plot_pitchCands_pars$cex = 2
+        }
+        pitchSource_1234 = matrix(match(pitchSource, plot_pitchCands_pars$levels),
+                                  ncol = ncol(pitchSource))
+        for (r in 1:nrow(pitchCands)) {
+          points(
+            x = result$time,
+            y = pitchCands[r, ] / 1000,
+            col = plot_pitchCands_pars$col[pitchSource_1234[r, ]],
+            pch = plot_pitchCands_pars$pch[pitchSource_1234[r, ]],
+            cex = pitchCert[r, ] * plot_pitchCands_pars$cex
+          )
+        }
       }
-      if (is.null(plot_pitchCands_pars$col)) {
-        plot_pitchCands_pars$col = c('green', 'violet', 'red', 'orange')
-      }
-      if (is.null(plot_pitchCands_pars$pch)) {
-        plot_pitchCands_pars$pch = c(16, 7, 2, 3)
-      }
-      if (is.null(plot_pitchCands_pars$cex)) {
-        plot_pitchCands_pars$cex = 2
-      }
-      pitchSource_1234 = matrix(match(pitchSource, plot_pitchCands_pars$levels),
-                                ncol = ncol(pitchSource))
-      for (r in 1:nrow(pitchCands)) {
-        points(
+      # add the final pitch contour to the plot
+      if (is.list(plot_pitch_pars)) {
+        do.call('lines', c(list(
           x = result$time,
-          y = pitchCands[r, ] / 1000,
-          col = plot_pitchCands_pars$col[pitchSource_1234[r, ]],
-          pch = plot_pitchCands_pars$pch[pitchSource_1234[r, ]],
-          cex = pitchCert[r, ] * plot_pitchCands_pars$cex
+          y = result$pitch / 1000
+        ),
+        plot_pitch_pars)
         )
       }
-    }
-    # add the final pitch contour to the plot
-    if (is.list(plot_pitch_pars)) {
-      do.call('lines', c(list(
-        x = result$time,
-        y = result$pitch / 1000
-      ),
-      plot_pitch_pars)
-      )
     }
   }
   if (is.character(savePath)) {
@@ -580,20 +604,26 @@ analyzeFolder = function (myfolder,
                           step = 25,
                           zp = 0,
                           zpCep = 2 ^ 13,
+                          pitch_methods = c('autocor', 'cep', 'spec', 'dom'),
+                          min_voiced_cands = 'autom',
                           pitch_floor = 75,
                           pitch_ceiling = 3500,
-                          max_pitch_cands = 4,
-                          voiced_threshold_autocor = 0.75,
+                          nCands = 1,
+                          voiced_threshold_autocor = 0.7,
+                          autocor_smoothing_width = NULL,
                           voiced_threshold_cep = 0.45,
                           voiced_threshold_spec = 0.5,
                           specPitchThreshold_nullNA = 0.5,
                           slope_spec = 0.1,
                           width_spec = 150,
+                          merge_semitones = 1,
                           pitchSpec_only_peak_weight = 0.51,
                           prior_mean = HzToSemitones(300),
                           prior_sd = 6,
-                          cutoff_dom = 6000,
+                          plot_prior = FALSE,
+                          cutoff_freq = 6000,
                           dom_threshold = 0.1,
+                          dom_smoothing_width = NULL,
                           shortest_syl = 20,
                           shortest_pause = 60,
                           interpolWindow = 3,
@@ -608,9 +638,21 @@ analyzeFolder = function (myfolder,
                           smooth_vars = c('pitch', 'dom'),
                           plot = TRUE,
                           savePath = NA,
-                          contrast = .2,
-                          brightness = 0,
-                          ylim = c(0, 5),
+                          plot_spec_pars = list(
+                            contrast = .2,
+                            brightness = 0,
+                            ylim = c(0, 5)
+                          ),
+                          plot_pitch_pars = list(
+                            col = 'blue',
+                            lwd = 3
+                          ),
+                          plot_pitchCands_pars = list(
+                            levels = c('autocor', 'cepstrum', 'spec', 'dom'),
+                            col = c('green', 'violet', 'red', 'orange'),
+                            pch = c(16, 7, 2, 3),
+                            cex = 2
+                          ),
                           summary = TRUE,
                           verbose = TRUE) {
   time_start = proc.time()  # timing
@@ -627,20 +669,24 @@ analyzeFolder = function (myfolder,
     step = step,
     zp = zp,
     zpCep = zpCep,
+    pitch_methods = pitch_methods,
     pitch_floor = pitch_floor,
     pitch_ceiling = pitch_ceiling,
-    max_pitch_cands = max_pitch_cands,
+    nCands = nCands,
     voiced_threshold_autocor = voiced_threshold_autocor,
+    autocor_smoothing_width = autocor_smoothing_width,
     voiced_threshold_cep = voiced_threshold_cep,
     voiced_threshold_spec =voiced_threshold_spec,
     specPitchThreshold_nullNA = specPitchThreshold_nullNA,
     slope_spec = slope_spec,
     width_spec = width_spec,
+    merge_semitones = merge_semitones,
     pitchSpec_only_peak_weight = pitchSpec_only_peak_weight,
     prior_mean = prior_mean,
     prior_sd = prior_sd,
-    cutoff_dom = cutoff_dom,
+    cutoff_freq = cutoff_freq,
     dom_threshold = dom_threshold,
+    dom_smoothing_width = dom_smoothing_width,
     shortest_syl = shortest_syl,
     shortest_pause = shortest_pause,
     interpolWindow = interpolWindow,
@@ -655,9 +701,9 @@ analyzeFolder = function (myfolder,
     smooth_vars = smooth_vars,
     plot = plot,
     savePath = savePath,
-    contrast = contrast,
-    brightness = brightness,
-    ylim = ylim
+    plot_spec_pars = plot_spec_pars,
+    plot_pitch_pars = plot_pitch_pars,
+    plot_pitchCands_pars = plot_pitchCands_pars
   )
 
   if (summary == FALSE) {

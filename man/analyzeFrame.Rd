@@ -5,12 +5,13 @@
 \title{Analyze fft frame}
 \usage{
 analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
-  zpCep = 2^13, pitch_method = c("autocor", "cep", "spec", "dom"),
-  cutoff_dom = 6000, voiced_threshold_autocor = 0.75,
+  zpCep = 2^13, pitch_methods = c("autocor", "cep", "spec", "dom"),
+  cutoff_freq = 6000, dom_threshold = 0.1, dom_smoothing_width = NULL,
+  voiced_threshold_autocor = 0.75, autocor_smoothing_width = NULL,
   voiced_threshold_cep = 0.45, voiced_threshold_spec = 0.45,
   specPitchThreshold_nullNA = 0.8, pitchSpec_only_peak_weight = 0.6,
-  slope_spec = 0.75, width_spec = 100, pitch_floor = 75,
-  pitch_ceiling = 3500, dom_threshold = 0.1, maxNoCands = 1)
+  width_spec = 100, slope_spec = 0.1, merge_semitones = 1,
+  pitch_floor = 75, pitch_ceiling = 3500, nCands = 1)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
@@ -25,19 +26,31 @@ analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
 (points). Improves the precision of cepstral pitch detection quite
 noticeably.}
 
-\item{pitch_method}{methods of pitch estimation to consider for determining
+\item{pitch_methods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band}
 
-\item{cutoff_dom}{do not consider frequencies above cutoff_dom when
-calculating the lowest dominant frequency band (recommended if the original
-sampling rate varies across different analyzed audio files)}
+\item{cutoff_freq}{repeat the calculation of spectral descriptives after
+discarding all info above \code{cutoff_freq} (Hz). Recommended if the
+original sampling rate varies across different analyzed audio files}
+
+\item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
+do short-term FFT and take the lowest frequency with amplitude at least
+dom_threshold}
+
+\item{dom_smoothing_width}{the width of smoothing interval (Hz) for finding
+the lowest spectral peak (lowest dominant frequency band). If \code{NULL},
+defaults to ~220 Hz}
 
 \item{voiced_threshold_autocor}{(0
 to 1) separate thresholds for detecting pitch candidates with three
 different methods: autocorrelation, cepstrum, and BaNa algorithm (see
 Details). Note that HNR is still calculated for frames considered to be
 unvoiced.}
+
+\item{autocor_smoothing_width}{the width of smoothing interval (points) for
+finding peaks in the autocorrelation function. Defaults to 7 for sampling
+rate 44100 and smaller odd numbers for lower values of sampling rate}
 
 \item{voiced_threshold_cep}{(0
 to 1) separate thresholds for detecting pitch candidates with three
@@ -62,24 +75,24 @@ found, its weight (certainty) is taken to be
 \code{pitchSpec_only_peak_weight}. This mainly has implications for how
 much we trust the BaNa estimate vs. the autocorrelation estimate of f0.}
 
+\item{width_spec}{the width of window for detecting peaks in the spectrum
+(BaNa - spectral pitch tracking)}
+
 \item{slope_spec}{when looking for putative
 harmonics in the spectrum, the threshold for peak detection is calculated as
 \code{specPitchThreshold_nullNA * (1 - HNR * slope_spec)}. For noisy sounds the
 threshold is high to avoid false sumharmonics, while for tonal sounds it is low
 to catch weak harmonics (BaNa - spectral pitch tracking)}
 
-\item{width_spec}{the width of window for detecting peaks in the spectrum
-(BaNa - spectral pitch tracking)}
+\item{merge_semitones}{pitch candidates within \code{merge_semitones} are
+merged with boosted certainty (BaNa - spectral pitch tracking)}
 
 \item{pitch_floor}{bounds for pitch candidates (Hz)}
 
 \item{pitch_ceiling}{bounds for pitch candidates (Hz)}
 
-\item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
-do short-term FFT and take the lowest frequency with amplitude at least
-dom_threshold}
-
-\item{maxNoCands}{maximum number of pitch candidates in each class (autocor / cep / BaNa)}
+\item{nCands}{maximum number of pitch candidates to use per method (dom and
+cepstrum always use only one candidate each).}
 }
 \value{
 Returns a list with two components: $pitch_array contains pitch
@@ -90,8 +103,7 @@ Returns a list with two components: $pitch_array contains pitch
 Internal soundgen function.
 }
 \details{
-This monstrous function performs the heavy lifting of pitch tracking and
-acoustic analysis in general: it takes the spectrum of a single fft frame as
-input and analyzes it. Since a lot of subroutines speak to one another, it's
-easier to lump them into one function.
+This function performs the heavy lifting of pitch tracking and acoustic
+analysis in general: it takes the spectrum of a single fft frame as input and
+analyzes it.
 }

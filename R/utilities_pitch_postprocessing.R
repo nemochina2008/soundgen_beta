@@ -65,15 +65,18 @@ pathfinder = function(pitchCands,
 
   # order pitch candidates and certainties in each frame from lowest to highest
   # pitch (helpful for further processing)
-  o = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
-    order(pitchCands[, x])
-  })
-  pitchCands = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
-    pitchCands[o[, x], x]
-  })
-  pitchCert = apply(matrix(1:ncol(pitchCert)), 1, function(x) {
-    pitchCert[o[, x], x]
-  })
+  if (nrow(pitchCands) > 1) {
+    o = apply(as.matrix(1:ncol(pitchCands), nrow = 1), 1, function(x) {
+      order(pitchCands[, x])
+    })
+    pitchCands = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
+      pitchCands[o[, x], x]
+    })
+    pitchCert = apply(matrix(1:ncol(pitchCert)), 1, function(x) {
+      pitchCert[o[, x], x]
+    })
+  }
+
   # remove rows with all NA's
   pitchCands = pitchCands[rowSums(!is.na(pitchCands)) != 0, ]
   pitchCert = pitchCert[rowSums(!is.na(pitchCert)) != 0, ]

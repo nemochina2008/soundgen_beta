@@ -6,20 +6,22 @@
 \usage{
 analyze(x, samplingRate = NULL, silence = 0.04, entropy_threshold = 0.6,
   windowLength = 50, wn = "gaussian", step = 25, zp = 0, zpCep = 2^13,
-  pitch_method = c("autocor", "cep", "spec", "dom"), pitch_floor = 75,
-  pitch_ceiling = 3500, max_pitch_cands = 4,
-  voiced_threshold_autocor = 0.75, voiced_threshold_cep = 0.45,
+  pitch_methods = c("autocor", "cep", "spec", "dom"),
+  min_voiced_cands = "autom", pitch_floor = 75, pitch_ceiling = 3500,
+  nCands = 1, voiced_threshold_autocor = 0.7,
+  autocor_smoothing_width = NULL, voiced_threshold_cep = 0.45,
   voiced_threshold_spec = 0.5, specPitchThreshold_nullNA = 0.5,
-  slope_spec = 0.1, width_spec = 150, pitchSpec_only_peak_weight = 0.51,
-  prior_mean = HzToSemitones(300), prior_sd = 6, plot_prior = FALSE,
-  cutoff_dom = 6000, dom_threshold = 0.1, shortest_syl = 20,
+  slope_spec = 0.1, width_spec = 150, merge_semitones = 1,
+  pitchSpec_only_peak_weight = 0.51, prior_mean = HzToSemitones(300),
+  prior_sd = 6, plot_prior = FALSE, cutoff_freq = 6000,
+  dom_threshold = 0.1, dom_smoothing_width = NULL, shortest_syl = 20,
   shortest_pause = 60, interpolWindow = 3, interpolTolerance = 0.3,
   interpolCert = 0.3, postprocess = c("none", "fast", "slow")[2],
   control_anneal = list(maxit = 5000, temp = 1000), certWeight = 0.5,
   snake_step = 0.05, snake_plot = FALSE, smooth_idx = 1,
   smooth_vars = c("pitch", "dom"), plot = TRUE, savePath = NA,
   plot_spec_pars = list(contrast = 0.2, brightness = 0, ylim = c(0, 5)),
-  plot_pitch_pars = list(col = "blue", lwd = 3),
+  plot_pitch_pars = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
   plot_pitchCands_pars = list(levels = c("autocor", "cepstrum", "spec",
   "dom"), col = c("green", "violet", "red", "orange"), pch = c(16, 7, 2, 3), cex
   = 2))
@@ -51,15 +53,18 @@ are not analyzed (assumed to be just noise)}
 (points). Improves the precision of cepstral pitch detection quite
 noticeably.}
 
-\item{pitch_method}{methods of pitch estimation to consider for determining
+\item{pitch_methods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band}
 
+\item{min_voiced_cands}{minimum number of pitch candidates that have to be
+defined to consider a frame voiced (defaults to 2 if \code{dom} is among
+the candidates and 1 otherwise)}
+
 \item{pitch_floor, pitch_ceiling}{bounds for pitch candidates (Hz)}
 
-\item{max_pitch_cands}{maximum number of pitch candidates to return. NB: only
-one dom and one pitchCep is returned, so the remaining candidates come from
-the autocorrelation and spectral pitch candidates.}
+\item{nCands}{maximum number of pitch candidates to use per method (dom and
+cepstrum always use only one candidate each).}
 
 \item{voiced_threshold_autocor, voiced_threshold_cep, voiced_threshold_spec}{(0
 to 1) separate thresholds for detecting pitch candidates with three
@@ -76,6 +81,9 @@ to catch weak harmonics (BaNa - spectral pitch tracking)}
 \item{width_spec}{the width of window for detecting peaks in the spectrum
 (BaNa - spectral pitch tracking)}
 
+\item{merge_semitones}{pitch candidates within \code{merge_semitones} are
+merged with boosted certainty (BaNa - spectral pitch tracking)}
+
 \item{pitchSpec_only_peak_weight}{(0 to 1) if only one pitchSpec candidate is
 found, its weight (certainty) is taken to be
 \code{pitchSpec_only_peak_weight}. This mainly has implications for how
@@ -90,9 +98,9 @@ mean = 300 Hz and SD of 6 semitones (half an octave)}
 
 \item{plot_prior}{if TRUE, produces a separate plot of the prior}
 
-\item{cutoff_dom}{do not consider frequencies above cutoff_dom when
-calculating the lowest dominant frequency band (recommended if the original
-sampling rate varies across different analyzed audio files)}
+\item{cutoff_freq}{repeat the calculation of spectral descriptives after
+discarding all info above \code{cutoff_freq} (Hz). Recommended if the
+original sampling rate varies across different analyzed audio files}
 
 \item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least
@@ -178,7 +186,7 @@ playme(sound1, 16000)
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
 # or, to improve the quality of post-processing:
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
-median(a1$pitch, na.rm = TRUE)  # 613 Hz
+median(a1$pitch, na.rm = TRUE)  # 614 Hz
 # (can vary, since postprocessing is stochastic)
 # compare to the true value:
 median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
@@ -193,7 +201,7 @@ playme(sound2, 16000)
 a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
 # many pitch candidates are off, but the overall contour and estimate of
 # median pitch are pretty similar:
-median(a2$pitch, na.rm = TRUE)  # 581 Hz (can vary, since post-processing is stochastic)
+median(a2$pitch, na.rm = TRUE)  # 622 Hz (can vary, since post-processing is stochastic)
 median(a2$HNR, na.rm = TRUE)  # HNR of 3-4 dB
 
 # Fancy plotting options:

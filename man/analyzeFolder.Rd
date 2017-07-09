@@ -6,19 +6,25 @@
 \usage{
 analyzeFolder(myfolder, samplingRate = NULL, silence = 0.04,
   entropy_threshold = 0.6, windowLength = 50, wn = "gaussian",
-  step = 25, zp = 0, zpCep = 2^13, pitch_floor = 75,
-  pitch_ceiling = 3500, max_pitch_cands = 4,
-  voiced_threshold_autocor = 0.75, voiced_threshold_cep = 0.45,
+  step = 25, zp = 0, zpCep = 2^13, pitch_methods = c("autocor", "cep",
+  "spec", "dom"), min_voiced_cands = "autom", pitch_floor = 75,
+  pitch_ceiling = 3500, nCands = 1, voiced_threshold_autocor = 0.7,
+  autocor_smoothing_width = NULL, voiced_threshold_cep = 0.45,
   voiced_threshold_spec = 0.5, specPitchThreshold_nullNA = 0.5,
-  slope_spec = 0.1, width_spec = 150, pitchSpec_only_peak_weight = 0.51,
-  prior_mean = HzToSemitones(300), prior_sd = 6, cutoff_dom = 6000,
-  dom_threshold = 0.1, shortest_syl = 20, shortest_pause = 60,
-  interpolWindow = 3, interpolTolerance = 0.3, interpolCert = 0.3,
-  postprocess = c("none", "fast", "slow")[2], control_anneal = list(maxit =
-  5000, temp = 1000), certWeight = 0.5, snake_step = 0.05,
-  snake_plot = FALSE, smooth_idx = 1, smooth_vars = c("pitch", "dom"),
-  plot = TRUE, savePath = NA, contrast = 0.2, brightness = 0,
-  ylim = c(0, 5), summary = TRUE, verbose = TRUE)
+  slope_spec = 0.1, width_spec = 150, merge_semitones = 1,
+  pitchSpec_only_peak_weight = 0.51, prior_mean = HzToSemitones(300),
+  prior_sd = 6, plot_prior = FALSE, cutoff_freq = 6000,
+  dom_threshold = 0.1, dom_smoothing_width = NULL, shortest_syl = 20,
+  shortest_pause = 60, interpolWindow = 3, interpolTolerance = 0.3,
+  interpolCert = 0.3, postprocess = c("none", "fast", "slow")[2],
+  control_anneal = list(maxit = 5000, temp = 1000), certWeight = 0.5,
+  snake_step = 0.05, snake_plot = FALSE, smooth_idx = 1,
+  smooth_vars = c("pitch", "dom"), plot = TRUE, savePath = NA,
+  plot_spec_pars = list(contrast = 0.2, brightness = 0, ylim = c(0, 5)),
+  plot_pitch_pars = list(col = "blue", lwd = 3),
+  plot_pitchCands_pars = list(levels = c("autocor", "cepstrum", "spec",
+  "dom"), col = c("green", "violet", "red", "orange"), pch = c(16, 7, 2, 3), cex
+  = 2), summary = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
@@ -46,13 +52,20 @@ are not analyzed (assumed to be just noise)}
 (points). Improves the precision of cepstral pitch detection quite
 noticeably.}
 
+\item{pitch_methods}{methods of pitch estimation to consider for determining
+pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
+'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band}
+
+\item{min_voiced_cands}{minimum number of pitch candidates that have to be
+defined to consider a frame voiced (defaults to 2 if \code{dom} is among
+the candidates and 1 otherwise)}
+
 \item{pitch_floor}{bounds for pitch candidates (Hz)}
 
 \item{pitch_ceiling}{bounds for pitch candidates (Hz)}
 
-\item{max_pitch_cands}{maximum number of pitch candidates to return. NB: only
-one dom and one pitchCep is returned, so the remaining candidates come from
-the autocorrelation and spectral pitch candidates.}
+\item{nCands}{maximum number of pitch candidates to use per method (dom and
+cepstrum always use only one candidate each).}
 
 \item{voiced_threshold_autocor}{(0
 to 1) separate thresholds for detecting pitch candidates with three
@@ -87,6 +100,9 @@ to catch weak harmonics (BaNa - spectral pitch tracking)}
 \item{width_spec}{the width of window for detecting peaks in the spectrum
 (BaNa - spectral pitch tracking)}
 
+\item{merge_semitones}{pitch candidates within \code{merge_semitones} are
+merged with boosted certainty (BaNa - spectral pitch tracking)}
+
 \item{pitchSpec_only_peak_weight}{(0 to 1) if only one pitchSpec candidate is
 found, its weight (certainty) is taken to be
 \code{pitchSpec_only_peak_weight}. This mainly has implications for how
@@ -106,9 +122,11 @@ densities are calculated on the musical scale, not in Hz! Ex.:
 \code{prior_mean = HzToSemitones(300), prior_sd = 6} gives a prior with
 mean = 300 Hz and SD of 6 semitones (half an octave)}
 
-\item{cutoff_dom}{do not consider frequencies above cutoff_dom when
-calculating the lowest dominant frequency band (recommended if the original
-sampling rate varies across different analyzed audio files)}
+\item{plot_prior}{if TRUE, produces a separate plot of the prior}
+
+\item{cutoff_freq}{repeat the calculation of spectral descriptives after
+discarding all info above \code{cutoff_freq} (Hz). Recommended if the
+original sampling rate varies across different analyzed audio files}
 
 \item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least
@@ -178,6 +196,16 @@ corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.}
 
 \item{savePath}{if a valid path is specified, the plot is saved in this
 folder (defaults to NA)}
+
+\item{plot_spec_pars}{a list of graphical parameters passed on to
+\code{\link{spec}}. Set to \code{NULL} or \code{NA} to suppress plotting
+the spectrogram}
+
+\item{plot_pitch_pars}{a list of graphical parameters for displaying the
+final pitch contour. Set to \code{NULL} or \code{NA} to suppress}
+
+\item{plot_pitchCands_pars}{a list of graphical parameters for displaying
+individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress}
 
 \item{summary}{if TRUE, summarizes acoustics per file}
 
