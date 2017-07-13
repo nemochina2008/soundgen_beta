@@ -86,7 +86,7 @@ optimization against 260 human vocalizations in Anikin, A. & Persson, T.
 research: a validated corpus. Behavior Research Methods, 49(2): 758-771.
 }
 \examples{
-sound = generateBout(nSyl = 8, sylDur_mean = 50, pauseDur_mean = 70,
+sound = soundgen(nSyl = 8, sylDur_mean = 50, pauseDur_mean = 70,
   pitchAnchors = list(time = c(0, 1), value = c(368, 284)), temperature = 0.1,
   attackLen = 10, exactFormants = list(f1 = list(time = 0, freq = 790, amp = 30, width = 100),
   f2 = list(time = 0, freq = 1600, amp = 30, width = 100),

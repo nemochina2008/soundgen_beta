@@ -1,7 +1,7 @@
 #' Morph sounds
 #'
 #' Takes two formulas for synthesizing two target sounds and produces a number of intermediate forms (morphs), attempting to go from one target sound to the other in a specified number of equal steps.
-#' @param formula1,formula2 lists of parameters for calling \code{\link{generateBout}} that produce the two target sounds between which morphing will occur
+#' @param formula1,formula2 lists of parameters for calling \code{\link{soundgen}} that produce the two target sounds between which morphing will occur
 #' @param nHybrids the length of morphing sequence, including target sounds
 #' @param playMorphs if TRUE, the morphing sequence will be played
 #' @param savePath if it is the path to an existing directory, morphs will be saved there as individual .wav files (defaults to NA)
@@ -60,7 +60,7 @@ morph = function (formula1,
                   playMorphs = TRUE,
                   savePath = NA,
                   samplingRate = 16000) {
-  # which pars are different from the defaults of generateBout()?
+  # which pars are different from the defaults of soundgen()?
   notDefaultIdx_formula1 = which(apply(matrix(1:length(formula1)), 1, function(x) {
     identical(formula1[[x]], defaults[[names(formula1)[x]]]) == FALSE
     }))
@@ -129,7 +129,7 @@ morph = function (formula1,
   }
 
   for (h in 1:nHybrids) {
-    sounds[[h]] = do.call(generateBout, formulas[[h]])
+    sounds[[h]] = do.call(soundgen, formulas[[h]])
     if (playMorphs) playme(sounds[[h]], samplingRate = samplingRate)
     if (!is.na(savePath)){
       filename = paste0(savePath, 'morph_', h, '.wav')

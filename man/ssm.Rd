@@ -57,7 +57,7 @@ If \code{returnSSM} is TRUE, returns a list of two components: $ssm contains the
 Calculates the self-similarity matrix and novelty vector for a sound.
 }
 \examples{
-sound = c(generateBout(), generateBout(nSyl = 4, sylDur_mean = 200,
+sound = c(soundgen(), soundgen(nSyl = 4, sylDur_mean = 200,
   pauseDur_mean = 140,  pitchAnchors = list(time = c(0, 0.65, 1),
   value = c(977, 1540, 826)), exactFormants = NA))
 s = ssm(sound, samplingRate = 16000,

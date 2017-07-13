@@ -53,14 +53,14 @@ These four methods of pitch estimation are not treated as completely independent
 To demonstrate acoustic analysis in practice, let's begin by generating a sound with a known pitch contour. To make pitch tracking less trivial and demonstrate some of the challenges, let's add some breathing noise (to make HNR low) as well as subharmonics and jitter (to make harmonics less distinct):
 ```{r}
 library(soundgen)
-sound = generateBout(sylDur_mean = 900, pitchAnchors = list(
+sound = soundgen(sylDur_mean = 900, pitchAnchors = list(
   time = c(0, .3, 1), value = c(300, 900, 100)),
   breathingAnchors = list(time = c(0, 900, 1200), value = c(-40, 0,-40)),
   sidebands_width = 200, jitterDep = 0.5, noiseAmount = 100, temperature = 0, 
   plotSpectro = TRUE)
 # playme(sound, 16000)
 ```
-To analyze this sound with default settings, all we need to specify is the sampling rate (the default in generateBout is 16000 Hz):
+To analyze this sound with default settings, all we need to specify is the sampling rate (the default in soundgen is 16000 Hz):
 ```{r, fig.height = 6, fig.width = 6}
 a = analyze(sound, samplingRate = 16000, plot = TRUE)
 ```

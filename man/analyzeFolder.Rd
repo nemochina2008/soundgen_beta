@@ -8,23 +8,23 @@ analyzeFolder(myfolder, samplingRate = NULL, silence = 0.04,
   entropy_threshold = 0.6, windowLength = 50, wn = "gaussian",
   step = 25, zp = 0, zpCep = 2^13, pitch_methods = c("autocor", "cep",
   "spec", "dom"), min_voiced_cands = "autom", pitch_floor = 75,
-  pitch_ceiling = 3500, nCands = 1, voiced_threshold_autocor = 0.7,
+  pitch_ceiling = 3500, nCands = 1, dom_threshold = 0.1,
+  dom_smoothing_width = NULL, voiced_threshold_autocor = 0.7,
   autocor_smoothing_width = NULL, voiced_threshold_cep = 0.45,
-  voiced_threshold_spec = 0.5, specPitchThreshold_nullNA = 0.5,
-  slope_spec = 0.1, width_spec = 150, merge_semitones = 1,
-  pitchSpec_only_peak_weight = 0.51, prior_mean = HzToSemitones(300),
-  prior_sd = 6, plot_prior = FALSE, cutoff_freq = 6000,
-  dom_threshold = 0.1, dom_smoothing_width = NULL, shortest_syl = 20,
+  voiced_threshold_spec = 0.3, specPitchThreshold_nullNA = 0.35,
+  pitchSpec_only_peak_weight = 0.4, slope_spec = 0.8, width_spec = 150,
+  merge_semitones = 1, prior_mean = HzToSemitones(300), prior_sd = 6,
+  plot_prior = FALSE, cutoff_freq = 6000, shortest_syl = 20,
   shortest_pause = 60, interpolWindow = 3, interpolTolerance = 0.3,
   interpolCert = 0.3, postprocess = c("none", "fast", "slow")[2],
   control_anneal = list(maxit = 5000, temp = 1000), certWeight = 0.5,
   snake_step = 0.05, snake_plot = FALSE, smooth_idx = 1,
   smooth_vars = c("pitch", "dom"), plot = TRUE, savePath = NA,
   plot_spec_pars = list(contrast = 0.2, brightness = 0, ylim = c(0, 5)),
-  plot_pitch_pars = list(col = "blue", lwd = 3),
-  plot_pitchCands_pars = list(levels = c("autocor", "cepstrum", "spec",
-  "dom"), col = c("green", "violet", "red", "orange"), pch = c(16, 7, 2, 3), cex
-  = 2), summary = TRUE, verbose = TRUE)
+  plot_pitch_pars = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
+  plot_pitchCands_pars = list(levels = c("autocor", "cep", "spec", "dom"), col
+  = c("green", "violet", "red", "orange"), pch = c(16, 7, 2, 3), cex = 2),
+  summary = TRUE, verbose = TRUE)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
@@ -67,6 +67,10 @@ the candidates and 1 otherwise)}
 \item{nCands}{maximum number of pitch candidates to use per method (dom and
 cepstrum always use only one candidate each).}
 
+\item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
+do short-term FFT and take the lowest frequency with amplitude at least
+dom_threshold}
+
 \item{voiced_threshold_autocor}{(0
 to 1) separate thresholds for detecting pitch candidates with three
 different methods: autocorrelation, cepstrum, and BaNa algorithm (see
@@ -91,6 +95,11 @@ harmonics in the spectrum, the threshold for peak detection is calculated as
 threshold is high to avoid false sumharmonics, while for tonal sounds it is low
 to catch weak harmonics (BaNa - spectral pitch tracking)}
 
+\item{pitchSpec_only_peak_weight}{(0 to 1) if only one pitchSpec candidate is
+found, its weight (certainty) is taken to be
+\code{pitchSpec_only_peak_weight}. This mainly has implications for how
+much we trust the BaNa estimate vs. the autocorrelation estimate of f0.}
+
 \item{slope_spec}{when looking for putative
 harmonics in the spectrum, the threshold for peak detection is calculated as
 \code{specPitchThreshold_nullNA * (1 - HNR * slope_spec)}. For noisy sounds the
@@ -102,11 +111,6 @@ to catch weak harmonics (BaNa - spectral pitch tracking)}
 
 \item{merge_semitones}{pitch candidates within \code{merge_semitones} are
 merged with boosted certainty (BaNa - spectral pitch tracking)}
-
-\item{pitchSpec_only_peak_weight}{(0 to 1) if only one pitchSpec candidate is
-found, its weight (certainty) is taken to be
-\code{pitchSpec_only_peak_weight}. This mainly has implications for how
-much we trust the BaNa estimate vs. the autocorrelation estimate of f0.}
 
 \item{prior_mean}{specifies the mean and sd of gamma distribution
 describing our prior knowledge about the most likely pitch values for this
@@ -127,10 +131,6 @@ mean = 300 Hz and SD of 6 semitones (half an octave)}
 \item{cutoff_freq}{repeat the calculation of spectral descriptives after
 discarding all info above \code{cutoff_freq} (Hz). Recommended if the
 original sampling rate varies across different analyzed audio files}
-
-\item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
-do short-term FFT and take the lowest frequency with amplitude at least
-dom_threshold}
 
 \item{shortest_syl}{the smallest length of a voiced segment (ms) that
 constitutes a syllable (shorter segments will be replaced by NA as if

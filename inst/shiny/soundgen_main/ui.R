@@ -136,6 +136,8 @@ ui = fluidPage(
                                     tabPanel("Vowel",
                                              sidebarLayout(
                                                sidebarPanel(
+                                                 sliderInput('rolloff_lip', 'Lip radiation, dB/oct', value=permittedValues['rolloff_lip','default'], min=permittedValues['rolloff_lip', 'low'], max=permittedValues['rolloff_lip', 'high'], step=permittedValues['rolloff_lip','step']),
+                                                 shinyBS:::bsPopover(id='rolloff_lip', title=NULL, content='Rolloff due to lip radiation', placement="right", trigger="hover"),
                                                  sliderInput('formantStrength', 'Formant prominence *hyper*', value=permittedValues['formantStrength','default'], min=permittedValues['formantStrength', 'low'], max=permittedValues['formantStrength', 'high'], step=permittedValues['formantStrength','step']),
                                                  shinyBS:::bsPopover(id='formantStrength', title=NULL, content='Multiply formant amplitudes by ... (>1 = emphasize vowel quality)', placement="right", trigger="hover"),
                                                  textInput('vowelString', label='String of vowel presets *hyper*', value = "a", width = NULL, placeholder ='uaaao'),
@@ -192,9 +194,7 @@ ui = fluidPage(
                                                                  sliderInput('quadratic_delta', 'Parabolic rolloff adjustment, dB/octave', value=permittedValues['quadratic_delta','default'], min=permittedValues['quadratic_delta', 'low'], max=permittedValues['quadratic_delta', 'high'], step=permittedValues['quadratic_delta','step']),
                                                                  shinyBS:::bsPopover(id='quadratic_delta', title=NULL, content='Parabolic boost to the first ... harmonics, dB', placement="right", trigger="hover"),
                                                                  sliderInput('quadratic_nHarm', 'Harmonics boosted', value=permittedValues['quadratic_nHarm','default'], min=permittedValues['quadratic_nHarm', 'low'], max=permittedValues['quadratic_nHarm', 'high'], step=permittedValues['quadratic_nHarm','step']),
-                                                                 shinyBS:::bsPopover(id='quadratic_nHarm', title=NULL, content='Apply a parabolic boost to ... harmonics. See manual for demo', placement="right", trigger="hover"),
-                                                                 sliderInput('rolloff_lip', 'Lip radiation, dB/oct', value=permittedValues['rolloff_lip','default'], min=permittedValues['rolloff_lip', 'low'], max=permittedValues['rolloff_lip', 'high'], step=permittedValues['rolloff_lip','step']),
-                                                                 shinyBS:::bsPopover(id='rolloff_lip', title=NULL, content='Rolloff due to lip radiation', placement="right", trigger="hover")
+                                                                 shinyBS:::bsPopover(id='quadratic_nHarm', title=NULL, content='Apply a parabolic boost to ... harmonics. See manual for demo', placement="right", trigger="hover")
                                                  ), width=6
                                                ),
                                                mainPanel(
@@ -304,7 +304,7 @@ ui = fluidPage(
             selectInput(inputId='callType', label="Call", choices=names(presets[[1]]), selected=names(presets[[1]])[1]),
             shinyBS::bsCollapsePanel("Load new preset",
                                      tags$style(type="text/css", "textarea {width:100%; font-size:50%}"),
-                                     tags$textarea(id="user_preset", label='Type in a new preset here', rows=10, cols=20, value="", placeholder ="generateBout(...)"),
+                                     tags$textarea(id="user_preset", label='Type in a new preset here', rows=10, cols=20, value="", placeholder ="soundgen(...)"),
                                      actionButton(inputId = "import_preset", label = "Update sliders")
             ),
 
@@ -313,7 +313,7 @@ ui = fluidPage(
             tags$br(), tags$br(),
             shinyBS::bsCollapsePanel("Export R code",
                             tags$style(type="text/css", "textarea {width:100%; font-size:50%}"), # NB: this little hack ties the width of the following textarea to the width of the panel in which it is embedded; see http://stackoverflow.com/questions/32640875/r-shiny-tie-textarea-width-to-wellpanel-width
-                            tags$textarea(id="mycall", label='Copy-paste function call', rows=10, cols=20, value="", placeholder ="generateBout()")
+                            tags$textarea(id="mycall", label='Copy-paste function call', rows=10, cols=20, value="", placeholder ="soundgen()")
             )
     )
   ),

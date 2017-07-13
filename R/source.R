@@ -153,7 +153,7 @@ generateNoise = function(len,
 #'   computational efficiency, provide the pitch contour at a reduced sampling
 #'   rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be
 #'   upsampled before synthesis.
-#' @inheritParams generateBout
+#' @inheritParams soundgen
 #' @examples
 #' pitch=soundgen:::getSmoothContour(len = 3500,
 #'   anchors = data.frame('time' = c(0, 1), 'value' = c(200, 300)))

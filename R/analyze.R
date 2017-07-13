@@ -108,7 +108,7 @@
 #'   (pitchSpec).
 #' @export
 #' @examples
-#' sound1 = generateBout(sylDur_mean = 900, pitchAnchors = list(
+#' sound1 = soundgen(sylDur_mean = 900, pitchAnchors = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
 #'   breathingAnchors = list(time = c(0, 900), value = c(-40, 00)),
 #'   temperature = 0)
@@ -123,7 +123,7 @@
 #'   value = c(300, 900, 400, 2300)), len = 1000))  # 611 Hz
 #'
 #' # the same pitch contour, but harder to analyze b/c of subharmonics and jitter
-#' sound2 = generateBout(sylDur_mean = 900, pitchAnchors = list(
+#' sound2 = soundgen(sylDur_mean = 900, pitchAnchors = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
 #'   breathingAnchors = list(time = c(0, 900), value = c(-40, 20)),
 #'   sidebands_width = 200, jitterDep = 0.5, noiseAmount = 100, temperature = 0)
@@ -151,7 +151,7 @@ analyze = function(x,
                    step = 25,
                    zp = 0,
                    zpCep = 2 ^ 13,
-                   pitch_methods = c('autocor', 'cep', 'spec', 'dom'),
+                   pitch_methods = c('autocor', 'spec', 'dom'),
                    min_voiced_cands = 'autom',
                    pitch_floor = 75,
                    pitch_ceiling = 3500,
@@ -161,12 +161,12 @@ analyze = function(x,
                    voiced_threshold_autocor = 0.7,
                    autocor_smoothing_width = NULL,
                    voiced_threshold_cep = 0.45,
-                   voiced_threshold_spec = 0.5,
-                   specPitchThreshold_nullNA = 0.5,
-                   slope_spec = 0.1,
+                   voiced_threshold_spec = 0.3,
+                   specPitchThreshold_nullNA = 0.35,
+                   pitchSpec_only_peak_weight = 0.4,
+                   slope_spec = 0.8,
                    width_spec = 150,
                    merge_semitones = 1,
-                   pitchSpec_only_peak_weight = 0.51,
                    prior_mean = HzToSemitones(300),
                    prior_sd = 6,
                    plot_prior = FALSE,
@@ -195,9 +195,9 @@ analyze = function(x,
                      lwd = 3
                      ),
                    plot_pitchCands_pars = list(
-                     levels = c('autocor', 'cepstrum', 'spec', 'dom'),
-                     col = c('green', 'violet', 'red', 'orange'),
-                     pch = c(16, 7, 2, 3),
+                     levels = c('autocor', 'spec', 'dom', 'cep'),
+                     col = c('green', 'red', 'orange', 'violet'),
+                     pch = c(16, 2, 3, 7),
                      cex = 2
                    )) {
   ## preliminaries
@@ -456,8 +456,8 @@ analyze = function(x,
   result$pitchAutocor = as.numeric(lapply(pitch_list, function(x) {
     x$pitchCand[x$source == 'autocor'] [which.max(x$pitchAmpl[x$source == 'autocor'])]
   }))
-  result$pitchCepstrum = as.numeric(lapply(pitch_list, function(x) {
-    x$pitchCand[x$source == 'cepstrum'] [which.max(x$pitchAmpl[x$source == 'cepstrum'])]
+  result$pitchCep = as.numeric(lapply(pitch_list, function(x) {
+    x$pitchCand[x$source == 'cep'] [which.max(x$pitchAmpl[x$source == 'cep'])]
   }))
   result$pitchSpec = as.numeric(lapply(pitch_list, function(x) {
     x$pitchCand[x$source == 'spec'] [which.max(x$pitchAmpl[x$source == 'spec'])]
@@ -514,7 +514,7 @@ analyze = function(x,
     if (nrow(pitchCands) > 0) {
       if (is.list(plot_pitchCands_pars)) {
         if (is.null(plot_pitchCands_pars$levels)) {
-          plot_pitchCands_pars$levels = c('autocor', 'cepstrum', 'spec', 'dom')
+          plot_pitchCands_pars$levels = c('autocor', 'cep', 'spec', 'dom')
         }
         if (is.null(plot_pitchCands_pars$col)) {
           plot_pitchCands_pars$col = c('green', 'violet', 'red', 'orange')
@@ -562,7 +562,7 @@ analyze = function(x,
 
   result = result[c('duration', 'time', 'voiced', 'ampl', 'ampl_voiced',
                     'entropy', 'HNR', 'dom', 'meanFreq', 'peakFreq', 'peakFreq_cut',
-                    'pitch', 'pitchAutocor', 'pitchCepstrum', 'pitchSpec',
+                    'pitch', 'pitchAutocor', 'pitchCep', 'pitchSpec',
                     'quartile25', 'quartile50', 'quartile75', 'specSlope', 'harmonics'
   )]
   return (result)
@@ -609,21 +609,21 @@ analyzeFolder = function (myfolder,
                           pitch_floor = 75,
                           pitch_ceiling = 3500,
                           nCands = 1,
+                          dom_threshold = 0.1,
+                          dom_smoothing_width = NULL,
                           voiced_threshold_autocor = 0.7,
                           autocor_smoothing_width = NULL,
                           voiced_threshold_cep = 0.45,
-                          voiced_threshold_spec = 0.5,
-                          specPitchThreshold_nullNA = 0.5,
-                          slope_spec = 0.1,
+                          voiced_threshold_spec = 0.3,
+                          specPitchThreshold_nullNA = 0.35,
+                          pitchSpec_only_peak_weight = 0.4,
+                          slope_spec = 0.8,
                           width_spec = 150,
                           merge_semitones = 1,
-                          pitchSpec_only_peak_weight = 0.51,
                           prior_mean = HzToSemitones(300),
                           prior_sd = 6,
                           plot_prior = FALSE,
                           cutoff_freq = 6000,
-                          dom_threshold = 0.1,
-                          dom_smoothing_width = NULL,
                           shortest_syl = 20,
                           shortest_pause = 60,
                           interpolWindow = 3,
@@ -644,11 +644,11 @@ analyzeFolder = function (myfolder,
                             ylim = c(0, 5)
                           ),
                           plot_pitch_pars = list(
-                            col = 'blue',
+                            col = rgb(0, 0, 1, .75),
                             lwd = 3
                           ),
                           plot_pitchCands_pars = list(
-                            levels = c('autocor', 'cepstrum', 'spec', 'dom'),
+                            levels = c('autocor', 'cep', 'spec', 'dom'),
                             col = c('green', 'violet', 'red', 'orange'),
                             pch = c(16, 7, 2, 3),
                             cex = 2
@@ -717,7 +717,7 @@ analyzeFolder = function (myfolder,
     }
   } else if (summary == TRUE) {
     vars = c('ampl', 'ampl_voiced', 'entropy', 'HNR', 'dom', 'meanFreq', 'peakFreq',
-             'peakFreq_cut', 'pitch', 'pitchAutocor', 'pitchCepstrum', 'pitchSpec',
+             'peakFreq_cut', 'pitch', 'pitchAutocor', 'pitchCep', 'pitchSpec',
              'quartile25', 'quartile50', 'quartile75', 'specSlope', 'harmonics')
     out = as.data.frame(matrix(
       ncol = 3 + 2 * length(vars),

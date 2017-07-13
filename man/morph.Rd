@@ -8,7 +8,7 @@ morph(formula1, formula2, nHybrids, playMorphs = TRUE, savePath = NA,
   samplingRate = 16000)
 }
 \arguments{
-\item{formula1, formula2}{lists of parameters for calling \code{\link{generateBout}} that produce the two target sounds between which morphing will occur}
+\item{formula1, formula2}{lists of parameters for calling \code{\link{soundgen}} that produce the two target sounds between which morphing will occur}
 
 \item{nHybrids}{the length of morphing sequence, including target sounds}
 

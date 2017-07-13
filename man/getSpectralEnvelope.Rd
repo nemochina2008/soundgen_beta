@@ -7,7 +7,9 @@
 getSpectralEnvelope(nr, nc, exactFormants = NA, formantStrength = 1,
   rolloff_lip = 6, mouthAnchors = NA, mouthOpening_threshold = 0,
   amplBoost_openMouth_dB = 0, vocalTract_length = NULL, temperature = 0,
-  extraFormants_ampl = 30, smoothLinear_factor = 1, samplingRate = 44100)
+  extraFormants_ampl = 30, smoothLinear_factor = 1, samplingRate = 44100,
+  plot = FALSE, dur_ms = NULL, colorTheme = c("bw", "seewave", "...")[1],
+  nCols = 100, xlab = "Time", ylab = "Frequency, kHz", ...)
 }
 \arguments{
 \item{nr}{the number of frequency bins = windowLength_points/2, where

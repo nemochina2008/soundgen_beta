@@ -47,42 +47,41 @@
 #' @export
 #' @examples
 #' # steady exponential rolloff of -12 dB per octave
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = 150, rolloff_exp = -12,
+#' rolloff = getRolloff(pitch_per_gc = 150, rolloff_exp = -12,
 #'   rolloff_exp_delta = 0, plot = TRUE)
 #' # the rate of rolloff slows down with each octave
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = 150, rolloff_exp = -12,
+#' rolloff = getRolloff(pitch_per_gc = 150, rolloff_exp = -12,
 #'   rolloff_exp_delta = 2, plot = TRUE)
 #' # the rate of rolloff increases with each octave
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = 150, rolloff_exp = -12,
+#' rolloff = getRolloff(pitch_per_gc = 150, rolloff_exp = -12,
 #'   rolloff_exp_delta = -2, plot = TRUE)
 #'
-#' # variable f0
-#' # the lower f0, the more harmonics are non-zero
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = c(150, 800, 3000),
+#' # variable f0: the lower f0, the more harmonics are non-zero
+#' rolloff = getRolloff(pitch_per_gc = c(150, 800, 3000),
 #'   rolloff_exp_delta = 0, plot = TRUE)
 #' # without the correction for f0 (adjust_rolloff_per_kHz),
-#' # high-pitched sounds have the same rolloff as low-pitched sounds,
-#' # producing unnaturally strong high-frequency harmonics
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = c(150, 800, 3000),
+#'   # high-pitched sounds have the same rolloff as low-pitched sounds,
+#'   # producing unnaturally strong high-frequency harmonics
+#' rolloff = getRolloff(pitch_per_gc = c(150, 800, 3000),
 #'   rolloff_exp_delta = 0, adjust_rolloff_per_kHz = 0, plot = TRUE)
 #'
 #' # parabolic adjustment of lower harmonics
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = 350, quadratic_delta = 0,
+#' rolloff = getRolloff(pitch_per_gc = 350, quadratic_delta = 0,
 #'   quadratic_nHarm = 2, samplingRate = 16000, plot = TRUE)
 #' # quadratic_nHarm = 1 affects only f0
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = 150, quadratic_delta = 30,
+#' rolloff = getRolloff(pitch_per_gc = 150, quadratic_delta = 30,
 #'   quadratic_nHarm = 1, samplingRate = 16000, plot = TRUE)
 #' # quadratic_nHarm=2 or 3 affects only h1
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = 150, quadratic_delta = 30,
+#' rolloff = getRolloff(pitch_per_gc = 150, quadratic_delta = 30,
 #'   quadratic_nHarm = 2, samplingRate = 16000, plot = TRUE)
 #' # quadratic_nHarm = 4 affects h1 and h2, etc
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = 150, quadratic_delta = 30,
+#' rolloff = getRolloff(pitch_per_gc = 150, quadratic_delta = 30,
 #'   quadratic_nHarm = 4, samplingRate = 16000, plot = TRUE)
 #' # negative quadratic_delta weakens lower harmonics
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = 150, quadratic_delta = -20,
+#' rolloff = getRolloff(pitch_per_gc = 150, quadratic_delta = -20,
 #'   quadratic_nHarm = 7, samplingRate = 16000, plot = TRUE)
 #' # only harmonics below 2000 Hz are affected
-#' rolloff = soundgen:::getRolloff(pitch_per_gc = c(150, 600),
+#' rolloff = getRolloff(pitch_per_gc = c(150, 600),
 #'   quadratic_delta = -20, quadratic_ceiling = 2000, samplingRate = 16000,
 #'   plot = TRUE)
 getRolloff = function(pitch_per_gc = c(440),
@@ -250,6 +249,7 @@ getRolloff = function(pitch_per_gc = c(440),
 #'   \code{smoothLinear_factor} = 0: close to default spline; >3: approaches
 #'   linear extrapolation
 #' @param samplingRate sampling rate (Hz)
+#' @export
 #' @return Returns a spectral filter (matrix nr x nc, where nr is the number of
 #'   frequency bins = windowLength_points/2 and nc is the number of time steps)
 #' @examples
@@ -287,22 +287,28 @@ getSpectralEnvelope = function(nr,
                                temperature = 0,
                                extraFormants_ampl = 30,
                                smoothLinear_factor = 1,
-                               samplingRate = 44100) {
+                               samplingRate = 44100,
+                               plot = FALSE,
+                               dur_ms = NULL,
+                               colorTheme = c('bw', 'seewave', '...')[1],
+                               nCols = 100,
+                               xlab = 'Time',
+                               ylab = 'Frequency, kHz',
+                               ...) {
   if (class(exactFormants) == 'character') {
     exactFormants = convertStringToFormants(exactFormants)
-  } else if (class(exactFormants) == 'list') {
-    if (class(exactFormants[[1]]) == 'list') {
+  } else if (is.list(exactFormants)) {
+    if (is.list(exactFormants[[1]])) {
       exactFormants = lapply(exactFormants, as.data.frame)
     }
-  } else if (!is.na(exactFormants)) {
-    stop('exactFormants must be a list or a string of characters
+  } else if (!is.null(exactFormants) && !is.na(exactFormants)) {
+    stop('If not NULL, exactFormants must be a list or a string of characters
           from dictionary presets: a, o, i, e, u, 0 (schwa)')
   }
   if (is.null(vocalTract_length) & length(exactFormants[[1]]) > 2) {
     # if we don't know vocalTract_length, but at least one formant is defined,
     # we guess the length of vocal tract
-    formantDispersion = mean(diff(unlist(
-      lapply (exactFormants, function(f) f$freq))))
+    formantDispersion = mean(diff(unlist(lapply(exactFormants, function(f) f$freq))))
     vocalTract_length = ifelse (
       is.numeric(formantDispersion),
       speedSound / 2 / formantDispersion,
@@ -407,10 +413,11 @@ getSpectralEnvelope = function(nr,
           rw_smoothing = 0.3,
           trend = rnorm(1)
         )
-        # for nc==1, returns one number close to 1
+        # if nc == 1, returns one number close to 1
         if (length(rw) > 1) {
+          # for actual random walks, make sure mean is 1
           rw = rw - mean(rw) + 1
-        }  # for actual random walks, make sure mean is 1
+        }
         exactFormants_upsampled[[f]][, c] = exactFormants_upsampled[[f]][, c] * rw
       }
     } # end of wiggling existing formants
@@ -512,6 +519,7 @@ getSpectralEnvelope = function(nr,
     # (vector of length nc)
     sdg = exactFormants_upsampled[[f]][, 'width']  # sd of gamma distribution
     # (vector of length nc)
+    sdg[sdg == 0] = 1  # otherwise division by 0
     shape = mg ^ 2 / sdg ^ 2
     rate = mg / sdg ^ 2
     formant = matrix(0, nrow = nr, ncol = nc)
@@ -532,8 +540,32 @@ getSpectralEnvelope = function(nr,
                             lip_dB * mouthOpen_binary[c]) *
        2 ^ (mouthOpening_upsampled[c] * amplBoost_openMouth_dB / 10)
   }
-  # image(t(spectralEnvelope))
-  # range(spectralEnvelope)
 
-  return (2 ^ (spectralEnvelope / 10))
+  # convert from dB to linear multiplier
+  spectralEnvelope = 2 ^ (spectralEnvelope / 10)
+
+  if (plot) {
+    if (is.numeric(dur_ms)) {
+      x = seq(0, dur_ms, length.out = nc)
+    } else {
+      x = seq(0, 1, length.out = nc)
+    }
+    if (colorTheme == 'bw') {
+      col = gray(seq(from = 1, to = 0, length = nCols))
+    } else if (colorTheme == 'seewave') {
+      col = seewave::spectro.colors(nCols)
+    } else {
+      colFun = match.fun(colorTheme)
+      col = rev(colFun(nCols))
+    }
+    image(x = x,
+          y = seq(0, samplingRate /2, length.out = nr)/ 1000,
+          z = t(spectralEnvelope),
+          xlab = xlab,
+          ylab = ylab,
+          col = col,
+          ...)
+  }
+
+  return (spectralEnvelope)
 }

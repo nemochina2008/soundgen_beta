@@ -70,7 +70,7 @@ server = function(input, output, session) {
     } else {
       # a preset from the library
       preset_text = presets[[input$speaker]] [[input$callType]]
-      preset_text = substr(preset_text, 13, nchar(preset_text))  # remove 'generateBout('
+      preset_text = substr(preset_text, 13, nchar(preset_text))  # remove 'soundgen('
       preset_text = paste0('list', preset_text)  # start with 'list('
       preset = try(eval(parse(text = preset_text)), silent = TRUE)
     }
@@ -731,7 +731,7 @@ server = function(input, output, session) {
   })
 
   output$plot_spectrum = renderPlot({
-    # seewave::meanspec (myPars$sound, f = input$samplingRate, dB = 'max0',
+    # seewave::meanspec(myPars$sound, f = input$samplingRate, dB = 'max0',
     #   wl = floor(input$spec_windowLength*input$samplingRate/1000/2)*2,
     #   flim = c(0,10), main = 'Spectrum')
     getRolloff(pitch_per_gc = getSmoothContour(
@@ -749,56 +749,70 @@ server = function(input, output, session) {
   })
 
   output$plot_settings = renderPlot({
-    seewave::meanspec (myPars$sound,  f = input$samplingRate, dB = 'max0',
+    seewave::meanspec(myPars$sound,  f = input$samplingRate, dB = 'max0',
       wl = floor(input$spec_windowLength * input$samplingRate / 1000 / 2) * 2,
       flim = c(0, 10), main = 'Spectrum')
   })
 
   output$plot_consonant = renderPlot({
-    seewave::meanspec (myPars$sound,  f = input$samplingRate, dB = 'max0',
+    seewave::meanspec(myPars$sound,  f = input$samplingRate, dB = 'max0',
       wl = floor(input$spec_windowLength * input$samplingRate / 1000 / 2) * 2,
       flim = c(0, 10), main = 'Spectrum')
   })
 
   output$plot_exactFormants = renderPlot({
-    seewave::meanspec (myPars$sound,  f = input$samplingRate, dB = 'max0',
-      wl = floor(input$spec_windowLength * input$samplingRate / 1000 / 2) * 2,
-      flim = c(0, 10), main = 'Spectrum')
+    getSpectralEnvelope(nr = floor(input$spec_windowLength * input$samplingRate / 1000 / 2),
+                        nc = 100,
+                        exactFormants = myPars$exactFormants,
+                        formantStrength = input$formantStrength,
+                        rolloff_lip = input$rolloff_lip,
+                        mouthAnchors = myPars$mouthAnchors,
+                        vocalTract_length = input$vocalTract_length,
+                        temperature = input$temperature,
+                        extraFormants_ampl = input$extraFormants_ampl,
+                        samplingRate = input$samplingRate,
+                        plot = TRUE,
+                        dur_ms = durSyl_withBreathing(),
+                        xlab = 'Time, ms',
+                        ylab = 'Frequency, kHz',
+                        colorTheme = input$spec_colorTheme
+                       )
   })
 
   output$plot_timbre = renderPlot({
-    seewave::meanspec (myPars$sound,  f = input$samplingRate, dB = 'max0',
+    seewave::meanspec(myPars$sound,  f = input$samplingRate, dB = 'max0',
       wl = floor(input$spec_windowLength * input$samplingRate / 1000 / 2) * 2,
       flim = c(0, 10), main = 'Spectrum')
   })
 
   output$plot_pitchModulation = renderPlot({
-    seewave::meanspec (myPars$sound,  f = input$samplingRate, dB = 'max0',
+    seewave::meanspec(myPars$sound,  f = input$samplingRate, dB = 'max0',
       wl = floor(input$spec_windowLength * input$samplingRate / 1000 / 2) * 2,
       flim = c(0, 10), main = 'Spectrum')
   })
 
   output$plot_noise = renderPlot({
-    seewave::meanspec (myPars$sound,  f = input$samplingRate, dB = 'max0',
+    seewave::meanspec(myPars$sound,  f = input$samplingRate, dB = 'max0',
       wl = floor(input$spec_windowLength * input$samplingRate / 1000 / 2) * 2,
       flim = c(0, 10), main = 'Spectrum')
   })
 
-  output$spectrogram <- renderPlot({
-    spec (myPars$sound,  samplingRate = input$samplingRate,
-                      wn = 'gaussian', windowLength = input$spec_windowLength,
-                      step = round(input$spec_windowLength / 4),
-                      osc = TRUE, xlab = 'Time, ms', ylab = 'Frequency, kHz',
-                      main = 'Spectrogram', contrast = input$spec_contrast,
-                      brightness = input$spec_brightness,
-                      colorTheme = input$spec_colorTheme,
-                      method = input$spec_method,
-                      ylim = c(input$spec_ylim[1], input$spec_ylim[2]))
+  output$spectrogram = renderPlot({
+    spec(myPars$sound,
+         samplingRate = input$samplingRate,
+         wn = 'gaussian', windowLength = input$spec_windowLength,
+         step = round(input$spec_windowLength / 4),
+         osc = TRUE, xlab = 'Time, ms', ylab = 'Frequency, kHz',
+         main = 'Spectrogram', contrast = input$spec_contrast,
+         brightness = input$spec_brightness,
+         colorTheme = input$spec_colorTheme,
+         method = input$spec_method,
+         ylim = c(input$spec_ylim[1], input$spec_ylim[2]))
   })
 
 
   ## A U D I O
-  # create a string with the call to generateBout() with the par values from the UI
+  # create a string with the call to soundgen() with the par values from the UI
   mycall = reactive({
     arg_list = list(
       repeatBout = input$repeatBout,
@@ -860,7 +874,7 @@ server = function(input, output, session) {
                updateTextInput(session, inputId = 'mycall',
                  value = {
                    temp = as.character(call('print', mycall())[2])
-                   paste0('generateBout', substr(temp, 5, nchar(temp)))
+                   paste0('soundgen', substr(temp, 5, nchar(temp)))
                  })
   )
 
@@ -873,7 +887,7 @@ server = function(input, output, session) {
     if (!is.null(myPars$myfile)){
       file.remove(paste0('www/', myPars$myfile))
     }
-    myPars$sound = do.call('generateBout', mycall()) # eval(parse(text = mycall()))  # generate audio
+    myPars$sound = do.call('soundgen', mycall()) # eval(parse(text = mycall()))  # generate audio
     randomID = paste (sample (c(letters, 0:9), 8, replace = TRUE), collapse = '')
     myPars$myfile = paste0(randomID, '.wav')
     # this is the new sound file. NB: has to be saved in www/ !!!
@@ -892,7 +906,7 @@ server = function(input, output, session) {
   )
 
   observeEvent(input$import_preset, {
-    # replace "generateBout" with "list" and parse
+    # replace "soundgen" with "list" and parse
     new_preset_text = substr(input$user_preset, 13, nchar(input$user_preset))
     new_preset_text = paste0('list', new_preset_text)
     new_preset_list = try(eval(parse(text = new_preset_text)), silent = TRUE)

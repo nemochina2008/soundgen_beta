@@ -192,6 +192,7 @@ analyzeFrame = function (frame,
                          autocor_smoothing_width = autocor_smoothing_width,
                          pitch_floor = pitch_floor,
                          pitch_ceiling = pitch_ceiling,
+                         samplingRate = samplingRate,
                          nCands = nCands)
     if(!is.null(pa$pitchAutocor_array)) {
       pitch_array = rbind(pitch_array, pa$pitchAutocor_array)
@@ -327,9 +328,10 @@ getDom = function(frame,
 #'   (either NULL or a dataframe of pitch candidates).
 getPitchAutocor = function(autoCorrelation,
                            autocor_smoothing_width = NULL,
+                           voiced_threshold_autocor,
                            pitch_floor,
                            pitch_ceiling,
-                           voiced_threshold_autocor,
+                           samplingRate,
                            nCands) {
   # autoCorrelation = autocorBank[, 13]
   pitchAutocor_array = NULL
@@ -466,7 +468,7 @@ getPitchCep = function(frame,
     pitchCep_array = data.frame(
       'pitchCand' = cepstrumPeaks$freq[1],
       'pitchAmpl' = cepstrumPeaks$amp[1],
-      'source' = 'cepstrum',
+      'source' = 'cep',
       stringsAsFactors = FALSE,
       row.names = NULL
     )
