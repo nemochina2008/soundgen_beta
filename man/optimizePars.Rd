@@ -111,7 +111,6 @@ res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = segment_m
   mygrid = expand.grid(shortest_syl = c(30, 40),
                        shortest_pause = c(30, 40, 50)))
 1 - res$fit  # correlations with key
-}
 
 # Optimization of pitch tracking pars (takes several hours!)
 res = optimizePars(myfolder = myfolder,
@@ -175,4 +174,5 @@ for (i in 1:length(pp)) {
 }
 res[order(res$cor1, decreasing = TRUE), ]  # max correlation regardless of NA
 res[order(res$cor2, decreasing = TRUE), ]  # max correlation penalized for NA
+}  # end of dontrun
 }

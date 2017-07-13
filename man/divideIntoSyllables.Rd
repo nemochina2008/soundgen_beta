@@ -4,16 +4,16 @@
 \alias{divideIntoSyllables}
 \title{Syllable structure of a bout}
 \usage{
-divideIntoSyllables(nSyl, sylDur_mean, pauseDur_mean, sylDur_min = 20,
+divideIntoSyllables(nSyl, sylLen, pauseLen, sylDur_min = 20,
   sylDur_max = 10000, pauseDur_min = 20, pauseDur_max = 1000,
   temperature = 0.025, plot = FALSE)
 }
 \arguments{
 \item{nSyl}{the desired number of syllables}
 
-\item{sylDur_mean}{the desired mean syllable duration, in ms}
+\item{sylLen}{the desired mean syllable duration, in ms}
 
-\item{pauseDur_mean}{the desired mean pause between syllables, in ms}
+\item{pauseLen}{the desired mean pause between syllables, in ms}
 
 \item{sylDur_min, sylDur_max}{the lower and upper bounds on possible syllable
 duration, in ms}
@@ -23,7 +23,7 @@ duration, in ms}
 
 \item{temperature}{a non-negative float regulating the stochasticity of
 syllable segmentation; 0 = no stochasticity; 1 = sd of proposals is equal
-to sylDur_mean (very strong stochasticity)}
+to sylLen (very strong stochasticity)}
 
 \item{plot}{produce a plot of syllable structure?}
 }
@@ -40,8 +40,8 @@ pauses between syllables. Total bout duration will also vary, unless
 temperature is zero.
 }
 \examples{
-soundgen:::divideIntoSyllables (nSyl = 5, sylDur_mean = 180,
-  pauseDur_mean = 55, temperature = 0.2, plot = TRUE)
-soundgen:::divideIntoSyllables (nSyl = 5, sylDur_mean = 180,
-  pauseDur_mean = 55, temperature = 0, plot = TRUE)
+soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
+  pauseLen = 55, temperature = 0.2, plot = TRUE)
+soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
+  pauseLen = 55, temperature = 0, plot = TRUE)
 }

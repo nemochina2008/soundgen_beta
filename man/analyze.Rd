@@ -69,11 +69,19 @@ cepstrum always use only one candidate each).}
 do short-term FFT and take the lowest frequency with amplitude at least
 dom_threshold}
 
+\item{dom_smoothing_width}{the width of smoothing interval (Hz) for finding
+the lowest spectral peak (lowest dominant frequency band). If \code{NULL},
+defaults to ~220 Hz}
+
 \item{voiced_threshold_autocor, voiced_threshold_cep, voiced_threshold_spec}{(0
 to 1) separate thresholds for detecting pitch candidates with three
 different methods: autocorrelation, cepstrum, and BaNa algorithm (see
 Details). Note that HNR is still calculated for frames considered to be
 unvoiced.}
+
+\item{autocor_smoothing_width}{the width of smoothing interval (points) for
+finding peaks in the autocorrelation function. Defaults to 7 for sampling
+rate 44100 and smaller odd numbers for lower values of sampling rate}
 
 \item{specPitchThreshold_nullNA, slope_spec}{when looking for putative
 harmonics in the spectrum, the threshold for peak detection is calculated as
@@ -210,5 +218,5 @@ a = analyze(sound2, samplingRate = 16000, plot = TRUE,
   plot_pitch_pars = list(col = 'black', lty = 3, lwd = 3))
 
 # Plot pitch candidates w/o a spectrogram
-a = analyze(sound, samplingRate = 16000, plot = TRUE, plot_spec_pars = NA)
+a = analyze(sound2, samplingRate = 16000, plot = TRUE, plot_spec_pars = NA)
 }

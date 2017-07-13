@@ -125,7 +125,7 @@ rnorm_bounded = function(n = 1,
                          high = NULL,
                          roundToInteger = FALSE) {
   if (sum(mean > high | mean < low) > 0) {
-    warning('Some of the specified means are outside the low/high bounds!')
+    warning(paste('Some of the specified means are outside the low/high bounds! Mean =', mean))
   }
   if (sum(sd != 0) == 0) {
     out = rep(mean, n)
@@ -260,19 +260,19 @@ getRandomWalk = function(len,
 #' @examples
 #' rw = soundgen:::getRandomWalk(len = 100, rw_range = 100, rw_smoothing = .2)
 #' plot (rw, type = 'l')
-#' plot (soundgen:::getBinaryRandomWalk(rw, noiseAmount = 75, minLength = 10))
-#' plot (soundgen:::getBinaryRandomWalk(rw, noiseAmount = 5, minLength = 10))
+#' plot (soundgen:::getBinaryRandomWalk(rw, pitchEffects_amount = 75, minLength = 10))
+#' plot (soundgen:::getBinaryRandomWalk(rw, pitchEffects_amount = 5, minLength = 10))
 getBinaryRandomWalk = function(rw,
-                               noiseAmount = 50,
+                               pitchEffects_amount = 50,
                                minLength = 50) {
   len = length(rw)
-  if (noiseAmount == 0) return(rep(0, len))
-  if (noiseAmount == 100) return(rep(2, len))
+  if (pitchEffects_amount == 0) return(rep(0, len))
+  if (pitchEffects_amount == 100) return(rep(2, len))
 
   # calculate thresholds for different noise regimes
-  q1 = noiseThresholds_dict$q1[noiseAmount + 1]
+  q1 = noiseThresholds_dict$q1[pitchEffects_amount + 1]
   # +1 b/c the rows indices in noiseThresholds_dict start from 0, not 1
-  q2 = noiseThresholds_dict$q2[noiseAmount + 1]
+  q2 = noiseThresholds_dict$q2[pitchEffects_amount + 1]
 
   # convert continuous rw to discrete epochs based on q1 and q2 thresholds
   rw_bin = rep(0, len)

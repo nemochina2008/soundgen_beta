@@ -9,7 +9,7 @@ spec(x, samplingRate = NULL, windowLength = 50, step = 15,
   median_smoothing_time = 0, denoise_median_time = 0, percentNoise = 10,
   noiseReduction = 0, contrast = 0.2, brightness = 0,
   method = c("spectrum", "spectralDerivative")[1], output = c("none",
-  "original", "processed")[1], ylim = NULL, plot = TRUE, osc = F,
+  "original", "processed")[1], ylim = NULL, plot = TRUE, osc = FALSE,
   colorTheme = c("bw", "seewave", "...")[1], xlab = "", frameBank = NULL,
   duration = NULL, ...)
 }
@@ -90,8 +90,8 @@ time and frequency domains, and controlling contrast and brightness.
 }
 \examples{
 # synthesize a sound 1 s long, with gradually increasing hissing noise
-sound = soundgen(sylDur_mean = 1000, temperature = 0, breathingAnchors = list(
-  time = c(0, 1300), value = c(-120, 0)), exactFormants_unvoiced = list(
+sound = soundgen(sylLen = 1000, temperature = 0, noiseAnchors = list(
+  time = c(0, 1300), value = c(-120, 0)), exactFormants_noise = list(
   f1 = list(time = 0, freq = 5000, width = 10000, amp = 0)))
 # playme(sound, samplingRate = 16000)
 
@@ -120,7 +120,7 @@ spec(sound, samplingRate = 16000, median_smoothing_freq = 5,
 spec(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 
 # add bells and whistles
-spec(sound, samplingRate = 16000, osc = T, noiseReduction = 1.1,
+spec(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
   brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
   ylab = 'Frequency, kHz', ylim = c(0,5))
 }

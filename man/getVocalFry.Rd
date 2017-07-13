@@ -4,8 +4,8 @@
 \alias{getVocalFry}
 \title{Subharmonics}
 \usage{
-getVocalFry(rolloff, pitch_per_gc, g0 = 100, sideband_width_hz = 100,
-  throwaway_dB = -120, min_epoch_length_ms = 300)
+getVocalFry(rolloff, pitch_per_gc, subFreq = 100, subDep = 100,
+  throwaway_dB = -120, shortestEpoch = 300)
 }
 \arguments{
 \item{rolloff}{matrix of original amplitudes of each harmonic in f0 stack
@@ -14,11 +14,11 @@ returned by \code{\link{getRolloff}} (columns=time, rows=frequency bins)}
 \item{pitch_per_gc}{vector of the same length as ncol(rolloff)): f0 in Hz,
 one value per glottal cycle}
 
-\item{g0}{(numeric vector of length 1 or length(pitch_per_gc)): target
+\item{subFreq}{(numeric vector of length 1 or length(pitch_per_gc)): target
 frequency of subharmonics (lower than f0, adjusted dynamically so f0 is
-always a multiple of g0)}
+always a multiple of subFreq)}
 
-\item{sideband_width_hz}{(vector of the same length as the number of gc in
+\item{subDep}{(vector of the same length as the number of gc in
 the current epoch): regulates how quickly the strength of subharmonics
 fades as they move away from harmonics in f0 stack. Low values produce
 narrow sidebands, high values produce uniformly strong subharmonics}
@@ -26,7 +26,7 @@ narrow sidebands, high values produce uniformly strong subharmonics}
 \item{throwaway_dB}{discard harmonics that are weaker than this number (in
 dB) to save computational resources}
 
-\item{min_epoch_length_ms}{minimum duration of each epoch with unchanging
+\item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}
 }
 \value{
@@ -41,11 +41,11 @@ Adds subharmonics to the main (f0) harmonic stack, forming sidebands.
 }
 \examples{
 pitch_per_gc = c(400, 500, 600, 700)
-rolloff = soundgen:::getRolloff(pitch_per_gc, rolloff_exp = -30)
+rolloff = getRolloff(pitch_per_gc, rolloff = -30)
 # one epoch, two subharmonics
 rolloff_subh = soundgen:::getVocalFry(rolloff, pitch_per_gc,
-  g0 = 200, sideband_width_hz = 150, min_epoch_length_ms = 100)
+  subFreq = 200, subDep = 150, shortestEpoch = 100)
 # three epochs with 2/3/4 subharmonics
 rolloff_subh = soundgen:::getVocalFry(rolloff, pitch_per_gc,
-  g0 = 200, sideband_width_hz = 150, min_epoch_length_ms = 0)
+  subFreq = 200, subDep = 150, shortestEpoch = 0)
 }

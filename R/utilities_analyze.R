@@ -99,12 +99,6 @@ findVoicedSegments = function(pitchCands,
 #' @param autoCorrelation pre-calculated autocorrelation of the input frame
 #'   (computationally more efficient than to do it here)
 #' @param samplingRate sampling rate (Hz)
-#' @param dom_smoothing_width the width of smoothing interval (Hz) for finding
-#'   the lowest spectral peak (lowest dominant frequency band). If \code{NULL},
-#'   defaults to ~220 Hz
-#' @param autocor_smoothing_width the width of smoothing interval (points) for
-#'   finding peaks in the autocorrelation function. Defaults to 7 for sampling
-#'   rate 44100 and smaller odd numbers for lower values of sampling rate
 #' @inheritParams analyze
 #' @return Returns a list with two components: $pitch_array contains pitch
 #'   candidates for the frame, and $summaries contains other acoustic predictors

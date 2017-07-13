@@ -53,8 +53,8 @@
 #'   real numbers.
 #' @examples
 #' # synthesize a sound 1 s long, with gradually increasing hissing noise
-#' sound = soundgen(sylDur_mean = 1000, temperature = 0, breathingAnchors = list(
-#'   time = c(0, 1300), value = c(-120, 0)), exactFormants_unvoiced = list(
+#' sound = soundgen(sylLen = 1000, temperature = 0, noiseAnchors = list(
+#'   time = c(0, 1300), value = c(-120, 0)), exactFormants_noise = list(
 #'   f1 = list(time = 0, freq = 5000, width = 10000, amp = 0)))
 #' # playme(sound, samplingRate = 16000)
 #'
@@ -83,7 +83,7 @@
 #' spec(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 #'
 #' # add bells and whistles
-#' spec(sound, samplingRate = 16000, osc = T, noiseReduction = 1.1,
+#' spec(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
 #'   brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
 #'   ylab = 'Frequency, kHz', ylim = c(0,5))
 spec = function (x,
@@ -103,7 +103,7 @@ spec = function (x,
                  output = c('none', 'original', 'processed')[1],
                  ylim = NULL,
                  plot = TRUE,
-                 osc = F,
+                 osc = FALSE,
                  colorTheme = c('bw', 'seewave', '...')[1],
                  xlab = '',
                  frameBank = NULL,
@@ -208,7 +208,7 @@ spec = function (x,
   if (noiseReduction > 0) {
     # silence frames with entropy above threshold
     entr = apply(Z1, 1, function(x) getEntropy(x)) # Z1 >= 0
-    q = quantile(entr, probs = 1 - percentNoise/100, na.rm = T) # the entropy of
+    q = quantile(entr, probs = 1 - percentNoise/100, na.rm = TRUE) # the entropy of
     # silent frames is NA
     # plot(entr, type='l'); lines(x=1:length(entr),y=rep(q,length(entr)), col='blue', lty=2)
     idx = as.numeric(which(entr >= q))

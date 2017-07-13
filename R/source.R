@@ -5,28 +5,28 @@
 #' Internal soundgen function.
 #'
 #' Generates white noise of length \code{len} and with spectrum defined by
-#' exponential decay \code{rolloff_breathing} and/or a specified filter
-#' \code{filter_breathing}. Algorithm: paints a spectrum with desired
+#' exponential decay \code{rolloff_noise} and/or a specified filter
+#' \code{filter_noise}. Algorithm: paints a spectrum with desired
 #' characteristics, sets phase to zero, and generates a time sequence via
 #' inverse FFT. Soundgen generates aspiration noise (breathing) using this
 #' function. Noise can then be used as an additional source to be added to the
 #' glottal source AFTER the glottal source has been formant-filtered, or BEFORE
 #' formant-filtering for glottal breathing noise.
 #' @param len length of output
-#' @param breathingAnchors a dataframe specifying the amplitude envelope of
+#' @param noiseAnchors a dataframe specifying the amplitude envelope of
 #'   output. $time: timing of aspiration noise, ms c(start,finish) relative to
 #'   voiced part, eg c(-100,500) means breathing starts 100 ms before the voiced
 #'   part and lasts until 500 ms into the voiced part (eg total duration of
-#'   breathing = 500 - (-100) = 600 ms). breathingAnchors$value: the amount of
+#'   breathing = 500 - (-100) = 600 ms). noiseAnchors$value: the amount of
 #'   aspiration noise at the given time anchors (to be smoothed). throwaway_dB =
 #'   no breathing, 0 = as strong as the voiced (harmonic) part
-#' @param rolloff_breathing desired spectral slope of white noise (exponential
-#'   decay analogous to \code{rolloff_exp} in \code{\link{getRolloff}})
+#' @param rolloff_noise desired spectral slope of white noise (exponential
+#'   decay analogous to \code{rolloff} in \code{\link{getRolloff}})
 #' @param attackLen duration of fade-in and fade-out at the beginning and end of
 #'   output, ms
 #' @param windowLength_points fft window length, points
 #' @param overlap overlap of fft windows
-#' @param filter_breathing (optional): in addition to using rolloff_breathing,
+#' @param filter_noise (optional): in addition to using rolloff_noise,
 #'   we can provide the exact filter - a vector of length windowLength_points/2
 #'   or, if we want moving formants, a matrix with windowLength_points/2 rows
 #'   and an arbitrary number of columns
@@ -35,47 +35,47 @@
 #' # 1 s of white noise
 #' samplingRate = 16000
 #' noise = soundgen:::generateNoise(len = samplingRate,
-#'   rolloff_breathing = 0, samplingRate = samplingRate)
+#'   rolloff_noise = 0, samplingRate = samplingRate)
 #' # playme (noise, samplingRate = samplingRate)
 #' # 1 s of noise with rolloff -6 dB
 #' noise = soundgen:::generateNoise(len = samplingRate,
-#'   rolloff_breathing = -6, samplingRate = samplingRate)
+#'   rolloff_noise = -6, samplingRate = samplingRate)
 #'
 #' # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 #' windowLength_points = 1024
-#' filter_breathing = soundgen:::getSpectralEnvelope(
+#' filter_noise = soundgen:::getSpectralEnvelope(
 #'   nr = windowLength_points / 2, nc = 1, samplingRate = samplingRate,
 #'  exactFormants = list('f1' = data.frame(time = 0, freq = 7000,
 #'                                         amp = 50, width = 2000)))
-#' noise = soundgen:::generateNoise(len = samplingRate, rolloff_breathing = -12,
-#'   samplingRate = samplingRate, filter_breathing = filter_breathing)
-#' # plot (filter_breathing, type = 'l')
+#' noise = soundgen:::generateNoise(len = samplingRate, rolloff_noise = -12,
+#'   samplingRate = samplingRate, filter_noise = filter_noise)
+#' # plot (filter_noise, type = 'l')
 #' # playme (noise, samplingRate = samplingRate)
 #'
 #' # low-frequency, wind-like noise
-#' filter_breathing = soundgen:::getSpectralEnvelope(
-#'   nr = windowLength_points / 2, nc = 1, rolloff_lip = 0,
+#' filter_noise = soundgen:::getSpectralEnvelope(
+#'   nr = windowLength_points / 2, nc = 1, rolloff_lipRad = 0,
 #'   samplingRate = samplingRate, exactFormants = list('f1' = data.frame(
 #'     time = 0, freq = 150, amp = 30, width = 90)))
-#' noise = soundgen:::generateNoise(len = samplingRate, rolloff_breathing = -12,
-#'   samplingRate = samplingRate, filter_breathing = filter_breathing)
+#' noise = soundgen:::generateNoise(len = samplingRate, rolloff_noise = -12,
+#'   samplingRate = samplingRate, filter_noise = filter_noise)
 generateNoise = function(len,
-                         breathingAnchors = data.frame(
+                         noiseAnchors = data.frame(
                            'time' = c(0, 300),
                            'value' = c(throwaway_dB, throwaway_dB)
                          ),
-                         rolloff_breathing = -6,
+                         rolloff_noise = -6,
                          attackLen = 10,
                          windowLength_points = 1024,
                          samplingRate = 44100,
                          overlap = 75,
-                         filter_breathing = NA) {
+                         filter_noise = NA) {
   # convert anchors to a smooth contour of breathing amplitudes
   breathingStrength = getSmoothContour(
     len = len,
-    anchors = breathingAnchors,
-    value_floor = permittedValues['breathing_ampl', 'low'],
-    value_ceiling = permittedValues['breathing_ampl', 'high'],
+    anchors = noiseAnchors,
+    value_floor = permittedValues['noise_ampl', 'low'],
+    value_ceiling = permittedValues['noise_ampl', 'high'],
     samplingRate = samplingRate,
     plot = FALSE
   )
@@ -96,25 +96,25 @@ generateNoise = function(len,
   #   the sequence is a bit shorter than needed after i-fft
   nr = windowLength_points / 2
   nc = length(step)
-  if (is.na(filter_breathing[1])) {
-    filter_breathing = matrix(rep (1, nr), nrow = 1)
+  if (is.na(filter_noise[1])) {
+    filter_noise = matrix(rep (1, nr), nrow = 1)
     filterRowIdx = rep(1, nc)
   } else {
-    filterRowIdx = round(seq(1, ncol(filter_breathing), length.out = nc))
+    filterRowIdx = round(seq(1, ncol(filter_noise), length.out = nc))
   }
   # modify the exact filter (if provided) by adding the specified
   #   basic exponential rolloff
-  filter_breathing = apply(filter_breathing, 2, function(x) {
-    x * 2 ^ (rolloff_breathing / 10 * log2(1:nr))
+  filter_noise = apply(filter_noise, 2, function(x) {
+    x * 2 ^ (rolloff_noise / 10 * log2(1:nr))
   })
-  # plot(filter_breathing[,1], type = 'l')
+  # plot(filter_noise[,1], type = 'l')
 
   # instead of synthesizing the time series and then doing fft-ifft,
   #   we can simply synthesize spectral noise, convert to complex
   #   (setting imaginary=0), and then do inverse FFT just once
   z1 = matrix(as.complex(runif(nr * nc)), nrow = nr, ncol = nc)  # set up spectrum
   z1_filtered = apply(matrix(1:ncol(z1)), 1, function(x) {
-    z1[, x] * filter_breathing[, filterRowIdx[x]]
+    z1[, x] * filter_noise[, filterRowIdx[x]]
   })  # multiply by filter
   breathing = as.numeric (
     seewave::istft(
@@ -151,7 +151,7 @@ generateNoise = function(len,
 #' sine waves.
 #' @param pitch a contour of fundamental frequency (numeric vector). NB: for
 #'   computational efficiency, provide the pitch contour at a reduced sampling
-#'   rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be
+#'   rate pitch_samplingRate, eg 3500 points/s. The pitch contour will be
 #'   upsampled before synthesis.
 #' @inheritParams soundgen
 #' @examples
@@ -162,49 +162,48 @@ generateNoise = function(len,
 #' # playme(sound, samplingRate = 16000) # no formants yet
 generateHarmonics = function(pitch,
                              attackLen = 50,
-                             noiseAmount = 0,
-                             noiseIntensity = 0,
+                             pitchEffects_amount = 0,
+                             pitchEffects_intensity = 0,
                              jitterDep = 0,
-                             jitterLength_ms = 1,
+                             jitterLen = 1,
                              vibratoFreq = 100,
                              vibratoDep = 0,
                              shimmerDep = 0,
                              creakyBreathy = 0,
-                             rolloff_exp = -18,
-                             rolloff_exp_delta = -2,
-                             adjust_rolloff_per_kHz = -6,
-                             quadratic_delta = 0,
-                             quadratic_nHarm = 3,
-                             formantStrength = 1,
+                             rolloff = -18,
+                             rolloffAdjust_per_octave = -2,
+                             rolloffAdjust_per_kHz = -6,
+                             rolloffAdjust_quadratic = 0,
+                             rolloffAdjust_quadratic_nHarm = 3,
                              temperature = 0,
-                             min_epoch_length_ms = 300,
-                             g0 = 100,
-                             sideband_width_hz = 0,
-                             rolloff_lip = 6,
-                             trill_dep = 0,
-                             trill_freq = 30,
+                             shortestEpoch = 300,
+                             subFreq = 100,
+                             subDep = 0,
+                             rolloff_lipRad = 6,
+                             trillDep = 0,
+                             trillFreq = 30,
                              amplAnchors = NA,
                              overlap = 75,
                              windowLength_points = 2048,
                              samplingRate = 44100,
                              pitch_floor = 75,
                              pitch_ceiling = 3500,
-                             pitchSamplingRate = 3500) {
+                             pitch_samplingRate = 3500) {
   ## PRE-SYNTHESIS EFFECTS (NB: the order in which effects are added is NOT arbitrary!)
   # vibrato (performed on pitch, not pitch_per_gc!)
   if (vibratoDep > 0) {
     vibrato = 2 ^ (sin(2 * pi * (1:length(pitch)) * vibratoFreq /
-              pitchSamplingRate) * vibratoDep / 12)
+              pitch_samplingRate) * vibratoDep / 12)
     # plot(vibrato[], type = 'l')
     pitch = pitch * vibrato  # plot (pitch, type = 'l')
   }
 
   # transform f0 per s to f0 per glottal cycle
-  gc = getGlottalCycles(pitch, samplingRate = pitchSamplingRate)  # our "glottal cycles"
+  gc = getGlottalCycles(pitch, samplingRate = pitch_samplingRate)  # our "glottal cycles"
   pitch_per_gc = pitch[gc]
   nGC = length(pitch_per_gc)
 
-  # generate a short amplitude contour to adjust rolloff_exp per glottal cycle
+  # generate a short amplitude contour to adjust rolloff per glottal cycle
   if (!is.na(amplAnchors) &&
       length(which(amplAnchors$value < -throwaway_dB)) > 0) {
     amplContour = getSmoothContour(
@@ -216,9 +215,9 @@ generateHarmonics = function(pitch,
     )
     # plot (amplContour, type='l')
     amplContour = amplContour / abs(throwaway_dB) - 1
-    rolloff_exp_ampl = amplContour * rolloff_per_ampl
+    rolloff_ampl = amplContour * rolloff_per_ampl
   } else {
-    rolloff_exp_ampl = 0
+    rolloff_ampl = 0
   }
 
   # get a random walk for intra-syllable variation
@@ -234,10 +233,10 @@ generateHarmonics = function(pitch,
     # plot (rw_0_100, type = 'l')
     rw_bin = getBinaryRandomWalk (
       rw_0_100,
-      noiseAmount = noiseAmount,
-      minLength = ceiling(min_epoch_length_ms / 1000 * pitch_per_gc)
+      pitchEffects_amount = pitchEffects_amount,
+      minLength = ceiling(shortestEpoch / 1000 * pitch_per_gc)
     )
-    # minLength is min_epoch_length_ms / period_ms, where
+    # minLength is shortestEpoch / period_ms, where
     #   period_ms = 1000 / pitch_per_gc
     rw = rw - mean(rw) + 1 # change mean(rw) to 1
     vocalFry_on = (rw_bin > 0) # when is vocal fry on? For ex., rw_bin==1
@@ -250,8 +249,8 @@ generateHarmonics = function(pitch,
   }
 
   # calculate jitter (random variation of F0)
-  if (jitterDep > 0 & noiseAmount > 0) {
-    ratio = pitch_per_gc * jitterLength_ms / 1000 # the number of gc that make
+  if (jitterDep > 0 & pitchEffects_amount > 0) {
+    ratio = pitch_per_gc * jitterLen / 1000 # the number of gc that make
     #   up one jitter period (vector of length nGC)
     idx = 1
     i = 1
@@ -319,11 +318,11 @@ generateHarmonics = function(pitch,
   rolloff_source = getRolloff(
     pitch_per_gc = pitch_per_gc,
     nHarmonics = nHarmonics,
-    rolloff_exp = (rolloff_exp + rolloff_exp_ampl) * rw ^ 3,
-    rolloff_exp_delta = rolloff_exp_delta * rw ^ 3,
-    adjust_rolloff_per_kHz = adjust_rolloff_per_kHz * rw,
-    quadratic_delta = quadratic_delta,
-    quadratic_nHarm = quadratic_nHarm,
+    rolloff = (rolloff + rolloff_ampl) * rw ^ 3,
+    rolloffAdjust_per_octave = rolloffAdjust_per_octave * rw ^ 3,
+    rolloffAdjust_per_kHz = rolloffAdjust_per_kHz * rw,
+    rolloffAdjust_quadratic = rolloffAdjust_quadratic,
+    rolloffAdjust_quadratic_nHarm = rolloffAdjust_quadratic_nHarm,
     samplingRate = samplingRate
   )
   # NB: this whole pitch_per_gc trick is purely for computational efficiency.
@@ -332,7 +331,7 @@ generateHarmonics = function(pitch,
   # image(t(rolloff_source))
 
   # add shimmer (random variation in amplitude)
-  if (shimmerDep > 0 & noiseAmount > 0) {
+  if (shimmerDep > 0 & pitchEffects_amount > 0) {
     shimmer = 2 ^ (rnorm (
       n = ncol(rolloff_source),
       mean = 0,
@@ -344,13 +343,13 @@ generateHarmonics = function(pitch,
   }
 
   # add vocal fry (subharmonics)
-  if (sideband_width_hz > 0 & noiseAmount > 0) {
+  if (subDep > 0 & pitchEffects_amount > 0) {
     vocalFry = getVocalFry (
       rolloff = rolloff_source,
       pitch_per_gc = pitch_per_gc,
-      g0 = g0 * rw ^ 4,
-      sideband_width_hz = sideband_width_hz * rw ^ 4 * vocalFry_on,
-      min_epoch_length_ms = min_epoch_length_ms
+      subFreq = subFreq * rw ^ 4,
+      subDep = subDep * rw ^ 4 * vocalFry_on,
+      shortestEpoch = shortestEpoch
     )
     rolloff_source = vocalFry$rolloff # list of matrices
     epochs = vocalFry$epochs # dataframe

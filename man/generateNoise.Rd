@@ -4,24 +4,24 @@
 \alias{generateNoise}
 \title{Generate noise}
 \usage{
-generateNoise(len, breathingAnchors = data.frame(time = c(0, 300), value =
-  c(throwaway_dB, throwaway_dB)), rolloff_breathing = -6, attackLen = 10,
+generateNoise(len, noiseAnchors = data.frame(time = c(0, 300), value =
+  c(throwaway_dB, throwaway_dB)), rolloff_noise = -6, attackLen = 10,
   windowLength_points = 1024, samplingRate = 44100, overlap = 75,
-  filter_breathing = NA)
+  filter_noise = NA)
 }
 \arguments{
 \item{len}{length of output}
 
-\item{breathingAnchors}{a dataframe specifying the amplitude envelope of
+\item{noiseAnchors}{a dataframe specifying the amplitude envelope of
 output. $time: timing of aspiration noise, ms c(start,finish) relative to
 voiced part, eg c(-100,500) means breathing starts 100 ms before the voiced
 part and lasts until 500 ms into the voiced part (eg total duration of
-breathing = 500 - (-100) = 600 ms). breathingAnchors$value: the amount of
+breathing = 500 - (-100) = 600 ms). noiseAnchors$value: the amount of
 aspiration noise at the given time anchors (to be smoothed). throwaway_dB =
 no breathing, 0 = as strong as the voiced (harmonic) part}
 
-\item{rolloff_breathing}{desired spectral slope of white noise (exponential
-decay analogous to \code{rolloff_exp} in \code{\link{getRolloff}})}
+\item{rolloff_noise}{desired spectral slope of white noise (exponential
+decay analogous to \code{rolloff} in \code{\link{getRolloff}})}
 
 \item{attackLen}{duration of fade-in and fade-out at the beginning and end of
 output, ms}
@@ -32,7 +32,7 @@ output, ms}
 
 \item{overlap}{overlap of fft windows}
 
-\item{filter_breathing}{(optional): in addition to using rolloff_breathing,
+\item{filter_noise}{(optional): in addition to using rolloff_noise,
 we can provide the exact filter - a vector of length windowLength_points/2
 or, if we want moving formants, a matrix with windowLength_points/2 rows
 and an arbitrary number of columns}
@@ -42,8 +42,8 @@ Internal soundgen function.
 }
 \details{
 Generates white noise of length \code{len} and with spectrum defined by
-exponential decay \code{rolloff_breathing} and/or a specified filter
-\code{filter_breathing}. Algorithm: paints a spectrum with desired
+exponential decay \code{rolloff_noise} and/or a specified filter
+\code{filter_noise}. Algorithm: paints a spectrum with desired
 characteristics, sets phase to zero, and generates a time sequence via
 inverse FFT. Soundgen generates aspiration noise (breathing) using this
 function. Noise can then be used as an additional source to be added to the
@@ -54,28 +54,28 @@ formant-filtering for glottal breathing noise.
 # 1 s of white noise
 samplingRate = 16000
 noise = soundgen:::generateNoise(len = samplingRate,
-  rolloff_breathing = 0, samplingRate = samplingRate)
+  rolloff_noise = 0, samplingRate = samplingRate)
 # playme (noise, samplingRate = samplingRate)
 # 1 s of noise with rolloff -6 dB
 noise = soundgen:::generateNoise(len = samplingRate,
-  rolloff_breathing = -6, samplingRate = samplingRate)
+  rolloff_noise = -6, samplingRate = samplingRate)
 
 # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 windowLength_points = 1024
-filter_breathing = soundgen:::getSpectralEnvelope(
+filter_noise = soundgen:::getSpectralEnvelope(
   nr = windowLength_points / 2, nc = 1, samplingRate = samplingRate,
  exactFormants = list('f1' = data.frame(time = 0, freq = 7000,
                                         amp = 50, width = 2000)))
-noise = soundgen:::generateNoise(len = samplingRate, rolloff_breathing = -12,
-  samplingRate = samplingRate, filter_breathing = filter_breathing)
-# plot (filter_breathing, type = 'l')
+noise = soundgen:::generateNoise(len = samplingRate, rolloff_noise = -12,
+  samplingRate = samplingRate, filter_noise = filter_noise)
+# plot (filter_noise, type = 'l')
 # playme (noise, samplingRate = samplingRate)
 
 # low-frequency, wind-like noise
-filter_breathing = soundgen:::getSpectralEnvelope(
-  nr = windowLength_points / 2, nc = 1, rolloff_lip = 0,
+filter_noise = soundgen:::getSpectralEnvelope(
+  nr = windowLength_points / 2, nc = 1, rolloff_lipRad = 0,
   samplingRate = samplingRate, exactFormants = list('f1' = data.frame(
     time = 0, freq = 150, amp = 30, width = 90)))
-noise = soundgen:::generateNoise(len = samplingRate, rolloff_breathing = -12,
-  samplingRate = samplingRate, filter_breathing = filter_breathing)
+noise = soundgen:::generateNoise(len = samplingRate, rolloff_noise = -12,
+  samplingRate = samplingRate, filter_noise = filter_noise)
 }

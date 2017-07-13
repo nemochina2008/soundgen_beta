@@ -10,46 +10,31 @@
 #' @return A list of two sublists ('formulas' and 'sounds'), each sublist of length nHybrids. For ex., the formula for the second hybrid is m$formulas[[2]], and the waveform is m$sounds[[2]]
 #' @examples
 #' # write or copy-paste two formulas from the app soundgen_app(), for example:
-#' formula1 = list(nSyl=1, sylDur_mean=1190, pauseDur_mean=100, noiseAmount=0,
-#'   noiseIntensity=50, attackLen=50, jitterDep=3, jitterLength_ms=1,
-#'   vibratoFreq=5, vibratoDep=0, shimmerDep=0, formantStrength=1,
-#'   extraFormants_ampl=20, creakyBreathy=0, rolloff_exp=-24,
-#'   rolloff_exp_delta=0, adjust_rolloff_per_kHz=-6, quadratic_delta=20,
-#'   quadratic_nHarm=1, rolloff_lip=6, trill_dep=0, trill_freq=30,
-#'   rolloff_breathing=-13, temperature=0.025, min_epoch_length_ms=300,
-#'   g0=100, sideband_width_hz=100, maleFemale=0, samplingRate=16000,
-#'   windowLength_points=512, overlap=75, pitch_floor=25, pitch_ceiling=3500,
-#'   pitchSamplingRate=3500, vocalTract_length=15.5, repeatBout=1,
-#'   pitchAnchors=data.frame(time=c(0,.05,.25,.35,1),
-#'   value=c(240,305,250,260,250)), pitchAnchors_global=data.frame(time=c(0,1),
-#'   value=c(0,0)), breathingAnchors=data.frame(time=c(-50,1214),
-#'   value=c(-50,-70)), mouthAnchors=data.frame(time=c(0,0.1,.4,1),
-#'   value=c(0.18,0.5,.2,.1)), amplAnchors=data.frame(time=c(0,0.16,1),
-#'   value=c(19,120,120)), amplAnchors_global=data.frame(time=c(0,1),
-#'   value=c(120,120)), exactFormants=list(f1=data.frame(time=c(0), freq=c(700),
+#' formula1 = list(sylLen=1190, rolloff=-24, rolloffAdjust_quadratic=20,
+#'   rolloffAdjust_quadratic_nHarm=1, rolloff_noise=-13,
+#'   subFreq=100, subDep=100,
+#'   pitchAnchors=data.frame(time=c(0,.05,.25,.35,1), value=c(240,305,250,260,250)),
+#'   noiseAnchors=data.frame(time=c(-50,1214), value=c(-50,-70)),
+#'   mouthAnchors=data.frame(time=c(0,0.1,.4,1), value=c(0.18,0.5,.2,.1)),
+#'   amplAnchors=data.frame(time=c(0,0.16,1), value=c(19,120,120)),
+#'   exactFormants=list(f1=data.frame(time=c(0), freq=c(700),
 #'   amp=c(30), width=c(80)), f2=data.frame(time=c(0), freq=c(900), amp=c(30),
 #'   width=c(120)), f3=data.frame(time=c(0), freq=c(1500), amp=c(20),
-#'   width=c(150))), exactFormants_unvoiced=NA)
-#' formula2 = list(nSyl=1, sylDur_mean=240, pauseDur_mean=100, noiseAmount=100,
-#'   noiseIntensity=50, attackLen=1, jitterDep=5.1, jitterLength_ms=1,
-#'   vibratoFreq=5, vibratoDep=0, shimmerDep=0, formantStrength=1.3,
-#'   extraFormants_ampl=15, creakyBreathy=0, rolloff_exp=-12,
-#'   rolloff_exp_delta=-6, adjust_rolloff_per_kHz=-6, quadratic_delta=0,
-#'   quadratic_nHarm=3, rolloff_lip=6, trill_dep=0, trill_freq=30,
-#'   rolloff_breathing=-13, temperature=0.01, min_epoch_length_ms=300, g0=100,
-#'   sideband_width_hz=0, maleFemale=0, samplingRate=16000,
-#'   windowLength_points=512, overlap=75, pitch_floor=25, pitch_ceiling=3500,
-#'   pitchSamplingRate=3500, vocalTract_length=15.5, repeatBout=1,
+#'   width=c(150))))
+#' formula2 = list(sylLen=240, pitchEffects_amount=100,
+#'   pitchEffects_intensity=50, attackLen=1, jitterDep=5.1, jitterLen=1,
+#'   formantDep=1.3,
+#'   extraFormants_stochastic=15, rolloff=-12,
+#'   rolloffAdjust_per_octave=-6, rolloffAdjust_per_kHz=-6,
+#'   rolloff_noise=-13, temperature=0.01,
 #'   pitchAnchors=data.frame(time=c(0,0.17,1), value=c(383,421,358)),
-#'   pitchAnchors_global=data.frame(time=c(0,1), value=c(0,0)),
-#'   breathingAnchors=data.frame(time=c(0,49,256), value=c(-120,10,-120)),
+#'   noiseAnchors=data.frame(time=c(0,49,256), value=c(-120,10,-120)),
 #'   mouthAnchors=data.frame(time=c(0,0.15,1), value=c(0,0.49,0.2)),
 #'   amplAnchors=data.frame(time=c(0,0.26,1), value=c(43,120,43)),
-#'   amplAnchors_global=data.frame(time=c(0,1), value=c(120,120)),
 #'   exactFormants=list(f1=data.frame(time=c(0), freq=c(400), amp=c(40),
 #'   width=c(120)), f2=data.frame(time=c(0), freq=c(1000), amp=c(40),
 #'   width=c(120)), f3=data.frame(time=c(0), freq=c(1500), amp=c(30),
-#'   width=c(150))), exactFormants_unvoiced=NA)
+#'   width=c(150))))
 #'
 #'  m = morph (formula1, formula2, nHybrids=5, playMorphs=TRUE)
 #'  # use m$formulas to access formulas for each morph, m$sounds for waveforms
@@ -88,11 +73,11 @@ morph = function (formula1,
     for (f in 1:length(f1$exactFormants))
       f1$exactFormants[[f]]$amp = 0
   }
-  if (class(f1$exactFormants_unvoiced) != 'list' &
-      class(f2$exactFormants_unvoiced) == 'list') {
-    f1$exactFormants_unvoiced = f2$exactFormants_unvoiced
-    for (f in 1:length(f1$exactFormants_unvoiced))
-      f1$exactFormants_unvoiced[[f]]$amp = 0
+  if (class(f1$exactFormants_noise) != 'list' &
+      class(f2$exactFormants_noise) == 'list') {
+    f1$exactFormants_noise = f2$exactFormants_noise
+    for (f in 1:length(f1$exactFormants_noise))
+      f1$exactFormants_noise[[f]]$amp = 0
   }
   if (class(f2$exactFormants) != 'list' &
       class(f1$exactFormants) == 'list') {
@@ -100,11 +85,11 @@ morph = function (formula1,
     for (f in 1:length(f2$exactFormants))
       f2$exactFormants[[f]]$amp = 0
   }
-  if (class(f2$exactFormants_unvoiced) != 'list' &
-      class(f1$exactFormants_unvoiced) == 'list') {
-    f2$exactFormants_unvoiced = f1$exactFormants_unvoiced
-    for (f in 1:length(f2$exactFormants_unvoiced))
-      f2$exactFormants_unvoiced[[f]]$amp = 0
+  if (class(f2$exactFormants_noise) != 'list' &
+      class(f1$exactFormants_noise) == 'list') {
+    f2$exactFormants_noise = f1$exactFormants_noise
+    for (f in 1:length(f2$exactFormants_noise))
+      f2$exactFormants_noise[[f]]$amp = 0
   }
 
   # f1 and f2 are now fully prepared: two target formulas,

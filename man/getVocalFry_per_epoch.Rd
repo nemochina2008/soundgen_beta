@@ -15,7 +15,7 @@ returned by \code{\link{getRolloff}} (columns=time, rows=frequency bins)}
 one value per glottal cycle}
 
 \item{nSubharm}{the number of subharmonics to generate (a positive integer).
-If nSubharm==1, g0 = f0 / 2. If nSubharm==2, g0 = f0 / 3 and 2 * f0 / 3.
+If nSubharm==1, subFreq = f0 / 2. If nSubharm==2, subFreq = f0 / 3 and 2 * f0 / 3.
 Etc}
 
 \item{sideband_width_vector}{(either numeric or vector of the same length as

@@ -12,7 +12,7 @@
 #' @param pitch_per_gc vector of the same length as ncol(rolloff)): f0 in Hz,
 #'   one value per glottal cycle
 #' @param nSubharm the number of subharmonics to generate (a positive integer).
-#'   If nSubharm==1, g0 = f0 / 2. If nSubharm==2, g0 = f0 / 3 and 2 * f0 / 3.
+#'   If nSubharm==1, subFreq = f0 / 2. If nSubharm==2, subFreq = f0 / 3 and 2 * f0 / 3.
 #'   Etc
 #' @param sideband_width_vector (either numeric or vector of the same length as
 #'   pitch_per_gc): regulates how quickly the strength of subharmonics fades as
@@ -91,36 +91,36 @@ getVocalFry_per_epoch = function(rolloff,
 #'
 #' Adds subharmonics to the main (f0) harmonic stack, forming sidebands.
 #' @inheritParams getVocalFry_per_epoch
-#' @param g0 (numeric vector of length 1 or length(pitch_per_gc)): target
+#' @param subFreq (numeric vector of length 1 or length(pitch_per_gc)): target
 #'   frequency of subharmonics (lower than f0, adjusted dynamically so f0 is
-#'   always a multiple of g0)
-#' @param sideband_width_hz (vector of the same length as the number of gc in
+#'   always a multiple of subFreq)
+#' @param subDep (vector of the same length as the number of gc in
 #'   the current epoch): regulates how quickly the strength of subharmonics
 #'   fades as they move away from harmonics in f0 stack. Low values produce
 #'   narrow sidebands, high values produce uniformly strong subharmonics
 #' @param throwaway_dB discard harmonics that are weaker than this number (in
 #'   dB) to save computational resources
-#' @param min_epoch_length_ms minimum duration of each epoch with unchanging
+#' @param shortestEpoch minimum duration of each epoch with unchanging
 #'   subharmonics regime, in ms
 #' @return Returns a list consisting of a list of rolloff matrices (one matrix
 #'   per epoch) and a dataframe of epochs.
 #' @examples
 #' pitch_per_gc = c(400, 500, 600, 700)
-#' rolloff = soundgen:::getRolloff(pitch_per_gc, rolloff_exp = -30)
+#' rolloff = getRolloff(pitch_per_gc, rolloff = -30)
 #' # one epoch, two subharmonics
 #' rolloff_subh = soundgen:::getVocalFry(rolloff, pitch_per_gc,
-#'   g0 = 200, sideband_width_hz = 150, min_epoch_length_ms = 100)
+#'   subFreq = 200, subDep = 150, shortestEpoch = 100)
 #' # three epochs with 2/3/4 subharmonics
 #' rolloff_subh = soundgen:::getVocalFry(rolloff, pitch_per_gc,
-#'   g0 = 200, sideband_width_hz = 150, min_epoch_length_ms = 0)
+#'   subFreq = 200, subDep = 150, shortestEpoch = 0)
 getVocalFry = function(rolloff,
                        pitch_per_gc,
-                       g0 = 100,
-                       sideband_width_hz = 100,
+                       subFreq = 100,
+                       subDep = 100,
                        throwaway_dB = -120,
-                       min_epoch_length_ms = 300) {
-  # force g0 to be a multiple of f0 at each point
-  nSubharm = round(pitch_per_gc / g0, 0) - 1
+                       shortestEpoch = 300) {
+  # force subFreq to be a multiple of f0 at each point
+  nSubharm = round(pitch_per_gc / subFreq, 0) - 1
   nSubharm[nSubharm < 0] = 0
   if (max(nSubharm) < 1) {
     return(list(
@@ -128,13 +128,13 @@ getVocalFry = function(rolloff,
       'epochs' = data.frame('start' = 1, 'end' = length(pitch_per_gc))
     ))
   }
-  if (length(sideband_width_hz) < length(pitch_per_gc)) {
-    sideband_width_hz = rep(sideband_width_hz[1], length(pitch_per_gc))
+  if (length(subDep) < length(pitch_per_gc)) {
+    subDep = rep(subDep[1], length(pitch_per_gc))
   }
 
   throwaway = 2 ^ (throwaway_dB / 10)
   period_ms = 1000 / pitch_per_gc
-  min_epoch_length_points = round(min_epoch_length_ms / period_ms)
+  min_epoch_length_points = round(shortestEpoch / period_ms)
 
   # to ensure each epoch is long enough, we keep the same number of harmonics
   # for at least min_epoch_length_points glottal cycles
@@ -158,7 +158,7 @@ getVocalFry = function(rolloff,
       rolloff = rolloff[, idx, drop = FALSE],
       pitch_per_gc = pitch_per_gc[idx],
       nSubharm = nSubharm_per_epoch[e],
-      sideband_width_vector = sideband_width_hz[idx],
+      sideband_width_vector = subDep[idx],
       throwaway = throwaway
     )
     # View(rolloff_new[[1]])

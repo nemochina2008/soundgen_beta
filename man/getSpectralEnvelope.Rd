@@ -4,12 +4,13 @@
 \alias{getSpectralEnvelope}
 \title{Spectral envelope}
 \usage{
-getSpectralEnvelope(nr, nc, exactFormants = NA, formantStrength = 1,
-  rolloff_lip = 6, mouthAnchors = NA, mouthOpening_threshold = 0,
-  amplBoost_openMouth_dB = 0, vocalTract_length = NULL, temperature = 0,
-  extraFormants_ampl = 30, smoothLinear_factor = 1, samplingRate = 44100,
-  plot = FALSE, dur_ms = NULL, colorTheme = c("bw", "seewave", "...")[1],
-  nCols = 100, xlab = "Time", ylab = "Frequency, kHz", ...)
+getSpectralEnvelope(nr, nc, exactFormants = NA, formantDep = 1,
+  rolloff_lipRad = 6, mouthAnchors = NA, mouthOpening_threshold = 0,
+  amplBoost_openMouth_dB = 0, vocalTract = NULL, temperature = 0,
+  extraFormants_stochastic = 30, smoothLinear_factor = 1,
+  samplingRate = 44100, plot = FALSE, dur_ms = NULL,
+  colorTheme = c("bw", "seewave", "...")[1], nCols = 100, xlab = "Time",
+  ylab = "Frequency, kHz", ...)
 }
 \arguments{
 \item{nr}{the number of frequency bins = windowLength_points/2, where
@@ -24,9 +25,9 @@ schwa. Time stamps for exactFormants and mouthOpening can be specified in
 ms, percent of duration, or whatever - the scale doesn't matter, since
 duration is determined by length(ampl). See details below.}
 
-\item{formantStrength}{scale factor of formant amplitude}
+\item{formantDep}{scale factor of formant amplitude}
 
-\item{rolloff_lip}{adds this many dB per octave (high-frequency boost) when
+\item{rolloff_lipRad}{adds this many dB per octave (high-frequency boost) when
 the mouth is open}
 
 \item{mouthAnchors}{specify when the mouth is open. Example: mouthAnchors =
@@ -39,7 +40,7 @@ is >threshold}
 \item{amplBoost_openMouth_dB}{amplify the voice when the mouth is open by
 \code{amplBoost_openMouth_dB} dB}
 
-\item{vocalTract_length}{used for calculating formant dispersion and formant
+\item{vocalTract}{used for calculating formant dispersion and formant
 transitions as the mouth opens and closes (specified in cm)}
 
 \item{temperature}{regulates the amount of stochasticity in the algorithm. If
@@ -48,7 +49,7 @@ temperature == 0, the spectrum is exactly the same every time
 0, input parameters are "wiggled" and extra formants are added above the
 highest specified formant}
 
-\item{extraFormants_ampl}{the amplitude of additional formants added above
+\item{extraFormants_stochastic}{the amplitude of additional formants added above
 the highest specified formant (only if temperature > 0)}
 
 \item{smoothLinear_factor}{regulates smoothing of formant anchors (0 to +Inf)
@@ -59,6 +60,19 @@ sets of formant values than the number of fft steps.
 linear extrapolation}
 
 \item{samplingRate}{sampling rate (Hz)}
+
+\item{plot}{if TRUE, produces a plot of the spectral envelope}
+
+\item{dur_ms}{duration of the sound, ms (for plotting purposes only)}
+
+\item{colorTheme}{black and white ('bw'), as in seewave package ('seewave'),
+or another color theme (e.g. 'heat.colors')}
+
+\item{nCols}{number of colors in the palette}
+
+\item{xlab, ylab}{labels of axes}
+
+\item{...}{other graphical parameters passed on to \code{image()}}
 }
 \value{
 Returns a spectral filter (matrix nr x nc, where nr is the number of
@@ -79,23 +93,23 @@ FFT.
 }
 \examples{
 # [a] with F1-F4 visible
-image(t(soundgen:::getSpectralEnvelope(nr = 512, nc = 50,
+image(t(getSpectralEnvelope(nr = 512, nc = 50,
   exactFormants = soundgen:::convertStringToFormants('a'),
   temperature = 0, samplingRate = 16000)))
 # some "wiggling" of specified formants plus extra formants on top
-image(t(soundgen:::getSpectralEnvelope(nr = 512, nc = 50,
+image(t(getSpectralEnvelope(nr = 512, nc = 50,
   exactFormants = soundgen:::convertStringToFormants('a'),
-  temperature = 0.1, extraFormants_ampl = 10, samplingRate = 16000)))
+  temperature = 0.1, extraFormants_stochastic = 10, samplingRate = 16000)))
 # stronger extra formants
-image(t(soundgen:::getSpectralEnvelope(nr = 512, nc = 50,
+image(t(getSpectralEnvelope(nr = 512, nc = 50,
   exactFormants = soundgen:::convertStringToFormants('a'),
-  temperature = 0.1, extraFormants_ampl = 30, samplingRate = 16000)))
+  temperature = 0.1, extraFormants_stochastic = 30, samplingRate = 16000)))
 # a schwa based on the length of vocal tract = 15.5 cm
-image(t(soundgen:::getSpectralEnvelope(nr = 512, nc = 50, exactFormants = NA,
-  temperature = .1, vocalTract_length = 15.5, samplingRate = 16000)))
+image(t(getSpectralEnvelope(nr = 512, nc = 50, exactFormants = NA,
+  temperature = .1, vocalTract = 15.5, samplingRate = 16000)))
 
 # manual specification of formants
-image(t(soundgen:::getSpectralEnvelope(nr = 512, nc = 50,
+image(t(getSpectralEnvelope(nr = 512, nc = 50,
 samplingRate = 16000, exactFormants = list(
   'f1' = data.frame('time' = 0, 'freq' = 900, 'amp' = 30, 'width' = 120),
   'f2' = data.frame('time' = 0, 'freq' = 1300, 'amp' = 30, 'width' = 120),

@@ -4,32 +4,32 @@
 \alias{generateHarmonics}
 \title{Generate harmonics}
 \usage{
-generateHarmonics(pitch, attackLen = 50, noiseAmount = 0,
-  noiseIntensity = 0, jitterDep = 0, jitterLength_ms = 1,
+generateHarmonics(pitch, attackLen = 50, pitchEffects_amount = 0,
+  pitchEffects_intensity = 0, jitterDep = 0, jitterLen = 1,
   vibratoFreq = 100, vibratoDep = 0, shimmerDep = 0, creakyBreathy = 0,
-  rolloff_exp = -18, rolloff_exp_delta = -2, adjust_rolloff_per_kHz = -6,
-  quadratic_delta = 0, quadratic_nHarm = 3, formantStrength = 1,
-  temperature = 0, min_epoch_length_ms = 300, g0 = 100,
-  sideband_width_hz = 0, rolloff_lip = 6, trill_dep = 0,
-  trill_freq = 30, amplAnchors = NA, overlap = 75,
+  rolloff = -18, rolloffAdjust_per_octave = -2,
+  rolloffAdjust_per_kHz = -6, rolloffAdjust_quadratic = 0,
+  rolloffAdjust_quadratic_nHarm = 3, temperature = 0, shortestEpoch = 300,
+  subFreq = 100, subDep = 0, rolloff_lipRad = 6, trillDep = 0,
+  trillFreq = 30, amplAnchors = NA, overlap = 75,
   windowLength_points = 2048, samplingRate = 44100, pitch_floor = 75,
-  pitch_ceiling = 3500, pitchSamplingRate = 3500)
+  pitch_ceiling = 3500, pitch_samplingRate = 3500)
 }
 \arguments{
 \item{pitch}{a contour of fundamental frequency (numeric vector). NB: for
 computational efficiency, provide the pitch contour at a reduced sampling
-rate pitchSamplingRate, eg 3500 points/s. The pitch contour will be
+rate pitch_samplingRate, eg 3500 points/s. The pitch contour will be
 upsampled before synthesis.}
 
-\item{attackLen}{duration of fade-in/ fade-out at each end of syllable and breathing noise (ms)}
+\item{attackLen}{duration of fade-in/ fade-out at each end of syllable and noise (ms)}
 
-\item{noiseAmount}{hyperparameter for regulating the (approximate) proportion of sound with different noise regimes (none / subharmonics only / subharmonics and jitter), 0 to 100\%. 0\% = no noise; 100\% = the entire sound has jitter + subharmonics. Ignored if temperature=0}
+\item{pitchEffects_amount}{hyperparameter for regulating the (approximate) proportion of sound with different noise regimes (none / subharmonics only / subharmonics and jitter), 0 to 100\%. 0\% = no noise; 100\% = the entire sound has jitter + subharmonics. Ignored if temperature=0}
 
-\item{noiseIntensity}{hyperparameter for regulating the intensity of subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as specified, <50\% weaker, >50\% stronger). Ignored if temperature=0}
+\item{pitchEffects_intensity}{hyperparameter for regulating the intensity of subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
 
 \item{jitterDep}{cycle-to-cycle random pitch variation (semitones)}
 
-\item{jitterLength_ms}{duration of pitch jump (ms). Use a low value for harsh noise, a high value for irregular vibrato or shaky voice}
+\item{jitterLen}{duration of pitch jump (ms). Use a low value for harsh noise, a high value for irregular vibrato or shaky voice}
 
 \item{vibratoFreq}{the rate of regular pitch modulation, or vibrato (Hz)}
 
@@ -39,43 +39,42 @@ upsampled before synthesis.}
 
 \item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality from creaky (-1) to breathy (+1)}
 
-\item{rolloff_exp}{basic rolloff at a constant rate of \code{rolloff_exp}
+\item{rolloff}{basic rolloff at a constant rate of \code{rolloff}
 db/octave (exponential decay). See \code{\link{getRolloff}} for more details}
 
-\item{rolloff_exp_delta}{basic rolloff changes from lower to upper harmonics
-(regardless of f0) by \code{rolloff_exp_delta} dB/oct. For example, we can
+\item{rolloffAdjust_per_octave}{basic rolloff changes from lower to upper harmonics
+(regardless of f0) by \code{rolloffAdjust_per_octave} dB/oct. For example, we can
 get steeper rolloff in the upper part of the spectrum}
 
-\item{adjust_rolloff_per_kHz}{rolloff changes linearly with f0 by
-\code{adjust_rolloff_per_kHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
+\item{rolloffAdjust_per_kHz}{rolloff changes linearly with f0 by
+\code{rolloffAdjust_per_kHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
 steeper basic rolloff as f0 goes up by 1000 Hz}
 
-\item{quadratic_delta}{an optional quadratic term affecting only the first
-\code{quadratic_nHarm} harmonics. The middle harmonic of the first
-\code{quadratic_nHarm} harmonics is amplified or dampened by
-\code{quadratic_delta} dB relative to the basic exponential decay.}
+\item{rolloffAdjust_quadratic}{an optional quadratic term affecting only the first
+\code{rolloffAdjust_quadratic_nHarm} harmonics. The middle harmonic of the first
+\code{rolloffAdjust_quadratic_nHarm} harmonics is amplified or dampened by
+\code{rolloffAdjust_quadratic} dB relative to the basic exponential decay.}
 
-\item{quadratic_nHarm}{the number of harmonics affected by
-\code{quadratic_delta}}
-
-\item{formantStrength}{scale factor of formant amplitude}
+\item{rolloffAdjust_quadratic_nHarm}{the number of harmonics affected by
+\code{rolloffAdjust_quadratic}}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity in sound generation (see Details)}
 
-\item{min_epoch_length_ms}{minimum duration of each epoch with unchanging
+\item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}
 
-\item{g0}{target frequency of subharmonics (lower than f0, adjusted dynamically so f0 is always a multiple of g0)}
+\item{subFreq}{target frequency of subharmonics (lower than f0, adjusted dynamically so f0 is always a multiple of subFreq)}
 
-\item{sideband_width_hz}{regulates how quickly the strength of subharmonics
-fades as they move away from harmonics in f0 stack. Low values produce
-narrow sidebands, high values produce uniformly strong subharmonics}
+\item{subDep}{the width of subharmonic band, Hz. Regulates how
+quickly the strength of subharmonics fades as they move away from harmonics
+in f0 stack. Low values produce narrow sidebands, high values produce
+uniformly strong subharmonics}
 
-\item{rolloff_lip}{the effect of lip radiation on source spectrum, dB/oct (the default of +6 dB/oct produces a high-frequency boost when the mouth is open)}
+\item{rolloff_lipRad}{the effect of lip radiation on source spectrum, dB/oct (the default of +6 dB/oct produces a high-frequency boost when the mouth is open)}
 
-\item{trill_dep}{amplitude modulation depth (0 to 1). 0: no change;1: amplitude modulation with amplitude range equal to the dynamic range of the sound}
+\item{trillDep}{amplitude modulation depth (0 to 1). 0: no change;1: amplitude modulation with amplitude range equal to the dynamic range of the sound}
 
-\item{trill_freq}{amplitude modulation frequency, Hz}
+\item{trillFreq}{amplitude modulation frequency, Hz}
 
 \item{amplAnchors}{dataframe specifying the time (ms) and value (0 to 1) of amplitude anchors}
 
@@ -89,7 +88,7 @@ narrow sidebands, high values produce uniformly strong subharmonics}
 
 \item{pitch_ceiling}{lower/upper bounds of fundamental frequency}
 
-\item{pitchSamplingRate}{sampling frequency of the pitch contour only. Low values can decrease processing time (Hz). A rule of thumb is to set this to the same value as \code{pitch_ceiling}}
+\item{pitch_samplingRate}{sampling frequency of the pitch contour only. Low values can decrease processing time (Hz). A rule of thumb is to set this to the same value as \code{pitch_ceiling}}
 }
 \description{
 Internal soundgen function.

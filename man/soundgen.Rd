@@ -4,35 +4,35 @@
 \alias{soundgen}
 \title{Generate a sound}
 \usage{
-soundgen(repeatBout = 1, nSyl = 1, sylDur_mean = 300,
-  pauseDur_mean = 200, pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
-  value = c(100, 150, 135, 100)), pitchAnchors_global = NA,
-  temperature = 0.025, maleFemale = 0, creakyBreathy = 0,
-  noiseAmount = 0, noiseIntensity = 50, jitterDep = 3,
-  jitterLength_ms = 1, vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0,
-  attackLen = 50, rolloff_exp = -12, rolloff_exp_delta = -12,
-  quadratic_delta = 0, quadratic_nHarm = 3, adjust_rolloff_per_kHz = -6,
-  rolloff_lip = 6, exactFormants = list(f1 = list(time = 0, freq = 860, amp
-  = 30, width = 120), f2 = list(time = 0, freq = 1280, amp = 40, width = 120),
-  f3 = list(time = 0, freq = 2900, amp = 25, width = 200)),
-  formantStrength = 1, extraFormants_ampl = 30, vocalTract_length = 15.5,
-  g0 = 100, sideband_width_hz = 100, min_epoch_length_ms = 300,
-  trill_dep = 0, trill_freq = 30, breathingAnchors = NA,
-  exactFormants_unvoiced = NA, rolloff_breathing = -14,
-  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
-  amplAnchors = NA, amplAnchors_global = NA, samplingRate = 16000,
-  windowLength_points = 2048, overlap = 75, addSilence = 100,
-  pitch_floor = 50, pitch_ceiling = 3500, pitchSamplingRate = 3500,
-  plot = FALSE, play = FALSE, savePath = NA, ...)
+soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
+  pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135,
+  100)), pitchAnchors_global = NA, temperature = 0.025, maleFemale = 0,
+  creakyBreathy = 0, pitchEffects_amount = 0, pitchEffects_intensity = 50,
+  jitterLen = 1, jitterDep = 3, vibratoFreq = 5, vibratoDep = 0,
+  shimmerDep = 0, attackLen = 50, rolloff = -12,
+  rolloffAdjust_per_octave = -12, rolloffAdjust_per_kHz = -6,
+  rolloffAdjust_quadratic = 0, rolloffAdjust_quadratic_nHarm = 3,
+  rolloff_lipRad = 6, exactFormants = list(f1 = list(time = 0, freq = 860,
+  amp = 30, width = 120), f2 = list(time = 0, freq = 1280, amp = 40, width =
+  120), f3 = list(time = 0, freq = 2900, amp = 25, width = 200)),
+  formantDep = 1, formantDep_stochastic = 30, vocalTract = 15.5,
+  subFreq = 100, subDep = 100, shortestEpoch = 300, trillDep = 0,
+  trillFreq = 30, noiseAnchors = NA, exactFormants_noise = NA,
+  rolloff_noise = -14, mouthAnchors = data.frame(time = c(0, 1), value =
+  c(0.5, 0.5)), amplAnchors = NA, amplAnchors_global = NA,
+  samplingRate = 16000, windowLength_points = 2048, overlap = 75,
+  addSilence = 100, pitch_floor = 50, pitch_ceiling = 3500,
+  pitch_samplingRate = 3500, plot = FALSE, play = FALSE, savePath = NA,
+  ...)
 }
 \arguments{
 \item{repeatBout}{the number of times the bout should be repeated}
 
 \item{nSyl}{the number of syllables in the bout. Intonation, amplitude, and formants contours span multiple syllables, but not multiple bouts (see Details)}
 
-\item{sylDur_mean}{average duration of each syllable, ms}
+\item{sylLen}{average duration of each syllable, ms}
 
-\item{pauseDur_mean}{average duration of pauses between syllables, ms}
+\item{pauseLen}{average duration of pauses between syllables, ms}
 
 \item{pitchAnchors}{dataframe specifying the time (ms) and value (Hz) of pitch anchors. These anchors are used to create a smooth contour of fundamental frequency f0 (pitch) within one syllable (see Details)}
 
@@ -40,17 +40,17 @@ soundgen(repeatBout = 1, nSyl = 1, sylDur_mean = 300,
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity in sound generation (see Details)}
 
-\item{maleFemale}{hyperparameter for shifting f0 contour, formants, and vocalTract_length to make the speaker appear more male (-1...0) or more female (0...+1).}
+\item{maleFemale}{hyperparameter for shifting f0 contour, formants, and vocalTract to make the speaker appear more male (-1...0) or more female (0...+1).}
 
 \item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality from creaky (-1) to breathy (+1)}
 
-\item{noiseAmount}{hyperparameter for regulating the (approximate) proportion of sound with different noise regimes (none / subharmonics only / subharmonics and jitter), 0 to 100\%. 0\% = no noise; 100\% = the entire sound has jitter + subharmonics. Ignored if temperature=0}
+\item{pitchEffects_amount}{hyperparameter for regulating the (approximate) proportion of sound with different noise regimes (none / subharmonics only / subharmonics and jitter), 0 to 100\%. 0\% = no noise; 100\% = the entire sound has jitter + subharmonics. Ignored if temperature=0}
 
-\item{noiseIntensity}{hyperparameter for regulating the intensity of subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as specified, <50\% weaker, >50\% stronger). Ignored if temperature=0}
+\item{pitchEffects_intensity}{hyperparameter for regulating the intensity of subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
+
+\item{jitterLen}{duration of pitch jump (ms). Use a low value for harsh noise, a high value for irregular vibrato or shaky voice}
 
 \item{jitterDep}{cycle-to-cycle random pitch variation (semitones)}
-
-\item{jitterLength_ms}{duration of pitch jump (ms). Use a low value for harsh noise, a high value for irregular vibrato or shaky voice}
 
 \item{vibratoFreq}{the rate of regular pitch modulation, or vibrato (Hz)}
 
@@ -58,55 +58,56 @@ soundgen(repeatBout = 1, nSyl = 1, sylDur_mean = 300,
 
 \item{shimmerDep}{random variation in amplitude between individual glottal cycles (0 to 100\% of original amplitude of each cycle)}
 
-\item{attackLen}{duration of fade-in/ fade-out at each end of syllable and breathing noise (ms)}
+\item{attackLen}{duration of fade-in/ fade-out at each end of syllable and noise (ms)}
 
-\item{rolloff_exp}{basic rolloff at a constant rate of \code{rolloff_exp}
+\item{rolloff}{basic rolloff at a constant rate of \code{rolloff}
 db/octave (exponential decay). See \code{\link{getRolloff}} for more details}
 
-\item{rolloff_exp_delta}{basic rolloff changes from lower to upper harmonics
-(regardless of f0) by \code{rolloff_exp_delta} dB/oct. For example, we can
+\item{rolloffAdjust_per_octave}{basic rolloff changes from lower to upper harmonics
+(regardless of f0) by \code{rolloffAdjust_per_octave} dB/oct. For example, we can
 get steeper rolloff in the upper part of the spectrum}
 
-\item{quadratic_delta}{an optional quadratic term affecting only the first
-\code{quadratic_nHarm} harmonics. The middle harmonic of the first
-\code{quadratic_nHarm} harmonics is amplified or dampened by
-\code{quadratic_delta} dB relative to the basic exponential decay.}
-
-\item{quadratic_nHarm}{the number of harmonics affected by
-\code{quadratic_delta}}
-
-\item{adjust_rolloff_per_kHz}{rolloff changes linearly with f0 by
-\code{adjust_rolloff_per_kHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
+\item{rolloffAdjust_per_kHz}{rolloff changes linearly with f0 by
+\code{rolloffAdjust_per_kHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
 steeper basic rolloff as f0 goes up by 1000 Hz}
 
-\item{rolloff_lip}{the effect of lip radiation on source spectrum, dB/oct (the default of +6 dB/oct produces a high-frequency boost when the mouth is open)}
+\item{rolloffAdjust_quadratic}{an optional quadratic term affecting only the first
+\code{rolloffAdjust_quadratic_nHarm} harmonics. The middle harmonic of the first
+\code{rolloffAdjust_quadratic_nHarm} harmonics is amplified or dampened by
+\code{rolloffAdjust_quadratic} dB relative to the basic exponential decay.}
+
+\item{rolloffAdjust_quadratic_nHarm}{the number of harmonics affected by
+\code{rolloffAdjust_quadratic}}
+
+\item{rolloff_lipRad}{the effect of lip radiation on source spectrum, dB/oct (the default of +6 dB/oct produces a high-frequency boost when the mouth is open)}
 
 \item{exactFormants}{either a character string like "aaui" referring to default presets for speaker "M1" or a list of formant frequencies, amplitude, and bandwidth (see ex. below). exactFormants=NA defaults to schwa. Time stamps for exactFormants and mouthOpening can be specified in ms, percent of duration, or whatever - the scale doesn't matter, since duration is determined by length(ampl). See \code{\link{getSpectralEnvelope}} for more details}
 
-\item{formantStrength}{scale factor of formant amplitude}
+\item{formantDep}{scale factor of formant amplitude}
 
-\item{extraFormants_ampl}{the amplitude of additional formants added above the highest specified formant (only if temperature > 0)}
+\item{formantDep_stochastic}{the amplitude of additional formants added above the highest specified formant (only if temperature > 0)}
 
-\item{vocalTract_length}{used for calculating formant dispersion and formant transitions as the mouth opens and closes (specified in cm)}
+\item{vocalTract}{used for calculating formant dispersion and formant transitions as the mouth opens and closes (specified in cm)}
 
-\item{g0}{target frequency of subharmonics (lower than f0, adjusted dynamically so f0 is always a multiple of g0)}
+\item{subFreq}{target frequency of subharmonics (lower than f0, adjusted dynamically so f0 is always a multiple of subFreq)}
 
-\item{sideband_width_hz}{regulates how quickly the strength of subharmonics
-fades as they move away from harmonics in f0 stack. Low values produce
-narrow sidebands, high values produce uniformly strong subharmonics}
+\item{subDep}{the width of subharmonic band, Hz. Regulates how
+quickly the strength of subharmonics fades as they move away from harmonics
+in f0 stack. Low values produce narrow sidebands, high values produce
+uniformly strong subharmonics}
 
-\item{min_epoch_length_ms}{minimum duration of each epoch with unchanging
+\item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}
 
-\item{trill_dep}{amplitude modulation depth (0 to 1). 0: no change;1: amplitude modulation with amplitude range equal to the dynamic range of the sound}
+\item{trillDep}{amplitude modulation depth (0 to 1). 0: no change;1: amplitude modulation with amplitude range equal to the dynamic range of the sound}
 
-\item{trill_freq}{amplitude modulation frequency, Hz}
+\item{trillFreq}{amplitude modulation frequency, Hz}
 
-\item{breathingAnchors}{dataframe specifying the time (ms) and frequency (Hz) of breathing anchors}
+\item{noiseAnchors}{dataframe specifying the time (ms) and amplitude (dB) of anchors for generating the noise component}
 
-\item{exactFormants_unvoiced}{the same as \code{exactFormants}, but for the noise component instead of the harmonic component. If NA (default), the noise component will be filtered through the same formants as the harmonic component, approximating breathing noise [h]}
+\item{exactFormants_noise}{the same as \code{exactFormants}, but for the noise component instead of the harmonic component. If NA (default), the noise component will be filtered through the same formants as the harmonic component, approximating aspiration noise [h]}
 
-\item{rolloff_breathing}{rolloff of breathing noise, dB/octave. It is analogous to \code{rolloff_exp}, but while \code{rolloff_exp} applies to the harmonic component, \code{rolloff_breathing} applies to the noise component}
+\item{rolloff_noise}{rolloff of noise, dB/octave. It is analogous to \code{rolloff}, but while \code{rolloff} applies to the harmonic component, \code{rolloff_noise} applies to the noise component}
 
 \item{mouthAnchors}{dataframe specifying the time (ms) and value (0 to 1) of mouth-opening anchors}
 
@@ -124,7 +125,7 @@ subharmonics regime, in ms}
 
 \item{pitch_floor, pitch_ceiling}{lower/upper bounds of fundamental frequency}
 
-\item{pitchSamplingRate}{sampling frequency of the pitch contour only. Low values can decrease processing time (Hz). A rule of thumb is to set this to the same value as \code{pitch_ceiling}}
+\item{pitch_samplingRate}{sampling frequency of the pitch contour only. Low values can decrease processing time (Hz). A rule of thumb is to set this to the same value as \code{pitch_ceiling}}
 
 \item{plot}{if TRUE, plots a spectrogram}
 
@@ -145,7 +146,7 @@ Details: put some parts of the manual here.
 }
 \examples{
 sound = soundgen(play = TRUE)
-spec(sound, osc = TRUE)
+spec(sound, 16000, osc = TRUE)
 # unless temperature is 0, the sound is different every time
 for (i in 1:3) sound = soundgen(play = TRUE, temperature = .2)
 
@@ -154,22 +155,22 @@ sound = soundgen(exactFormants = 'uai', repeatBout = 3, play = TRUE)
 sound = soundgen(exactFormants = 'uai', nSyl = 3, play = TRUE)
 
 # Intonation contours per syllable and globally:
-sound = soundgen(nSyl = 5, sylDur_mean = 200, pauseDur_mean = 140,
+sound = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140,
   play = TRUE, pitchAnchors = data.frame(
     time = c(0, 0.65, 1), value = c(977, 1540, 826)),
   pitchAnchors_global = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 
 # Subharmonics in sidebands (noisy scream, chimpanzee-like)
-sound = soundgen (noiseAmount = 100, g0 = 75, sideband_width_hz = 130,
+sound = soundgen (pitchEffects_amount = 100, subFreq = 75, subDep = 130,
   pitchAnchors = data.frame(
     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
-  sylDur_mean = 800,
+  sylLen = 800,
   play = TRUE, plot = TRUE)
 
 # Jitter and mouth opening (bark, dog-like)
-sound = soundgen(repeatBout = 2, sylDur_mean = 160, pauseDur_mean = 100,
-  noiseAmount = 100, g0 = 100, sideband_width_hz = 60, jitterDep = 1,
+sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
+  pitchEffects_amount = 100, subFreq = 100, subDep = 60, jitterDep = 1,
   pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
   mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
-  vocalTract_length = 5, play = TRUE)
+  vocalTract = 5, play = TRUE)
 }
