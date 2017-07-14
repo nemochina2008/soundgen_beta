@@ -4,7 +4,7 @@
 \alias{playme}
 \title{Play audio}
 \usage{
-playme(sound, samplingRate = 44100)
+playme(sound, samplingRate = 16000)
 }
 \arguments{
 \item{sound}{a vector of numbers on any scale or a path to a .wav file}
@@ -18,5 +18,6 @@ functionality provided by tuneR package.
 \examples{
 \dontrun{playme('~/myfile.wav')}
 f0_Hz = 440
-playme(sin(2*pi*f0_Hz*(1:16000)/16000), samplingRate=16000)
+sound = sin(2 * pi * f0_Hz * (1:16000) / 16000)
+playme(sound, 16000)
 }

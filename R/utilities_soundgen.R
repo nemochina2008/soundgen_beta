@@ -1,12 +1,14 @@
 ### UTILITIES FOR SOUND GENERATION ###
 
-## TODO: check upsample (maybe we should not hold pitch constant in the last gc); non-linear cross-fade; fine-tune saveme for compatibility
+## TODO: fine-tune saveme for compatibility with html
 
 #' Report time
 #'
 #' Internal soudgen function.
 #'
-#' Based on the current iteration, total number of iterations, and time when the loop started running, prints estimated time left or a summary upon completion.
+#' Based on the current iteration, total number of iterations, and time when the
+#' loop started running, prints estimated time left or a summary upon
+#' completion.
 #' @param i current iteration
 #' @param nIter total number of iterations
 #' @param time_start time when the loop started running
@@ -82,8 +84,9 @@ convert_sec_to_hms = function(time_s) {
 #' @examples
 #' \dontrun{playme('~/myfile.wav')}
 #' f0_Hz = 440
-#' playme(sin(2*pi*f0_Hz*(1:16000)/16000), samplingRate=16000)
-playme = function(sound, samplingRate = 44100) {
+#' sound = sin(2 * pi * f0_Hz * (1:16000) / 16000)
+#' playme(sound, 16000)
+playme = function(sound, samplingRate = 16000) {
   # input: a vector of numbers on any scale or a path to a .wav file
   if (class(sound) == 'character') {
     soundWave = tuneR::readWave(sound)
@@ -97,6 +100,7 @@ playme = function(sound, samplingRate = 44100) {
     soundWave = tuneR::normalize(soundWave, unit = '32') # / 2
   }
   tuneR::play(soundWave, 'play')
+  # can't get rid of printed output! sink(), capture.output, invisible don't work!!!
 }
 
 
@@ -357,23 +361,30 @@ crossFade = function (ampl1,
 #'   of the input) and gc_upsampled (new indices of glottal cycles on an
 #'   upsampled scale)
 #' @examples
-#' soundgen:::upsample(c(100, 150, 130), samplingRate = 16000)
-upsample = function(pitch_per_gc, samplingRate = 44100) {
-  gcLength_points = round (samplingRate / pitch_per_gc)
-  gc_upsampled = c(1, cumsum(gcLength_points))
-  pitch_upsampled = vector()
+#' soundgen:::upsample(pitch_per_gc = c(100, 150, 130), samplingRate = 16000)
+upsample = function(pitch_per_gc, samplingRate = 16000) {
+  l = length(pitch_per_gc)
+  gcLength_points = round(samplingRate / pitch_per_gc)
+  c = cumsum(gcLength_points)
+  gc_upsampled = c(1, c)
 
-  # fill in the missing values in between points through linear interpolation
-  for (i in 1:(length(pitch_per_gc) - 1)) {
-    pitch_upsampled = c(
-      pitch_upsampled,
-      seq(pitch_per_gc[i], pitch_per_gc[i + 1], length.out = gcLength_points[i])
-    )
+  if (l == 1) {
+    pitch_upsampled = rep(pitch_per_gc, gcLength_points)
+  } else if (l == 2) {
+    pitch_upsampled = seq(pitch_per_gc[1], pitch_per_gc[2], length.out = sum(gcLength_points))
+  } else {
+    # find time stamps (in gc) corresponding to centers of each pitch value
+    t = rep(1, l)
+    t[1] = 1  # start at 1
+    t[l] = sum(gcLength_points)  # end at total number of gc
+    for (i in 2:(l - 1)) {
+      t[i] = c[i - 1] + round(gcLength_points[i] / 2)
+    }
+    pitch_upsampled = spline(x = t,
+                             y = pitch_per_gc,
+                             n = tail(c, 1))$y
   }
-  pitch_upsampled = c(pitch_upsampled,
-                      rep(tail(pitch_per_gc, 1), tail(gcLength_points, 1)))
   # plot(pitch_upsampled, type = 'l')
-
   return (list(pitch = pitch_upsampled, gc = gc_upsampled))
 }
 

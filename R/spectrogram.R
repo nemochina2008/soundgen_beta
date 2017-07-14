@@ -11,9 +11,10 @@
 #' @param samplingRate sampling rate of \code{x} (only needed if
 #'   \code{x} is a numeric vector, rather than a .wav file)
 #' @param windowLength length of fft window (ms)
-#' @param wn window type: gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop
-#' @param step fft step (ms)
-#' @param zp zero padding (points)
+#' @param wn window type: gaussian, hanning, hamming, bartlett, rectangular,
+#'   blackman, flattop
+#' @param step fft step, ms
+#' @param zp zero padding, points
 #' @param median_smoothing_freq,median_smoothing_time length of the window, in
 #'   data points (0 to +inf), for calculating a rolling median. Applies median
 #'   smoothing to spectrogram in frequency and time domains, respectively
@@ -304,9 +305,7 @@ ftwindow_modif = function (wl, wn = "gaussian") {
 gaussian.w = function(n) {
   if (n == 0)
     stop("'n' must be a positive integer")
-  w = (exp(-12 * (((
-    1:n
-  ) / n) - 0.5) ^ 2) - exp(-12)) / (1 - exp(-12))
+  w = (exp(-12 * (((1:n) / n) - 0.5) ^ 2) - exp(-12)) / (1 - exp(-12))
   # Boersma (PRAAT)
   return(w)
 }
@@ -315,9 +314,9 @@ gaussian.w = function(n) {
 #'
 #' Internal soundgen function.
 #'
-#' A subroutine of \code{\link{spec}} that saves windowed (and
-#' optionally zero-padded) frames, i.e. chunks of the sound file of the right
-#' size and spacing. Handy for further processing.
+#' A subroutine of \code{\link{spec}} that saves windowed (and optionally
+#' zero-padded) frames, i.e. chunks of the sound file of the right size and
+#' spacing. Handy for further processing.
 #' @param sound numeric vector
 #' @inheritParams spec
 #' @param windowLength_points length of fft window (points)

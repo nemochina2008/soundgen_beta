@@ -45,6 +45,9 @@ morphDF = function(a,
     return (rep(list(a), nHybrids))
   }
 
+  if (is.list(a)) a = as.data.frame(a)
+  if (is.list(b)) b = as.data.frame(b)
+
   mymax_x = max(max(a[, 1]), max(b[, 1]))
   mymin_x = min(min(a[, 1]), min(b[, 1]))
   mymax_y = max(max(a[, 2]), max(b[, 2]))
@@ -183,6 +186,8 @@ morphDF = function(a,
 #'   (different numbers of rows are ok)
 #' @param nHybrids length of morphing sequence
 morphFormants = function(f1, f2, nHybrids = 5) {
+  if (is.list(f1)) f1 = as.data.frame(f1)
+  if (is.list(f2)) f2 = as.data.frame(f2)
   # for compatibility with morphDF(), make sure we have at least two anchors
   if (nrow(f1) == 1) {
     f1 = rbind(f1, f1)

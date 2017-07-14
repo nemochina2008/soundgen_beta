@@ -42,11 +42,12 @@ are not analyzed (assumed to be just noise)}
 
 \item{windowLength}{length of fft window (ms)}
 
-\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
+\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
+blackman, flattop}
 
-\item{step}{fft step (ms)}
+\item{step}{fft step, ms}
 
-\item{zp}{zero padding (points)}
+\item{zp}{zero padding, points}
 
 \item{zpCep}{zero-padding of the spectrum used for cepstral pitch detection
 (points). Improves the precision of cepstral pitch detection quite

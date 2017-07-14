@@ -19,35 +19,34 @@ windowLength_points is the size of window for Fourier transform}
 \item{nc}{the number of time steps for Fourier transform}
 
 \item{exactFormants}{either a character string like "aaui" referring to
-default presets for speaker "M1" or a list of formant frequencies,
-amplitude, and bandwidth (see ex. below). exactFormants=NA defaults to
+default presets for speaker "M1" or a list of formant times, frequencies,
+amplitudes, and bandwidths (see ex. below). exactFormants = NA defaults to
 schwa. Time stamps for exactFormants and mouthOpening can be specified in
-ms, percent of duration, or whatever - the scale doesn't matter, since
-duration is determined by length(ampl). See details below.}
+ms or an any other arbitarary scale, since duration is determined by
+length(ampl). See \code{\link{getSpectralEnvelope}} for more details}
 
-\item{formantDep}{scale factor of formant amplitude}
+\item{formantDep}{scale factor of formant amplitude (1 = no change relative
+to amplitudes in \code{exactFormants})}
 
-\item{rolloff_lipRad}{adds this many dB per octave (high-frequency boost) when
-the mouth is open}
+\item{rolloff_lipRad}{the effect of lip radiation on source spectrum, dB/oct
+(the default of +6 dB/oct produces a high-frequency boost when the mouth is
+open)}
 
-\item{mouthAnchors}{specify when the mouth is open. Example: mouthAnchors =
-data.frame('time' = seq(0, 1000, length.out = 5), 'value'=c(0, .2, 1, .2,
-0))}
+\item{mouthAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
+mouth-opening anchors}
 
-\item{mouthOpening_threshold}{count the mouth as open when its opening degree
-is >threshold}
+\item{mouthOpening_threshold}{the mouth is considered to be open when its
+opening is greater than \code{mouthOpening_threshold}. Defaults to 0}
 
 \item{amplBoost_openMouth_dB}{amplify the voice when the mouth is open by
 \code{amplBoost_openMouth_dB} dB}
 
-\item{vocalTract}{used for calculating formant dispersion and formant
-transitions as the mouth opens and closes (specified in cm)}
+\item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
+dispersion (for adding extra formants) and formant transitions as the mouth
+opens and closes}
 
-\item{temperature}{regulates the amount of stochasticity in the algorithm. If
-temperature == 0, the spectrum is exactly the same every time
-\code{getSpectralEnvelope} is called with the same pars. If temperature >
-0, input parameters are "wiggled" and extra formants are added above the
-highest specified formant}
+\item{temperature}{hyperparameter for regulating the amount of stochasticity
+in sound generation}
 
 \item{extraFormants_stochastic}{the amplitude of additional formants added above
 the highest specified formant (only if temperature > 0)}
@@ -59,7 +58,7 @@ sets of formant values than the number of fft steps.
 \code{smoothLinear_factor} = 0: close to default spline; >3: approaches
 linear extrapolation}
 
-\item{samplingRate}{sampling rate (Hz)}
+\item{samplingRate}{sampling frequency, Hz}
 
 \item{plot}{if TRUE, produces a plot of the spectral envelope}
 

@@ -4,7 +4,7 @@
 \alias{upsample}
 \title{Upsample pitch contour}
 \usage{
-upsample(pitch_per_gc, samplingRate = 44100)
+upsample(pitch_per_gc, samplingRate = 16000)
 }
 \arguments{
 \item{pitch_per_gc}{a vector of fundamental frequencies per glottal cycle}
@@ -24,5 +24,5 @@ Upsamples a pitch contour to samplingRate through linear interpolation
 between successive glottal cycles.
 }
 \examples{
-soundgen:::upsample(c(100, 150, 130), samplingRate = 16000)
+soundgen:::upsample(pitch_per_gc = c(100, 150, 130), samplingRate = 16000)
 }

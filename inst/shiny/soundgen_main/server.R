@@ -70,7 +70,7 @@ server = function(input, output, session) {
     } else {
       # a preset from the library
       preset_text = presets[[input$speaker]] [[input$callType]]
-      preset_text = substr(preset_text, 13, nchar(preset_text))  # remove 'soundgen('
+      preset_text = substr(preset_text, 9, nchar(preset_text))  # remove 'soundgen('
       preset_text = paste0('list', preset_text)  # start with 'list('
       preset = try(eval(parse(text = preset_text)), silent = TRUE)
     }
@@ -907,7 +907,7 @@ server = function(input, output, session) {
 
   observeEvent(input$import_preset, {
     # replace "soundgen" with "list" and parse
-    new_preset_text = substr(input$user_preset, 13, nchar(input$user_preset))
+    new_preset_text = substr(input$user_preset, 9, nchar(input$user_preset))
     new_preset_text = paste0('list', new_preset_text)
     new_preset_list = try(eval(parse(text = new_preset_text)), silent = TRUE)
 

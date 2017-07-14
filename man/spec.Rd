@@ -22,11 +22,12 @@ samplingRate}
 
 \item{windowLength}{length of fft window (ms)}
 
-\item{step}{fft step (ms)}
+\item{step}{fft step, ms}
 
-\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular, blackman, flattop}
+\item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
+blackman, flattop}
 
-\item{zp}{zero padding (points)}
+\item{zp}{zero padding, points}
 
 \item{median_smoothing_freq, median_smoothing_time}{length of the window, in
 data points (0 to +inf), for calculating a rolling median. Applies median

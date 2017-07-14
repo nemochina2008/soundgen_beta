@@ -6,7 +6,7 @@
 \usage{
 generateNoise(len, noiseAnchors = data.frame(time = c(0, 300), value =
   c(throwaway_dB, throwaway_dB)), rolloff_noise = -6, attackLen = 10,
-  windowLength_points = 1024, samplingRate = 44100, overlap = 75,
+  windowLength_points = 1024, samplingRate = 16000, overlap = 75,
   filter_noise = NA)
 }
 \arguments{
@@ -20,17 +20,18 @@ breathing = 500 - (-100) = 600 ms). noiseAnchors$value: the amount of
 aspiration noise at the given time anchors (to be smoothed). throwaway_dB =
 no breathing, 0 = as strong as the voiced (harmonic) part}
 
-\item{rolloff_noise}{desired spectral slope of white noise (exponential
-decay analogous to \code{rolloff} in \code{\link{getRolloff}})}
+\item{rolloff_noise}{rolloff of noise, dB/octave. It is analogous to
+\code{rolloff}, but while \code{rolloff} applies to the harmonic component,
+\code{rolloff_noise} applies to the noise component}
 
-\item{attackLen}{duration of fade-in and fade-out at the beginning and end of
-output, ms}
+\item{attackLen}{duration of fade-in / fade-out at each end of syllables and
+noise (ms)}
 
-\item{windowLength_points}{fft window length, points}
+\item{windowLength_points}{Fourier window length, points}
 
-\item{samplingRate}{sampling frequency (Hz)}
+\item{samplingRate}{sampling frequency, Hz}
 
-\item{overlap}{overlap of fft windows}
+\item{overlap}{Fourier window overlap, \%}
 
 \item{filter_noise}{(optional): in addition to using rolloff_noise,
 we can provide the exact filter - a vector of length windowLength_points/2
@@ -45,10 +46,9 @@ Generates white noise of length \code{len} and with spectrum defined by
 exponential decay \code{rolloff_noise} and/or a specified filter
 \code{filter_noise}. Algorithm: paints a spectrum with desired
 characteristics, sets phase to zero, and generates a time sequence via
-inverse FFT. Soundgen generates aspiration noise (breathing) using this
-function. Noise can then be used as an additional source to be added to the
-glottal source AFTER the glottal source has been formant-filtered, or BEFORE
-formant-filtering for glottal breathing noise.
+inverse FFT. Noise can then be used as an additional source to be added to
+the glottal source AFTER the glottal source has been formant-filtered, or
+BEFORE formant-filtering for glottal breathing noise.
 }
 \examples{
 # 1 s of white noise

@@ -29,26 +29,26 @@
 #' @param voiced,contourLabel graphical pars for plotting breathing contours
 #'   (see examples below)
 #' @param main,xlim,ylim plotting options
-#' @param ... other plotting options
+#' @param ... other plotting options passed on to \code{plot()}
 #' @export
-#' @return Numeric vector.
+#' @return Returns a numeric vector.
 #' @examples
-#' a = getSmoothContour (anchors = data.frame(
+#' a = getSmoothContour(anchors = data.frame(
 #'   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
 #'   voiced = 200, value_floor = 0, plot = TRUE, main = '',
 #'   samplingRate = 16000) # breathing
 #'
-#' a = getSmoothContour (anchors = data.frame(
+#' a = getSmoothContour(anchors = data.frame(
 #'   time = c(0, .1), value = c(350, 800)),
 #'   len = 5500, thisIsPitch = TRUE, plot = TRUE,
 #'   samplingRate = 3500) # pitch
 #'
 #' # a single anchor gives constant pitch
-#' a = getSmoothContour (anchors = data.frame(time = 0, value = 800),
+#' a = getSmoothContour(anchors = data.frame(time = 0, value = 800),
 #'   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 #'
 #' # two anchors give loglinear pitch change
-#' a = getSmoothContour (anchors = data.frame(
+#' a = getSmoothContour(anchors = data.frame(
 #'   time = c(0, 1), value = c(220, 440)),
 #'   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)),

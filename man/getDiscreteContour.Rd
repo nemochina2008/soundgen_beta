@@ -30,7 +30,7 @@ only a few anchors}
 
 \item{plot}{(boolean) produce a plot?}
 
-\item{...}{other plotting options}
+\item{...}{other plotting options passed on to \code{plot()}}
 }
 \value{
 Numeric vector.

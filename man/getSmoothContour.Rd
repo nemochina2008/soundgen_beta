@@ -39,10 +39,10 @@ only a few anchors}
 \item{voiced, contourLabel}{graphical pars for plotting breathing contours
 (see examples below)}
 
-\item{...}{other plotting options}
+\item{...}{other plotting options passed on to \code{plot()}}
 }
 \value{
-Numeric vector.
+Returns a numeric vector.
 }
 \description{
 Internal soundgen function.
@@ -56,22 +56,22 @@ with musical notes rather than frequencies in Hz). Pitch plots have two Y
 axes: one showing Hz and the other showing musical notation.
 }
 \examples{
-a = getSmoothContour (anchors = data.frame(
+a = getSmoothContour(anchors = data.frame(
   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
   voiced = 200, value_floor = 0, plot = TRUE, main = '',
   samplingRate = 16000) # breathing
 
-a = getSmoothContour (anchors = data.frame(
+a = getSmoothContour(anchors = data.frame(
   time = c(0, .1), value = c(350, 800)),
   len = 5500, thisIsPitch = TRUE, plot = TRUE,
   samplingRate = 3500) # pitch
 
 # a single anchor gives constant pitch
-a = getSmoothContour (anchors = data.frame(time = 0, value = 800),
+a = getSmoothContour(anchors = data.frame(time = 0, value = 800),
   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 
 # two anchors give loglinear pitch change
-a = getSmoothContour (anchors = data.frame(
+a = getSmoothContour(anchors = data.frame(
   time = c(0, 1), value = c(220, 440)),
   len = 500, thisIsPitch = TRUE, plot = TRUE, samplingRate = 500)
 }

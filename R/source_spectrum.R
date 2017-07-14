@@ -8,32 +8,18 @@
 #' fundamental frequency (f0). \code{\link{getRolloff}} provides flexible
 #' control over this rolloff function, going beyond simple exponential decay
 #' (\code{rolloff}). Use quadratic terms to modify the behavior of a few lower
-#' harmonics, \code{rolloffAdjust_per_octave} to adjust the rate of decay per octave, and
-#' \code{rolloffAdjust_per_kHz} for rolloff correction depending on f0. Plot the
-#' output with different parameter values and see examples below and the
-#' vignette to get a feel for how to use \code{\link{getRolloff}} effectively.
+#' harmonics, \code{rolloffAdjust_per_octave} to adjust the rate of decay per
+#' octave, and \code{rolloffAdjust_per_kHz} for rolloff correction depending on
+#' f0. Plot the output with different parameter values and see examples below
+#' and the vignette to get a feel for how to use \code{\link{getRolloff}}
+#' effectively.
 #' @param pitch_per_gc a vector of f0 per glottal cycle, Hz
 #' @param nHarmonics maximum number of harmonics to generate (very weak
 #'   harmonics with amplitude < \code{throwaway_dB} will be discarded)
-#' @param rolloff basic rolloff at a constant rate of \code{rolloff}
-#'   db/octave (exponential decay)
-#' @param rolloffAdjust_per_octave basic rolloff changes from lower to upper harmonics
-#'   (regardless of f0) by \code{rolloffAdjust_per_octave} dB/oct. For example, we can
-#'   get steeper rolloff in the upper part of the spectrum
-#' @param rolloffAdjust_quadratic an optional quadratic term affecting only the first
-#'   \code{rolloffAdjust_quadratic_nHarm} harmonics. The middle harmonic of the first
-#'   \code{rolloffAdjust_quadratic_nHarm} harmonics is amplified or dampened by
-#'   \code{rolloffAdjust_quadratic} dB relative to the basic exponential decay.
-#' @param rolloffAdjust_quadratic_nHarm the number of harmonics affected by
-#'   \code{rolloffAdjust_quadratic}
-#' @param quadratic_ceiling an alternative way of specifying which harmonics are
-#'   affected by \code{rolloffAdjust_quadratic}: instead of \code{rolloffAdjust_quadratic_nHarm}, we
-#'   can specify \code{quadratic_ceiling} to apply a parabolic boost to all
-#'   harmonics up to this frequency (ie \code{rolloffAdjust_quadratic_nHarm} will vary
-#'   depending on f0). Defaults to NULL
-#' @param rolloffAdjust_per_kHz rolloff changes linearly with f0 by
-#'   \code{rolloffAdjust_per_kHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
-#'   steeper basic rolloff as f0 goes up by 1000 Hz
+#' @inheritParams soundgen
+#' @param rolloff_quadratic_ceiling quadratic adjustment is applied only up to
+#'   \code{rolloff_quadratic_ceiling}, Hz. If not NULL, it overrides
+#'   \code{rolloffAdjust_quadratic_nHarm}
 #' @param baseline_Hz The "neutral" frequency, at which no adjustment of rolloff
 #'   takes place regardless of \code{rolloffAdjust_per_kHz}
 #' @param throwaway_dB discard harmonics that are weaker than this number (in
@@ -82,7 +68,7 @@
 #'   rolloffAdjust_quadratic_nHarm = 7, samplingRate = 16000, plot = TRUE)
 #' # only harmonics below 2000 Hz are affected
 #' rolloff = getRolloff(pitch_per_gc = c(150, 600),
-#'   rolloffAdjust_quadratic = -20, quadratic_ceiling = 2000, samplingRate = 16000,
+#'   rolloffAdjust_quadratic = -20, rolloff_quadratic_ceiling = 2000, samplingRate = 16000,
 #'   plot = TRUE)
 getRolloff = function(pitch_per_gc = c(440),
                       nHarmonics = 100,
@@ -90,7 +76,7 @@ getRolloff = function(pitch_per_gc = c(440),
                       rolloffAdjust_per_octave = -2,
                       rolloffAdjust_quadratic = 0,
                       rolloffAdjust_quadratic_nHarm = 2,
-                      quadratic_ceiling = NULL,
+                      rolloff_quadratic_ceiling = NULL,
                       rolloffAdjust_per_kHz = -6,
                       baseline_Hz = 200,
                       throwaway_dB = -120,
@@ -118,8 +104,8 @@ getRolloff = function(pitch_per_gc = c(440),
 
   ## QUADRATIC term affecting the first rolloffAdjust_quadratic_nHarm harmonics only
   if (rolloffAdjust_quadratic != 0) {
-    if (!is.null(quadratic_ceiling)) {
-      rolloffAdjust_quadratic_nHarm = round(quadratic_ceiling / pitch_per_gc)  # vector of
+    if (!is.null(rolloff_quadratic_ceiling)) {
+      rolloffAdjust_quadratic_nHarm = round(rolloff_quadratic_ceiling / pitch_per_gc)  # vector of
       # length pitch_per_gc specifying the number of harmonics whose amplitude
       # is to be adjusted
     } else {
@@ -217,29 +203,11 @@ getRolloff = function(pitch_per_gc = c(440),
 #' @param nr the number of frequency bins = windowLength_points/2, where
 #'   windowLength_points is the size of window for Fourier transform
 #' @param nc the number of time steps for Fourier transform
-#' @param exactFormants either a character string like "aaui" referring to
-#'   default presets for speaker "M1" or a list of formant frequencies,
-#'   amplitude, and bandwidth (see ex. below). exactFormants=NA defaults to
-#'   schwa. Time stamps for exactFormants and mouthOpening can be specified in
-#'   ms, percent of duration, or whatever - the scale doesn't matter, since
-#'   duration is determined by length(ampl). See details below.
-#' @param formantDep scale factor of formant amplitude
-#' @param rolloff_lipRad adds this many dB per octave (high-frequency boost) when
-#'   the mouth is open
-#' @param mouthAnchors specify when the mouth is open. Example: mouthAnchors =
-#'   data.frame('time' = seq(0, 1000, length.out = 5), 'value'=c(0, .2, 1, .2,
-#'   0))
-#' @param mouthOpening_threshold count the mouth as open when its opening degree
-#'   is >threshold
+#' @inheritParams soundgen
 #' @param amplBoost_openMouth_dB amplify the voice when the mouth is open by
 #'   \code{amplBoost_openMouth_dB} dB
-#' @param vocalTract used for calculating formant dispersion and formant
-#'   transitions as the mouth opens and closes (specified in cm)
-#' @param temperature regulates the amount of stochasticity in the algorithm. If
-#'   temperature == 0, the spectrum is exactly the same every time
-#'   \code{getSpectralEnvelope} is called with the same pars. If temperature >
-#'   0, input parameters are "wiggled" and extra formants are added above the
-#'   highest specified formant
+#' @param mouthOpening_threshold the mouth is considered to be open when its
+#'   opening is greater than \code{mouthOpening_threshold}. Defaults to 0
 #' @param extraFormants_stochastic the amplitude of additional formants added above
 #'   the highest specified formant (only if temperature > 0)
 #' @param smoothLinear_factor regulates smoothing of formant anchors (0 to +Inf)
@@ -248,7 +216,6 @@ getRolloff = function(pitch_per_gc = c(440),
 #'   sets of formant values than the number of fft steps.
 #'   \code{smoothLinear_factor} = 0: close to default spline; >3: approaches
 #'   linear extrapolation
-#' @param samplingRate sampling rate (Hz)
 #' @param plot if TRUE, produces a plot of the spectral envelope
 #' @param dur_ms duration of the sound, ms (for plotting purposes only)
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),

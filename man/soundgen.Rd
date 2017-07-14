@@ -28,110 +28,154 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
 \arguments{
 \item{repeatBout}{the number of times the bout should be repeated}
 
-\item{nSyl}{the number of syllables in the bout. Intonation, amplitude, and formants contours span multiple syllables, but not multiple bouts (see Details)}
+\item{nSyl}{the number of syllables in the bout. Intonation, amplitude, and
+formants contours span multiple syllables, but not multiple bouts (see
+Details)}
 
 \item{sylLen}{average duration of each syllable, ms}
 
 \item{pauseLen}{average duration of pauses between syllables, ms}
 
-\item{pitchAnchors}{dataframe specifying the time (ms) and value (Hz) of pitch anchors. These anchors are used to create a smooth contour of fundamental frequency f0 (pitch) within one syllable (see Details)}
+\item{pitchAnchors}{dataframe specifying the time (ms) and value (Hz) of
+pitch anchors. These anchors are used to create a smooth contour of
+fundamental frequency f0 (pitch) within one syllable (see Examples)}
 
-\item{pitchAnchors_global}{unlike \code{pitchAnchors}, this dataframe is used to create a smooth contour of average f0 across multiple syllables}
+\item{pitchAnchors_global}{unlike \code{pitchAnchors}, this dataframe is used
+to create a smooth contour of average f0 across multiple syllables}
 
-\item{temperature}{hyperparameter for regulating the amount of stochasticity in sound generation (see Details)}
+\item{temperature}{hyperparameter for regulating the amount of stochasticity
+in sound generation}
 
-\item{maleFemale}{hyperparameter for shifting f0 contour, formants, and vocalTract to make the speaker appear more male (-1...0) or more female (0...+1).}
+\item{maleFemale}{hyperparameter for shifting f0 contour, formants, and
+vocalTract to make the speaker appear more male (-1...0) or more female
+(0...+1).}
 
-\item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality from creaky (-1) to breathy (+1)}
+\item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality
+from creaky (-1) to breathy (+1)}
 
-\item{pitchEffects_amount}{hyperparameter for regulating the (approximate) proportion of sound with different noise regimes (none / subharmonics only / subharmonics and jitter), 0 to 100\%. 0\% = no noise; 100\% = the entire sound has jitter + subharmonics. Ignored if temperature=0}
+\item{pitchEffects_amount}{hyperparameter for regulating the (approximate)
+proportion of sound with different noise regimes (none / subharmonics only
+/ subharmonics and jitter), 0 to 100\%. 0\% = no noise; 100\% = the entire
+sound has jitter + subharmonics. Ignored if temperature = 0}
 
-\item{pitchEffects_intensity}{hyperparameter for regulating the intensity of subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
+\item{pitchEffects_intensity}{hyperparameter for regulating the intensity of
+subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as
+specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
 
-\item{jitterLen}{duration of pitch jump (ms). Use a low value for harsh noise, a high value for irregular vibrato or shaky voice}
+\item{jitterLen}{duration of stable periods between pitch jumps, ms. Use a
+low value for harsh noise, a high value for irregular vibrato or shaky
+voice}
 
-\item{jitterDep}{cycle-to-cycle random pitch variation (semitones)}
+\item{jitterDep}{cycle-to-cycle random pitch variation, semitones}
 
-\item{vibratoFreq}{the rate of regular pitch modulation, or vibrato (Hz)}
+\item{vibratoFreq}{the rate of regular pitch modulation, or vibrato, Hz}
 
 \item{vibratoDep}{the depth of vibrato, semitones}
 
-\item{shimmerDep}{random variation in amplitude between individual glottal cycles (0 to 100\% of original amplitude of each cycle)}
+\item{shimmerDep}{random variation in amplitude between individual glottal
+cycles (0 to 100\% of original amplitude of each cycle)}
 
-\item{attackLen}{duration of fade-in/ fade-out at each end of syllable and noise (ms)}
+\item{attackLen}{duration of fade-in / fade-out at each end of syllables and
+noise (ms)}
 
-\item{rolloff}{basic rolloff at a constant rate of \code{rolloff}
-db/octave (exponential decay). See \code{\link{getRolloff}} for more details}
+\item{rolloff}{basic rolloff at a constant rate of \code{rolloff} db/octave
+(exponential decay). See \code{\link{getRolloff}} for more details}
 
-\item{rolloffAdjust_per_octave}{basic rolloff changes from lower to upper harmonics
-(regardless of f0) by \code{rolloffAdjust_per_octave} dB/oct. For example, we can
-get steeper rolloff in the upper part of the spectrum}
+\item{rolloffAdjust_per_octave}{basic rolloff changes from lower to upper
+harmonics (regardless of f0) by \code{rolloffAdjust_per_octave} dB/oct. For
+example, we can get steeper rolloff in the upper part of the spectrum}
 
 \item{rolloffAdjust_per_kHz}{rolloff changes linearly with f0 by
 \code{rolloffAdjust_per_kHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
 steeper basic rolloff as f0 goes up by 1000 Hz}
 
-\item{rolloffAdjust_quadratic}{an optional quadratic term affecting only the first
-\code{rolloffAdjust_quadratic_nHarm} harmonics. The middle harmonic of the first
-\code{rolloffAdjust_quadratic_nHarm} harmonics is amplified or dampened by
-\code{rolloffAdjust_quadratic} dB relative to the basic exponential decay.}
+\item{rolloffAdjust_quadratic}{an optional quadratic term affecting only the
+first \code{rolloffAdjust_quadratic_nHarm} harmonics. The middle harmonic
+of the first \code{rolloffAdjust_quadratic_nHarm} harmonics is amplified or
+dampened by \code{rolloffAdjust_quadratic} dB relative to the basic
+exponential decay.}
 
 \item{rolloffAdjust_quadratic_nHarm}{the number of harmonics affected by
 \code{rolloffAdjust_quadratic}}
 
-\item{rolloff_lipRad}{the effect of lip radiation on source spectrum, dB/oct (the default of +6 dB/oct produces a high-frequency boost when the mouth is open)}
+\item{rolloff_lipRad}{the effect of lip radiation on source spectrum, dB/oct
+(the default of +6 dB/oct produces a high-frequency boost when the mouth is
+open)}
 
-\item{exactFormants}{either a character string like "aaui" referring to default presets for speaker "M1" or a list of formant frequencies, amplitude, and bandwidth (see ex. below). exactFormants=NA defaults to schwa. Time stamps for exactFormants and mouthOpening can be specified in ms, percent of duration, or whatever - the scale doesn't matter, since duration is determined by length(ampl). See \code{\link{getSpectralEnvelope}} for more details}
+\item{exactFormants}{either a character string like "aaui" referring to
+default presets for speaker "M1" or a list of formant times, frequencies,
+amplitudes, and bandwidths (see ex. below). exactFormants = NA defaults to
+schwa. Time stamps for exactFormants and mouthOpening can be specified in
+ms or an any other arbitarary scale, since duration is determined by
+length(ampl). See \code{\link{getSpectralEnvelope}} for more details}
 
-\item{formantDep}{scale factor of formant amplitude}
+\item{formantDep}{scale factor of formant amplitude (1 = no change relative
+to amplitudes in \code{exactFormants})}
 
-\item{formantDep_stochastic}{the amplitude of additional formants added above the highest specified formant (only if temperature > 0)}
+\item{formantDep_stochastic}{the amplitude of additional formants added above
+the highest specified formant, dB (only if temperature > 0)}
 
-\item{vocalTract}{used for calculating formant dispersion and formant transitions as the mouth opens and closes (specified in cm)}
+\item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
+dispersion (for adding extra formants) and formant transitions as the mouth
+opens and closes}
 
-\item{subFreq}{target frequency of subharmonics (lower than f0, adjusted dynamically so f0 is always a multiple of subFreq)}
+\item{subFreq}{target frequency of subharmonics, Hz (lower than f0, adjusted
+dynamically so f0 is always a multiple of subFreq)}
 
-\item{subDep}{the width of subharmonic band, Hz. Regulates how
-quickly the strength of subharmonics fades as they move away from harmonics
-in f0 stack. Low values produce narrow sidebands, high values produce
-uniformly strong subharmonics}
+\item{subDep}{the width of subharmonic band, Hz. Regulates how quickly the
+strength of subharmonics fades as they move away from harmonics in f0
+stack. Low values produce narrow sidebands, high values produce uniformly
+strong subharmonics}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}
 
-\item{trillDep}{amplitude modulation depth (0 to 1). 0: no change;1: amplitude modulation with amplitude range equal to the dynamic range of the sound}
+\item{trillDep}{amplitude modulation depth. 0: no change; 1: amplitude
+modulation with amplitude range equal to the dynamic range of the sound}
 
 \item{trillFreq}{amplitude modulation frequency, Hz}
 
-\item{noiseAnchors}{dataframe specifying the time (ms) and amplitude (dB) of anchors for generating the noise component}
+\item{noiseAnchors}{dataframe specifying the time (ms) and amplitude (dB) of
+anchors for generating the noise component such as aspiration, hissing, etc}
 
-\item{exactFormants_noise}{the same as \code{exactFormants}, but for the noise component instead of the harmonic component. If NA (default), the noise component will be filtered through the same formants as the harmonic component, approximating aspiration noise [h]}
+\item{exactFormants_noise}{the same as \code{exactFormants}, but for the
+noise component instead of the harmonic component. If NA (default), the
+noise component will be filtered through the same formants as the harmonic
+component, approximating aspiration noise [h]}
 
-\item{rolloff_noise}{rolloff of noise, dB/octave. It is analogous to \code{rolloff}, but while \code{rolloff} applies to the harmonic component, \code{rolloff_noise} applies to the noise component}
+\item{rolloff_noise}{rolloff of noise, dB/octave. It is analogous to
+\code{rolloff}, but while \code{rolloff} applies to the harmonic component,
+\code{rolloff_noise} applies to the noise component}
 
-\item{mouthAnchors}{dataframe specifying the time (ms) and value (0 to 1) of mouth-opening anchors}
+\item{mouthAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
+mouth-opening anchors}
 
-\item{amplAnchors}{dataframe specifying the time (ms) and value (0 to 1) of amplitude anchors}
+\item{amplAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
+amplitude anchors}
 
-\item{amplAnchors_global}{dataframe specifying the time (ms) and value (0 to 1) of global amplitude anchors, i.e. spanning multiple syllables}
+\item{amplAnchors_global}{dataframe specifying the time (ms) and value (0 to
+1) of global amplitude anchors, i.e. spanning multiple syllables}
 
-\item{samplingRate}{sampling frequency (Hz)}
+\item{samplingRate}{sampling frequency, Hz}
 
-\item{windowLength_points}{Fourier window length (points)}
+\item{windowLength_points}{Fourier window length, points}
 
-\item{overlap}{Fourier window overlap (points)}
+\item{overlap}{Fourier window overlap, \%}
 
-\item{addSilence}{silence before and after the bout (ms)}
+\item{addSilence}{silence before and after the bout, ms}
 
-\item{pitch_floor, pitch_ceiling}{lower/upper bounds of fundamental frequency}
+\item{pitch_floor, pitch_ceiling}{lower & upper bounds of f0}
 
-\item{pitch_samplingRate}{sampling frequency of the pitch contour only. Low values can decrease processing time (Hz). A rule of thumb is to set this to the same value as \code{pitch_ceiling}}
+\item{pitch_samplingRate}{sampling frequency of the pitch contour only, Hz. Low
+values can decrease processing time. A rule of thumb is to set this to
+the same value as \code{pitch_ceiling}}
 
 \item{plot}{if TRUE, plots a spectrogram}
 
 \item{play}{if TRUE, plays the synthesized sound}
 
-\item{savePath}{full path for saving the output, e.g. '~/Downloads/temp.wav'. If NA (default), doesn't save anything}
+\item{savePath}{full path for saving the output, e.g. '~/Downloads/temp.wav'.
+If NA (default), doesn't save anything}
 
 \item{...}{other plotting parameters passed on to \code{\link{spec}}}
 }
@@ -139,7 +183,14 @@ subharmonics regime, in ms}
 Returns the synthesized waveform as a numeric vector.
 }
 \description{
-Generates a bout of one or more syllables with pauses between them. Two basic components are synthesized: the harmonic component (the sum of sine waves with frequencies that are multiples of the fundamental frequency) and the noise component. Both components can be filtered with independently specified formants. Intonation and amplitude contours can be applied both within each syllable and across multiple syllables. Suggested application: synthesis of animal or human non-linguistic vocalizations. For more information, see \url{http://cogsci.se/soundgen.html}
+Generates a bout of one or more syllables with pauses between them. Two basic
+components are synthesized: the harmonic component (the sum of sine waves
+with frequencies that are multiples of the fundamental frequency) and the
+noise component. Both components can be filtered with independently specified
+formants. Intonation and amplitude contours can be applied both within each
+syllable and across multiple syllables. Suggested application: synthesis of
+animal or human non-linguistic vocalizations. For more information, see
+\url{http://cogsci.se/soundgen.html}
 }
 \details{
 Details: put some parts of the manual here.

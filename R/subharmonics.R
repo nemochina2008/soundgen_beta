@@ -91,17 +91,9 @@ getVocalFry_per_epoch = function(rolloff,
 #'
 #' Adds subharmonics to the main (f0) harmonic stack, forming sidebands.
 #' @inheritParams getVocalFry_per_epoch
-#' @param subFreq (numeric vector of length 1 or length(pitch_per_gc)): target
-#'   frequency of subharmonics (lower than f0, adjusted dynamically so f0 is
-#'   always a multiple of subFreq)
-#' @param subDep (vector of the same length as the number of gc in
-#'   the current epoch): regulates how quickly the strength of subharmonics
-#'   fades as they move away from harmonics in f0 stack. Low values produce
-#'   narrow sidebands, high values produce uniformly strong subharmonics
+#' @inheritParams soundgen
 #' @param throwaway_dB discard harmonics that are weaker than this number (in
 #'   dB) to save computational resources
-#' @param shortestEpoch minimum duration of each epoch with unchanging
-#'   subharmonics regime, in ms
 #' @return Returns a list consisting of a list of rolloff matrices (one matrix
 #'   per epoch) and a dataframe of epochs.
 #' @examples

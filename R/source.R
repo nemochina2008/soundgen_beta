@@ -8,10 +8,9 @@
 #' exponential decay \code{rolloff_noise} and/or a specified filter
 #' \code{filter_noise}. Algorithm: paints a spectrum with desired
 #' characteristics, sets phase to zero, and generates a time sequence via
-#' inverse FFT. Soundgen generates aspiration noise (breathing) using this
-#' function. Noise can then be used as an additional source to be added to the
-#' glottal source AFTER the glottal source has been formant-filtered, or BEFORE
-#' formant-filtering for glottal breathing noise.
+#' inverse FFT. Noise can then be used as an additional source to be added to
+#' the glottal source AFTER the glottal source has been formant-filtered, or
+#' BEFORE formant-filtering for glottal breathing noise.
 #' @param len length of output
 #' @param noiseAnchors a dataframe specifying the amplitude envelope of
 #'   output. $time: timing of aspiration noise, ms c(start,finish) relative to
@@ -20,17 +19,11 @@
 #'   breathing = 500 - (-100) = 600 ms). noiseAnchors$value: the amount of
 #'   aspiration noise at the given time anchors (to be smoothed). throwaway_dB =
 #'   no breathing, 0 = as strong as the voiced (harmonic) part
-#' @param rolloff_noise desired spectral slope of white noise (exponential
-#'   decay analogous to \code{rolloff} in \code{\link{getRolloff}})
-#' @param attackLen duration of fade-in and fade-out at the beginning and end of
-#'   output, ms
-#' @param windowLength_points fft window length, points
-#' @param overlap overlap of fft windows
+#' @inheritParams soundgen
 #' @param filter_noise (optional): in addition to using rolloff_noise,
 #'   we can provide the exact filter - a vector of length windowLength_points/2
 #'   or, if we want moving formants, a matrix with windowLength_points/2 rows
 #'   and an arbitrary number of columns
-#' @param samplingRate sampling frequency (Hz)
 #' @examples
 #' # 1 s of white noise
 #' samplingRate = 16000
@@ -67,7 +60,7 @@ generateNoise = function(len,
                          rolloff_noise = -6,
                          attackLen = 10,
                          windowLength_points = 1024,
-                         samplingRate = 44100,
+                         samplingRate = 16000,
                          overlap = 75,
                          filter_noise = NA) {
   # convert anchors to a smooth contour of breathing amplitudes
@@ -185,7 +178,7 @@ generateHarmonics = function(pitch,
                              amplAnchors = NA,
                              overlap = 75,
                              windowLength_points = 2048,
-                             samplingRate = 44100,
+                             samplingRate = 16000,
                              pitch_floor = 75,
                              pitch_ceiling = 3500,
                              pitch_samplingRate = 3500) {
