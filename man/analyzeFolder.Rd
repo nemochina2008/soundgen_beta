@@ -40,7 +40,7 @@ it will never be lower than this specified number.}
 \item{entropy_threshold}{frames with entropy above \code{entropy_threshold}
 are not analyzed (assumed to be just noise)}
 
-\item{windowLength}{length of fft window (ms)}
+\item{windowLength}{length of fft window, ms}
 
 \item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
 blackman, flattop}

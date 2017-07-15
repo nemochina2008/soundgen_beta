@@ -6,24 +6,26 @@
 \usage{
 soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135,
-  100)), pitchAnchors_global = NA, temperature = 0.025, maleFemale = 0,
-  creakyBreathy = 0, pitchEffects_amount = 0, pitchEffects_intensity = 50,
-  jitterLen = 1, jitterDep = 3, vibratoFreq = 5, vibratoDep = 0,
-  shimmerDep = 0, attackLen = 50, rolloff = -12,
-  rolloffAdjust_per_octave = -12, rolloffAdjust_per_kHz = -6,
-  rolloffAdjust_quadratic = 0, rolloffAdjust_quadratic_nHarm = 3,
-  rolloff_lipRad = 6, exactFormants = list(f1 = list(time = 0, freq = 860,
-  amp = 30, width = 120), f2 = list(time = 0, freq = 1280, amp = 40, width =
-  120), f3 = list(time = 0, freq = 2900, amp = 25, width = 200)),
-  formantDep = 1, formantDep_stochastic = 30, vocalTract = 15.5,
-  subFreq = 100, subDep = 100, shortestEpoch = 300, trillDep = 0,
-  trillFreq = 30, noiseAnchors = NA, exactFormants_noise = NA,
-  rolloff_noise = -14, mouthAnchors = data.frame(time = c(0, 1), value =
-  c(0.5, 0.5)), amplAnchors = NA, amplAnchors_global = NA,
-  samplingRate = 16000, windowLength_points = 2048, overlap = 75,
-  addSilence = 100, pitch_floor = 50, pitch_ceiling = 3500,
-  pitch_samplingRate = 3500, plot = FALSE, play = FALSE, savePath = NA,
-  ...)
+  100)), pitchAnchors_global = NA, temperature = 0.025,
+  tempEffects = list(formDrift = 0.3, formDisp = 0.2, pitchDriftDep = 0.5,
+  pitchDriftFreq = 0.125, pitchAnchorsDep = 0.05, noiseAnchorsDep = 0.1,
+  amplAnchorsDep = 0.1), maleFemale = 0, creakyBreathy = 0,
+  pitchEffects_amount = 0, pitchEffects_intensity = 50, jitterLen = 1,
+  jitterDep = 3, vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0,
+  attackLen = 50, rolloff = -12, rolloffAdjust_per_octave = -12,
+  rolloffAdjust_per_kHz = -6, rolloffAdjust_quadratic = 0,
+  rolloffAdjust_quadratic_nHarm = 3, rolloff_lipRad = 6,
+  exactFormants = list(f1 = list(time = 0, freq = 860, amp = 30, width = 120),
+  f2 = list(time = 0, freq = 1280, amp = 40, width = 120), f3 = list(time = 0,
+  freq = 2900, amp = 25, width = 200)), formantDep = 1,
+  formantDep_stochastic = 30, vocalTract = 15.5, subFreq = 100,
+  subDep = 100, shortestEpoch = 300, trillDep = 0, trillFreq = 30,
+  noiseAnchors = NA, exactFormants_noise = NA, rolloff_noise = -14,
+  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
+  amplAnchors = NA, amplAnchors_global = NA, samplingRate = 16000,
+  windowLength = 50, overlap = 75, addSilence = 100, pitch_floor = 50,
+  pitch_ceiling = 3500, pitch_samplingRate = 3500, throwaway_dB = -120,
+  plot = FALSE, play = FALSE, savePath = NA, ...)
 }
 \arguments{
 \item{repeatBout}{the number of times the bout should be repeated}
@@ -45,6 +47,16 @@ to create a smooth contour of average f0 across multiple syllables}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
+
+\item{tempEffects}{a list of scale factors regulating the effect of
+temperature on particular parameters. To change, specify just those pars
+that you want to modify, don't rewrite the whole list (defaults are
+hard-coded). \code{formDrift}: depth of random drift of formants;
+\code{formDisp}: irregularity of the dispersion of stochastic formants;
+\code{pitchDriftDep} amount of slow random drift of f0;
+\code{pitchDriftFreq}: frequency of slow random drift of f0;
+\code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random fluctuations
+of user-specified pitch / noise / amplitude anchors}
 
 \item{maleFemale}{hyperparameter for shifting f0 contour, formants, and
 vocalTract to make the speaker appear more male (-1...0) or more female
@@ -158,7 +170,7 @@ amplitude anchors}
 
 \item{samplingRate}{sampling frequency, Hz}
 
-\item{windowLength_points}{Fourier window length, points}
+\item{windowLength}{length of fft window, ms}
 
 \item{overlap}{Fourier window overlap, \%}
 
@@ -169,6 +181,9 @@ amplitude anchors}
 \item{pitch_samplingRate}{sampling frequency of the pitch contour only, Hz. Low
 values can decrease processing time. A rule of thumb is to set this to
 the same value as \code{pitch_ceiling}}
+
+\item{throwaway_dB}{discard harmonics and noise that are quieter than this
+number (in dB) to save computational resources}
 
 \item{plot}{if TRUE, plots a spectrogram}
 

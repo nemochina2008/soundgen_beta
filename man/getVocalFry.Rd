@@ -22,8 +22,8 @@ strength of subharmonics fades as they move away from harmonics in f0
 stack. Low values produce narrow sidebands, high values produce uniformly
 strong subharmonics}
 
-\item{throwaway_dB}{discard harmonics that are weaker than this number (in
-dB) to save computational resources}
+\item{throwaway_dB}{discard harmonics and noise that are quieter than this
+number (in dB) to save computational resources}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}

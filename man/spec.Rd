@@ -20,7 +20,7 @@ samplingRate}
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than a .wav file)}
 
-\item{windowLength}{length of fft window (ms)}
+\item{windowLength}{length of fft window, ms}
 
 \item{step}{fft step, ms}
 

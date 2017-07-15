@@ -62,6 +62,8 @@ ssm = function(x,
                kernel_sd = .2,
                win = 3,
                ...) {
+  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+
   ## import a sound
   if (class(x) == 'character') {
     sound = tuneR::readWave(x)

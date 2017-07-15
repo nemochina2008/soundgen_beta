@@ -32,7 +32,7 @@ server = function(input, output, session) {
   })
 
   durSyl_withBreathing = reactive({ # the duration of a single syllable with noise
-    ifelse(!sum(myPars$noiseAnchors$value > throwaway_dB) > 0,
+    ifelse(!sum(myPars$noiseAnchors$value > input$throwaway_dB) > 0,
            input$sylLen,
            min(0, myPars$noiseAnchors$time[1]) +
              max(input$sylLen,
@@ -110,7 +110,7 @@ server = function(input, output, session) {
                         value = as.character(call('print', preset$exactFormants)[2]))
         myPars$exactFormants = preset$exactFormants
       } else { # if both are NULL
-        updateTextInput(session, inputId = 'vowelString', value = defaultVowel)
+        updateTextInput(session, inputId = 'vowelString', value = 'a')
         updateVowels()
       }
 
@@ -559,8 +559,8 @@ server = function(input, output, session) {
     getSmoothContour (anchors = myPars$amplAnchors,
                       xaxs = "i",
                       xlim = c(0, input$sylLen),
-                      ylim = c(0, -throwaway_dB),
-                      value_floor = 0, value_ceiling = -throwaway_dB,
+                      ylim = c(0, -input$throwaway_dB),
+                      value_floor = 0, value_ceiling = -input$throwaway_dB,
                       len = input$sylLen / 1000 * 1000,
                       samplingRate = 1000, plot = TRUE)
     # xaxs = "i" to enforce exact axis limits, otherwise we exceed the range
@@ -572,7 +572,7 @@ server = function(input, output, session) {
     # if the click is outside the allowed range of y, re-interpret the click
     # as within the range
     if (click_y < 0) click_y = 0
-    if (click_y > -throwaway_dB) click_y = -throwaway_dB
+    if (click_y > -input$throwaway_dB) click_y = -input$throwaway_dB
 
     closest_point_in_time = which.min(abs(myPars$amplAnchors$time - click_x))
     delta_x = abs(myPars$amplAnchors$time[closest_point_in_time] - click_x)
@@ -634,9 +634,9 @@ server = function(input, output, session) {
     if (input$nSyl > 1) {
       getSmoothContour (anchors = myPars$amplAnchors_global,
                         xaxs = "i", xlim = c(0, durTotal()),
-                        ylim = c(0, -throwaway_dB),
+                        ylim = c(0, -input$throwaway_dB),
                         value_floor = 0,
-                        value_ceiling = -throwaway_dB,
+                        value_ceiling = -input$throwaway_dB,
                         len = durTotal() / 1000 * 100,
                         samplingRate = 100, plot = TRUE)
     } else {
@@ -650,7 +650,7 @@ server = function(input, output, session) {
     click_y = round(input$plot_ampl_global_click$y)
     # if the click is outside the allowed range of y, re-interpret the click as within the range
     if (click_y < 0) click_y = 0
-    if (click_y > -throwaway_dB) click_y = -throwaway_dB
+    if (click_y > -input$throwaway_dB) click_y = -input$throwaway_dB
 
     closest_point_in_time = which.min(abs(myPars$amplAnchors_global$time - click_x))
     delta_x = abs(myPars$amplAnchors_global$time[closest_point_in_time] - click_x)
@@ -742,7 +742,7 @@ server = function(input, output, session) {
       rolloffAdjust_quadratic_nHarm = input$rolloffAdjust_quadratic_nHarm,
       rolloffAdjust_per_kHz = input$rolloffAdjust_per_kHz,
       baseline_Hz = 200,
-      throwaway_dB = throwaway_dB,
+      throwaway_dB = input$throwaway_dB,
       samplingRate = input$samplingRate,
       plot = TRUE
     )
@@ -856,7 +856,8 @@ server = function(input, output, session) {
       samplingRate = input$samplingRate,
       pitch_floor = input$pitchFloorCeiling[1],
       pitch_ceiling = input$pitchFloorCeiling[2],
-      pitch_samplingRate = input$pitch_samplingRate
+      pitch_samplingRate = input$pitch_samplingRate,
+      throwaway_dB = input$throwaway_dB
     )
     # simplify arg_list by removing values that are the same as defaults
     idx_same = apply(matrix(1:length(arg_list)), 1, function(x) {

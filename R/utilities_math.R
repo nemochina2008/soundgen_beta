@@ -136,14 +136,15 @@ rnorm_bounded = function(n = 1,
   if (sum(mean > high | mean < low) > 0) {
     warning(paste('Some of the specified means are outside the low/high bounds! Mean =', mean))
   }
-  if (sum(sd != 0) == 0) {
-    out = rep(mean, n)
-    out[roundToInteger] = round (out[roundToInteger], 0)
-    return (out)
-  }
 
   if (length(mean) < n) mean = rep(mean[1], n)
   if (length(sd) < n) sd = rep(sd[1], n)
+
+  if (sum(sd != 0) == 0) {
+    out = mean
+    out[roundToInteger] = round(out[roundToInteger], 0)
+    return (out)
+  }
 
   if (is.null(low) & is.null(high)) {
     out = rnorm(n, mean, sd)
@@ -164,7 +165,7 @@ rnorm_bounded = function(n = 1,
       out[roundToInteger] = round (out[roundToInteger], 0)
     }
   }
-  out
+  return(out)
 }
 
 
@@ -269,9 +270,9 @@ getRandomWalk = function(len,
 #' @examples
 #' rw = soundgen:::getRandomWalk(len = 100, rw_range = 100, rw_smoothing = .2)
 #' plot (rw, type = 'l')
-#' plot (soundgen:::getBinaryRandomWalk(rw, pitchEffects_amount = 75, minLength = 10))
-#' plot (soundgen:::getBinaryRandomWalk(rw, pitchEffects_amount = 5, minLength = 10))
-getBinaryRandomWalk = function(rw,
+#' plot (soundgen:::getIntegerRandomWalk(rw, pitchEffects_amount = 75, minLength = 10))
+#' plot (soundgen:::getIntegerRandomWalk(rw, pitchEffects_amount = 5, minLength = 10))
+getIntegerRandomWalk = function(rw,
                                pitchEffects_amount = 50,
                                minLength = 50) {
   len = length(rw)
@@ -407,7 +408,7 @@ addVectors = function(v1, v2, insertionPoint) {
 #' Internal soundgen function.
 #'
 #' \code{clumper} makes sure each homogeneous segment in a sequence is at least
-#' minLength long. Called by getBinaryRandomWalk() and getVocalFry(). Algorithm:
+#' minLength long. Called by getIntegerRandomWalk() and getVocalFry(). Algorithm:
 #' go through the sequence once. If a short segment is encountered, it is pooled
 #' with the previous one (i.e., the currently evaluated segment grows until it
 #' is long enough, which may shorten the following segment). Finally, the last

@@ -7,10 +7,10 @@
 getSpectralEnvelope(nr, nc, exactFormants = NA, formantDep = 1,
   rolloff_lipRad = 6, mouthAnchors = NA, mouthOpening_threshold = 0,
   amplBoost_openMouth_dB = 0, vocalTract = NULL, temperature = 0,
-  extraFormants_stochastic = 30, smoothLinear_factor = 1,
-  samplingRate = 44100, plot = FALSE, dur_ms = NULL,
-  colorTheme = c("bw", "seewave", "...")[1], nCols = 100, xlab = "Time",
-  ylab = "Frequency, kHz", ...)
+  formDrift = 0.3, formDisp = 0.2, extraFormants_stochastic = 30,
+  smoothLinear_factor = 1, samplingRate = 16000, speedSound = 35400,
+  plot = FALSE, dur_ms = NULL, colorTheme = c("bw", "seewave", "...")[1],
+  nCols = 100, xlab = "Time", ylab = "Frequency, kHz", ...)
 }
 \arguments{
 \item{nr}{the number of frequency bins = windowLength_points/2, where
@@ -48,6 +48,10 @@ opens and closes}
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
 
+\item{formDrift}{scale factor regulating the effect of temperature on the depth of random drift of all formants (user-defined and stochastic): the higher, the more formants drift at a given temperature}
+
+\item{formDisp}{scale factor regulating the effect of temperature on the irregularity of the dispersion of stochastic formants: the higher, the more unevenly stochastic formants are spaced at a given temperature}
+
 \item{extraFormants_stochastic}{the amplitude of additional formants added above
 the highest specified formant (only if temperature > 0)}
 
@@ -59,6 +63,8 @@ sets of formant values than the number of fft steps.
 linear extrapolation}
 
 \item{samplingRate}{sampling frequency, Hz}
+
+\item{speedSound}{speed of sound in warm air, cm/s. Stevens (2000) "Acoustic phonetics", p. 138}
 
 \item{plot}{if TRUE, produces a plot of the spectral envelope}
 

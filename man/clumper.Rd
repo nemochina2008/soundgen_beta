@@ -23,7 +23,7 @@ Internal soundgen function.
 }
 \details{
 \code{clumper} makes sure each homogeneous segment in a sequence is at least
-minLength long. Called by getBinaryRandomWalk() and getVocalFry(). Algorithm:
+minLength long. Called by getIntegerRandomWalk() and getVocalFry(). Algorithm:
 go through the sequence once. If a short segment is encountered, it is pooled
 with the previous one (i.e., the currently evaluated segment grows until it
 is long enough, which may shorten the following segment). Finally, the last

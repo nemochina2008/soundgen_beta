@@ -10,7 +10,7 @@
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if
 #'   \code{x} is a numeric vector, rather than a .wav file)
-#' @param windowLength length of fft window (ms)
+#' @param windowLength length of fft window, ms
 #' @param wn window type: gaussian, hanning, hamming, bartlett, rectangular,
 #'   blackman, flattop
 #' @param step fft step, ms

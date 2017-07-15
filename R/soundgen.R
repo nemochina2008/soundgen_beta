@@ -37,6 +37,15 @@ NULL
 #'   to create a smooth contour of average f0 across multiple syllables
 #' @param temperature hyperparameter for regulating the amount of stochasticity
 #'   in sound generation
+#' @param tempEffects a list of scale factors regulating the effect of
+#'   temperature on particular parameters. To change, specify just those pars
+#'   that you want to modify, don't rewrite the whole list (defaults are
+#'   hard-coded). \code{formDrift}: depth of random drift of formants;
+#'   \code{formDisp}: irregularity of the dispersion of stochastic formants;
+#'   \code{pitchDriftDep} amount of slow random drift of f0;
+#'   \code{pitchDriftFreq}: frequency of slow random drift of f0;
+#'   \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random fluctuations
+#'   of user-specified pitch / noise / amplitude anchors
 #' @param maleFemale hyperparameter for shifting f0 contour, formants, and
 #'   vocalTract to make the speaker appear more male (-1...0) or more female
 #'   (0...+1).
@@ -117,13 +126,15 @@ NULL
 #' @param amplAnchors_global dataframe specifying the time (ms) and value (0 to
 #'   1) of global amplitude anchors, i.e. spanning multiple syllables
 #' @param samplingRate sampling frequency, Hz
-#' @param windowLength_points Fourier window length, points
+#' @param windowLength length of fft window, ms
 #' @param overlap Fourier window overlap, \%
 #' @param addSilence silence before and after the bout, ms
 #' @param pitch_floor,pitch_ceiling lower & upper bounds of f0
 #' @param pitch_samplingRate sampling frequency of the pitch contour only, Hz. Low
 #'   values can decrease processing time. A rule of thumb is to set this to
 #'   the same value as \code{pitch_ceiling}
+#' @param throwaway_dB discard harmonics and noise that are quieter than this
+#'   number (in dB) to save computational resources
 #' @param plot if TRUE, plots a spectrogram
 #' @param play if TRUE, plays the synthesized sound
 #' @param savePath full path for saving the output, e.g. '~/Downloads/temp.wav'.
@@ -170,6 +181,15 @@ soundgen = function(repeatBout = 1,
                                               value = c(100, 150, 135, 100)),
                     pitchAnchors_global = NA,
                     temperature = 0.025,
+                    tempEffects = list(
+                      formDrift = .3,
+                      formDisp = .2,
+                      pitchDriftDep = .5,
+                      pitchDriftFreq = .125,
+                      pitchAnchorsDep = .05,
+                      noiseAnchorsDep = .1,
+                      amplAnchorsDep = .1
+                    ),
                     maleFemale = 0,
                     creakyBreathy = 0,
                     pitchEffects_amount = 0,
@@ -208,16 +228,27 @@ soundgen = function(repeatBout = 1,
                     amplAnchors = NA,
                     amplAnchors_global = NA,
                     samplingRate = 16000,
-                    windowLength_points = 2048,
+                    windowLength = 50,
                     overlap = 75,
                     addSilence = 100,
                     pitch_floor = 50,
                     pitch_ceiling = 3500,
                     pitch_samplingRate = 3500,
+                    throwaway_dB = -120,
                     plot = FALSE,
                     play = FALSE,
                     savePath = NA,
                     ...) {
+  windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
+
+  if (!is.numeric(tempEffects$formDrift)) tempEffects$formDrift = .3
+  if (!is.numeric(tempEffects$formDisp)) tempEffects$formDisp = .2
+  if (!is.numeric(tempEffects$pitchDriftDep)) tempEffects$pitchDriftDep = .5
+  if (!is.numeric(tempEffects$pitchDriftFreq)) tempEffects$pitchDriftFreq = .125
+  if (!is.numeric(tempEffects$pitchAnchorsDep)) tempEffects$pitchAnchorsDep = .05
+  if (!is.numeric(tempEffects$noiseAnchorsDep)) tempEffects$noiseAnchorsDep = .1
+  if (!is.numeric(tempEffects$amplAnchorsDep)) tempEffects$amplAnchorsDep = .1
+
   # force anchor lists to dataframe
   if (class(pitchAnchors) == 'list') pitchAnchors = as.data.frame(pitchAnchors)
   if (class(pitchAnchors_global) == 'list') pitchAnchors_global = as.data.frame(pitchAnchors_global)
@@ -320,6 +351,8 @@ soundgen = function(repeatBout = 1,
     'rolloffAdjust_quadratic' = rolloffAdjust_quadratic,
     'rolloffAdjust_quadratic_nHarm' = rolloffAdjust_quadratic_nHarm,
     'temperature' = temperature,
+    'pitchDriftDep' = tempEffects$pitchDriftDep,
+    'pitchDriftFreq' = tempEffects$pitchDriftFreq,
     'shortestEpoch' = shortestEpoch,
     'subFreq' = subFreq,
     'subDep' = subDep,
@@ -331,8 +364,8 @@ soundgen = function(repeatBout = 1,
     'pitch_floor' = pitch_floor,
     'pitch_ceiling' = pitch_ceiling,
     'pitch_samplingRate' = pitch_samplingRate,
+    'throwaway_dB' = throwaway_dB,
     'samplingRate' = samplingRate,
-    'windowLength_points' = windowLength_points,
     'overlap' = overlap
   )
   pars_syllable = pars_list
@@ -446,7 +479,7 @@ soundgen = function(repeatBout = 1,
           temperature = temperature,
           low = c(0, permittedValues['pitch', 'low']),
           high = c(1, permittedValues['pitch', 'high']),
-          temp_coef = pitchAnchorsWiggle_per_temp
+          temp_coef = tempEffects$pitchAnchorsDep
         )
         if (wigglenoise) {
           noiseAnchors_syl[[s]] = wiggleAnchors(
@@ -455,7 +488,7 @@ soundgen = function(repeatBout = 1,
             low = c(-Inf, permittedValues['noise_ampl', 'low']),
             high = c(+Inf, permittedValues['noise_ampl', 'high']),
             wiggleAllRows = TRUE,
-            temp_coef = noiseAnchorsWiggle_per_temp
+            temp_coef = tempEffects$noiseAnchorsDep
           )
         }
         if (wiggleAmpl_per_syl) {
@@ -464,7 +497,7 @@ soundgen = function(repeatBout = 1,
             temperature = temperature,
             low = c(0, 0),
             high = c(1,-throwaway_dB),
-            temp_coef = amplAnchorsWiggle_per_temp
+            temp_coef = tempEffects$amplAnchorsDep
           )
         }
       }
@@ -547,6 +580,8 @@ soundgen = function(repeatBout = 1,
             rolloff_lipRad = rolloff_lipRad,
             mouthAnchors = mouthAnchors,
             temperature = temperature,
+            formDrift = tempEffects$formDrift,
+            formDisp = tempEffects$formDisp,
             samplingRate = samplingRate,
             vocalTract = vocalTract
           )
@@ -562,6 +597,7 @@ soundgen = function(repeatBout = 1,
           samplingRate = samplingRate,
           windowLength_points = windowLength_points,
           overlap = overlap,
+          throwaway_dB = throwaway_dB,
           filter_noise = spectralEnvelope_noise
         )
         # plot(unvoiced[[s]], type = 'l')
@@ -628,6 +664,8 @@ soundgen = function(repeatBout = 1,
         rolloff_lipRad = rolloff_lipRad,
         mouthAnchors = mouthAnchors,
         temperature = temperature,
+        formDrift = tempEffects$formDrift,
+        formDisp = tempEffects$formDisp,
         samplingRate = samplingRate,
         vocalTract = vocalTract
       )

@@ -4,9 +4,9 @@
 \alias{generateNoise}
 \title{Generate noise}
 \usage{
-generateNoise(len, noiseAnchors = data.frame(time = c(0, 300), value =
-  c(throwaway_dB, throwaway_dB)), rolloff_noise = -6, attackLen = 10,
-  windowLength_points = 1024, samplingRate = 16000, overlap = 75,
+generateNoise(len, noiseAnchors = data.frame(time = c(0, 300), value = c(-120,
+  -120)), rolloff_noise = -6, attackLen = 10, windowLength_points = 1024,
+  samplingRate = 16000, overlap = 75, throwaway_dB = -120,
   filter_noise = NA)
 }
 \arguments{
@@ -27,11 +27,14 @@ no breathing, 0 = as strong as the voiced (harmonic) part}
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms)}
 
-\item{windowLength_points}{Fourier window length, points}
+\item{windowLength_points}{the length of fft window, points}
 
 \item{samplingRate}{sampling frequency, Hz}
 
 \item{overlap}{Fourier window overlap, \%}
+
+\item{throwaway_dB}{discard harmonics and noise that are quieter than this
+number (in dB) to save computational resources}
 
 \item{filter_noise}{(optional): in addition to using rolloff_noise,
 we can provide the exact filter - a vector of length windowLength_points/2

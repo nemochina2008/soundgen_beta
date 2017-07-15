@@ -22,8 +22,6 @@
 #'   \code{rolloffAdjust_quadratic_nHarm}
 #' @param baseline_Hz The "neutral" frequency, at which no adjustment of rolloff
 #'   takes place regardless of \code{rolloffAdjust_per_kHz}
-#' @param throwaway_dB discard harmonics that are weaker than this number (in
-#'   dB) to save computational resources
 #' @param samplingRate sampling rate (needed to stop at Nyquist frequency and
 #'   for plotting purposes)
 #' @param plot if TRUE, produces a plot
@@ -204,6 +202,9 @@ getRolloff = function(pitch_per_gc = c(440),
 #'   windowLength_points is the size of window for Fourier transform
 #' @param nc the number of time steps for Fourier transform
 #' @inheritParams soundgen
+#' @param formDrift scale factor regulating the effect of temperature on the depth of random drift of all formants (user-defined and stochastic): the higher, the more formants drift at a given temperature
+#' @param formDisp scale factor regulating the effect of temperature on the irregularity of the dispersion of stochastic formants: the higher, the more unevenly stochastic formants are spaced at a given temperature
+#' @param speedSound speed of sound in warm air, cm/s. Stevens (2000) "Acoustic phonetics", p. 138
 #' @param amplBoost_openMouth_dB amplify the voice when the mouth is open by
 #'   \code{amplBoost_openMouth_dB} dB
 #' @param mouthOpening_threshold the mouth is considered to be open when its
@@ -259,9 +260,12 @@ getSpectralEnvelope = function(nr,
                                amplBoost_openMouth_dB = 0,
                                vocalTract = NULL,
                                temperature = 0,
+                               formDrift = .3,
+                               formDisp = .2,
                                extraFormants_stochastic = 30,
                                smoothLinear_factor = 1,
-                               samplingRate = 44100,
+                               samplingRate = 16000,
+                               speedSound = 35400,
                                plot = FALSE,
                                dur_ms = NULL,
                                colorTheme = c('bw', 'seewave', '...')[1],
@@ -338,7 +342,7 @@ getSpectralEnvelope = function(nr,
     } else {
       formantDispersion = NA # making sdG also NA, ie extra formants not added
     }
-    sdG = formantDispersion * temperature * formantDispersion_per_temp
+    sdG = formantDispersion * temperature * formDisp
     nFormants = length(exactFormants_upsampled)
     freq_max = max(exactFormants_upsampled[[nFormants]][, 'freq'])
 
@@ -347,7 +351,7 @@ getSpectralEnvelope = function(nr,
         # don't add extra formants close to Nyquist to avoid artifacts
         rw = getRandomWalk(
           len = nc,
-          rw_range = temperature * formantDrift_per_temp,
+          rw_range = temperature * formDrift,
           rw_smoothing = 0,
           trend = 0
         )
@@ -383,7 +387,7 @@ getSpectralEnvelope = function(nr,
         # wiggle freq, ampl and bandwidth independently
         rw = getRandomWalk(
           len = nc,
-          rw_range = temperature * formantDrift_per_temp,
+          rw_range = temperature * formDrift,
           rw_smoothing = 0.3,
           trend = rnorm(1)
         )

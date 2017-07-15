@@ -106,8 +106,8 @@ ui = fluidPage(
                                                  shinyBS:::bsPopover(id='samplingRate', title=NULL, content='The number of points per second of audio. Higher = better quality; lower = faster. Can be any integer, not necessarily a power of two.', placement="right", trigger="hover"),
                                                  numericInput('pitch_samplingRate', 'Pitch sampling rate, Hz', value=3500, min=100, max=44000, step=100),
                                                  shinyBS:::bsPopover(id='pitch_samplingRate', title=NULL, content='The number of considered F0 values per second of audio. Should be >= pitch_ceiling for best quality', placement="right", trigger="hover"),
-                                                 # numericInput('windowLength_points', 'Window length', value=512, min=256, max=2048, step=1),
-                                                 # shinyBS:::bsPopover(id='samplingRate', title=NULL, content='The length of window for synthesis', placement="right", trigger="hover"),
+                                                 numericInput('throwaway_dB', 'Dynamic range, dB', value=-120, min=-200, max=-40, step=10),
+                                                 shinyBS:::bsPopover(id='throwaway_dB', title=NULL, content='Discard everything below this amplitude', placement="right", trigger="hover"),
                                                  sliderInput('pitchFloorCeiling', 'Synthesized pitch range, Hz', value=c(permittedValues['pitch', 'low'],permittedValues['pitch', 'high']), min=25, max=8000, step=25),
                                                  shinyBS:::bsPopover(id='pitchFloorCeiling', title=NULL, content='Sets the bounds of fundamental frequency for synthesis', placement="right", trigger="hover"), width=6
                                                ),

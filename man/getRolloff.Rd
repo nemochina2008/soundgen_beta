@@ -43,8 +43,8 @@ steeper basic rolloff as f0 goes up by 1000 Hz}
 \item{baseline_Hz}{The "neutral" frequency, at which no adjustment of rolloff
 takes place regardless of \code{rolloffAdjust_per_kHz}}
 
-\item{throwaway_dB}{discard harmonics that are weaker than this number (in
-dB) to save computational resources}
+\item{throwaway_dB}{discard harmonics and noise that are quieter than this
+number (in dB) to save computational resources}
 
 \item{samplingRate}{sampling rate (needed to stop at Nyquist frequency and
 for plotting purposes)}

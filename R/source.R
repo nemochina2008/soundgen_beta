@@ -20,6 +20,7 @@
 #'   aspiration noise at the given time anchors (to be smoothed). throwaway_dB =
 #'   no breathing, 0 = as strong as the voiced (harmonic) part
 #' @inheritParams soundgen
+#' @param windowLength_points the length of fft window, points
 #' @param filter_noise (optional): in addition to using rolloff_noise,
 #'   we can provide the exact filter - a vector of length windowLength_points/2
 #'   or, if we want moving formants, a matrix with windowLength_points/2 rows
@@ -55,13 +56,14 @@
 generateNoise = function(len,
                          noiseAnchors = data.frame(
                            'time' = c(0, 300),
-                           'value' = c(throwaway_dB, throwaway_dB)
+                           'value' = c(-120, -120)
                          ),
                          rolloff_noise = -6,
                          attackLen = 10,
                          windowLength_points = 1024,
                          samplingRate = 16000,
                          overlap = 75,
+                         throwaway_dB = -120,
                          filter_noise = NA) {
   # convert anchors to a smooth contour of breathing amplitudes
   breathingStrength = getSmoothContour(
@@ -147,6 +149,19 @@ generateNoise = function(len,
 #'   rate pitch_samplingRate, eg 3500 points/s. The pitch contour will be
 #'   upsampled before synthesis.
 #' @inheritParams soundgen
+#' @param pitchDriftDep scale factor regulating the effect of temperature on the
+#'   amount of slow random drift of f0 (like jitter, but slower): the higher,
+#'   the more f0 "wiggles" at a given temperature
+#' @param pitchDriftFreq scale factor regulating the effect of temperature on
+#'   the frequency of random drift of f0 (like jitter, but slower): the higher,
+#'   the faster f0 "wiggles" at a given temperature
+#' @param randomWalk_trendStrength try 0 to 1 - the higher, the more likely rw
+#'   is to get high in the middle and low at the beginning and end (ie max
+#'   effect amplitude in the middle of a sound)
+#' @param rolloff_per_ampl as amplitude goes down from max to
+#'   \code{throwaway_dB}, \code{rolloff} increases by \code{rolloff_per_ampl}
+#'   dB/octave. The effect is to make loud parts brighter by increasing energy
+#'   in higher frequencies
 #' @examples
 #' pitch=soundgen:::getSmoothContour(len = 3500,
 #'   anchors = data.frame('time' = c(0, 1), 'value' = c(200, 300)))
@@ -168,20 +183,24 @@ generateHarmonics = function(pitch,
                              rolloffAdjust_per_kHz = -6,
                              rolloffAdjust_quadratic = 0,
                              rolloffAdjust_quadratic_nHarm = 3,
+                             rolloff_lipRad = 6,
+                             rolloff_per_ampl = 12,
                              temperature = 0,
+                             pitchDriftDep = .5,
+                             pitchDriftFreq = .125,
+                             randomWalk_trendStrength = .5,
                              shortestEpoch = 300,
                              subFreq = 100,
                              subDep = 0,
-                             rolloff_lipRad = 6,
                              trillDep = 0,
                              trillFreq = 30,
                              amplAnchors = NA,
                              overlap = 75,
-                             windowLength_points = 2048,
                              samplingRate = 16000,
                              pitch_floor = 75,
                              pitch_ceiling = 3500,
-                             pitch_samplingRate = 3500) {
+                             pitch_samplingRate = 3500,
+                             throwaway_dB = -120) {
   ## PRE-SYNTHESIS EFFECTS (NB: the order in which effects are added is NOT arbitrary!)
   # vibrato (performed on pitch, not pitch_per_gc!)
   if (vibratoDep > 0) {
@@ -224,7 +243,7 @@ generateHarmonics = function(pitch,
     rw_0_100 = rw - min(rw)
     rw_0_100 = rw_0_100 / max(rw_0_100) * 100
     # plot (rw_0_100, type = 'l')
-    rw_bin = getBinaryRandomWalk (
+    rw_bin = getIntegerRandomWalk(
       rw_0_100,
       pitchEffects_amount = pitchEffects_amount,
       minLength = ceiling(shortestEpoch / 1000 * pitch_per_gc)
@@ -281,9 +300,9 @@ generateHarmonics = function(pitch,
     # rownames(out_pred) = seq(0, 1, length.out = 30)
     # out_pred = out_pred[, -1]
     # persp3D (as.numeric(rownames(out_pred)), as.numeric(colnames(out_pred)), out_pred, theta=40, phi=50, zlab='rw_smoothing', xlab='Temperature', ylab='# of glottal cycles', colkey=FALSE, ticktype='detailed', cex.axis=0.75)
-    rw_smoothing = .9 - temperature * pitchDriftWiggle_per_temp -
+    rw_smoothing = .9 - temperature * pitchDriftFreq -
                    1.2 / (1 + exp(-.008 * (length(pitch_per_gc) - 10))) + .6
-    rw_range = temperature * pitchDrift_per_temp +
+    rw_range = temperature * pitchDriftDep +
                length(pitch_per_gc) / 1000 / 12
     drift = getRandomWalk (
       len = length(pitch_per_gc),
@@ -316,7 +335,8 @@ generateHarmonics = function(pitch,
     rolloffAdjust_per_kHz = rolloffAdjust_per_kHz * rw,
     rolloffAdjust_quadratic = rolloffAdjust_quadratic,
     rolloffAdjust_quadratic_nHarm = rolloffAdjust_quadratic_nHarm,
-    samplingRate = samplingRate
+    samplingRate = samplingRate,
+    throwaway_dB = throwaway_dB
   )
   # NB: this whole pitch_per_gc trick is purely for computational efficiency.
   #   The entire pitch contour can be fed in, but then it takes up to 1 s
@@ -337,12 +357,13 @@ generateHarmonics = function(pitch,
 
   # add vocal fry (subharmonics)
   if (subDep > 0 & pitchEffects_amount > 0) {
-    vocalFry = getVocalFry (
+    vocalFry = getVocalFry(
       rolloff = rolloff_source,
       pitch_per_gc = pitch_per_gc,
       subFreq = subFreq * rw ^ 4,
       subDep = subDep * rw ^ 4 * vocalFry_on,
-      shortestEpoch = shortestEpoch
+      shortestEpoch = shortestEpoch,
+      throwaway_dB = throwaway_dB
     )
     rolloff_source = vocalFry$rolloff # list of matrices
     epochs = vocalFry$epochs # dataframe

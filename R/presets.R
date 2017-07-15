@@ -2,40 +2,7 @@
 ### D E F A U L T   P A R   V A L U E S   &   P R E S E T S
 ###
 
-# devtools::use_data(permittedValues, presets, overwrite = TRUE)
-
-# global pars and constants
-# samplingRate = 16000 # synthesize at ... points/s # set from UI, defaults to 16000
-windowLength_points = 512 # the length of fft window
-overlap = 75 # overlap of fft windows
-throwaway_dB = -120 # discard harmonics and noise that is quieter than this
-speedSound = 35400 # cm/s, in warm air. Stevens (2000) "Acoustic phonetics", p. 138
-# amplBoost_openMouth_dB = 0
-randomWalk_trendStrength = .5 # try 0 to 1 - the higher, the more likely rw is to get high in the middle and low at the beginning and end (ie max effect amplitude in the middle of a sound)
-defaultVowel = 'a'
-# pitch_floor = 50
-# pitch_ceiling = 3500
-formantDrift_per_temp=.3 # the higher, the more formants drift at a given temperature
-formantDispersion_per_temp=.2 # the higher, the more unevenly stochastic formants are spaced at a given temperature
-pitchDrift_per_temp=.5 # the higher, the further pitch drifts (wiggles)
-pitchDriftWiggle_per_temp=.125 # the higher, the faster pitch drifts (wiggles)
-pitchAnchorsWiggle_per_temp = .05
-noiseAnchorsWiggle_per_temp = .1
-amplAnchorsWiggle_per_temp = .1
-smoothLinear_factor = 1 # (0 to +Inf): regulates smoothing of formant anchors in function getSpectralEnvelope(). 0 = close to spline; >3 = approches linear extrapolation
-rolloff_per_ampl = 12 # as amplitude goes down from max to throwaway_dB, rolloff increases by rolloff_per_ampl dB/octave. The effect is to make loud parts brighter by increasing energy in higher frequencies
-# dictionaries for getBinaryRandomWalk() to calculate and load once at the beginning of each session
-slope_q1 = -.1
-midpoint_q1 = 33
-slope_q2 = -.1
-midpoint_q2 = 66
-
-noiseThresholds_dict = list(pitchEffects_amount = 0:100, q1=NA, q2=NA)
-noiseThresholds_dict$q1 = 100 / (1 + exp(-slope_q1*(noiseThresholds_dict$pitchEffects_amount-midpoint_q1)))
-noiseThresholds_dict$q2 = 100 / (1 + exp(-slope_q2*(noiseThresholds_dict$pitchEffects_amount-midpoint_q2)))
-# plot (noiseThresholds_dict$pitchEffects_amount, noiseThresholds_dict$q1, type='l', col='red')
-# points (noiseThresholds_dict$pitchEffects_amount, noiseThresholds_dict$q2, type='l', col='blue')
-
+# devtools::use_data(permittedValues, defaults, presets, overwrite = TRUE)
 
 
 #' Defaults and ranges
@@ -93,13 +60,13 @@ permittedValues = matrix (c(
   'pitch', 100, 25, 3500, 1,  # set per species
   'pitchDeltas', 0, -24, 24, 1,
   'time', 0, 0, 5000, 1,
-  'noise_ampl', 0, throwaway_dB, 40, 1
+  'noise_ampl', 0, -120, 40, 1
 ), ncol=5, byrow=TRUE)
 temp = permittedValues[,1]
 permittedValues = apply (permittedValues[,2:5], 2, as.numeric)
 colnames(permittedValues) = c('default', 'low', 'high', 'step')
 rownames(permittedValues) = temp
-
+# devtools::use_data(permittedValues, overwrite = TRUE)
 
 # a list of default values for Shiny app - mostly the same as for
 # soundgen(). NB: if defaults change, this has to be updated!!!
@@ -133,9 +100,9 @@ defaults = list(
   shortestEpoch = 300,
   trillDep = 0,
   trillFreq = 30,
-  rolloff_noise = -12,
+  rolloff_noise = -14,
   samplingRate = 16000,
-  windowLength_points = 2048,
+  windowLength_points = 512,
   overlap = 75,
   addSilence = 100,
   pitch_floor = 25,
@@ -158,7 +125,7 @@ defaults = list(
                                  amp = 25, width = 200)),
   exactFormants_noise = NA
 )
-
+# devtools::use_data(defaults, overwrite = TRUE)
 
 # -------------------------------------------------------------
 # A library of presets for easy generation of a few nice sounds
@@ -171,7 +138,7 @@ defaults = list(
 "presets"
 presets = list(
   M1 = list(
-    Vowel = 'soundgen()', # these are just the global defaults
+    Vowel1 = 'soundgen()', # these are just the global defaults
 
     Gasp = 'soundgen(sylLen = 280, pitchAnchors = list(time = c(0, 0.7, 1), value = c(402, 556, 490)), temperature = 0.05, rolloffAdjust_per_octave = -8, rolloffAdjust_per_kHz = -15, exactFormants = list(f1 = list(time = 0, freq = 420, amp = 20, width = 150), f2 = list(time = 0, freq = 1200, amp = 50, width = 250), f3 = list(time = 0, freq = 5000, amp = 10, width = 200), f4 = list(time = 0, freq = 8500, amp = 10, width = 300)), subDep = 0, noiseAnchors = list(time = c(1, 234, 408), value = c(-120, -32, -120)), exactFormants_noise = list(f1 = list(time = 0, freq = 420, amp = 20, width = 150), f2 = list(time = 0, freq = 1200, amp = 50, width = 250), f3 = list(time = 0, freq = 5000, amp = 10, width = 200), f4 = list(time = 0, freq = 8500, amp = 10, width = 300)), rolloff_noise=-5, mouthAnchors = list(time = c(0, 0.3, 1), value = c(0.32, 0.88, 0.42)))',
 
@@ -261,7 +228,7 @@ presets = list(
   ),
 
   F1 = list(
-    'Vowel' = 'soundgen(sylLen = 500, pitchAnchors = list(time = c(0, 0.6, 1), value = c(340, 370, 340)), exactFormants = list(f1 = list(time = 0, freq = 900, amp = 30, width = 80), f2 = list(time = 0, freq = 1300, amp = 30, width = 160), f3 = list(time = 0, freq = 3300, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 20, width = 370)))',
+    Vowel2 = 'soundgen(sylLen = 500, pitchAnchors = list(time = c(0, 0.6, 1), value = c(340, 370, 340)), exactFormants = list(f1 = list(time = 0, freq = 900, amp = 30, width = 80), f2 = list(time = 0, freq = 1300, amp = 30, width = 160), f3 = list(time = 0, freq = 3300, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 20, width = 370)))',
 
     Scream = 'soundgen(sylLen = 1110, pitchAnchors = list(time = c(0, 0.1, 0.85, 1), value = c(900, 1832, 1618, 1200)), temperature = 0.1, pitchEffects_amount = 70, jitterDep = 1, shimmerDep = 10, exactFormants = list(f1 = list(time = 0, freq = 900, amp = 30, width = 80), f2 = list(time = 0, freq = 1300, amp = 30, width = 160), f3 = list(time = 0, freq = 3300, amp = 25, width = 130), f4 = list(time = 0, freq = 4340, amp = 20, width = 370)), subFreq = 400, noiseAnchors = list(time = c(0, 1110), value = c(-120, -120)))',
 
@@ -385,3 +352,5 @@ presets = list(
   #
   # )
 ) # END of presets / dictionaries
+
+# devtools::use_data(presets, overwrite = TRUE)

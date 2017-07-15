@@ -9,11 +9,13 @@ generateHarmonics(pitch, attackLen = 50, pitchEffects_amount = 0,
   vibratoFreq = 100, vibratoDep = 0, shimmerDep = 0, creakyBreathy = 0,
   rolloff = -18, rolloffAdjust_per_octave = -2,
   rolloffAdjust_per_kHz = -6, rolloffAdjust_quadratic = 0,
-  rolloffAdjust_quadratic_nHarm = 3, temperature = 0, shortestEpoch = 300,
-  subFreq = 100, subDep = 0, rolloff_lipRad = 6, trillDep = 0,
-  trillFreq = 30, amplAnchors = NA, overlap = 75,
-  windowLength_points = 2048, samplingRate = 16000, pitch_floor = 75,
-  pitch_ceiling = 3500, pitch_samplingRate = 3500)
+  rolloffAdjust_quadratic_nHarm = 3, rolloff_lipRad = 6,
+  rolloff_per_ampl = 12, temperature = 0, pitchDriftDep = 0.5,
+  pitchDriftFreq = 0.125, randomWalk_trendStrength = 0.5,
+  shortestEpoch = 300, subFreq = 100, subDep = 0, trillDep = 0,
+  trillFreq = 30, amplAnchors = NA, overlap = 75, samplingRate = 16000,
+  pitch_floor = 75, pitch_ceiling = 3500, pitch_samplingRate = 3500,
+  throwaway_dB = -120)
 }
 \arguments{
 \item{pitch}{a contour of fundamental frequency (numeric vector). NB: for
@@ -69,8 +71,29 @@ exponential decay.}
 \item{rolloffAdjust_quadratic_nHarm}{the number of harmonics affected by
 \code{rolloffAdjust_quadratic}}
 
+\item{rolloff_lipRad}{the effect of lip radiation on source spectrum, dB/oct
+(the default of +6 dB/oct produces a high-frequency boost when the mouth is
+open)}
+
+\item{rolloff_per_ampl}{as amplitude goes down from max to
+\code{throwaway_dB}, \code{rolloff} increases by \code{rolloff_per_ampl}
+dB/octave. The effect is to make loud parts brighter by increasing energy
+in higher frequencies}
+
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
+
+\item{pitchDriftDep}{scale factor regulating the effect of temperature on the
+amount of slow random drift of f0 (like jitter, but slower): the higher,
+the more f0 "wiggles" at a given temperature}
+
+\item{pitchDriftFreq}{scale factor regulating the effect of temperature on
+the frequency of random drift of f0 (like jitter, but slower): the higher,
+the faster f0 "wiggles" at a given temperature}
+
+\item{randomWalk_trendStrength}{try 0 to 1 - the higher, the more likely rw
+is to get high in the middle and low at the beginning and end (ie max
+effect amplitude in the middle of a sound)}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}
@@ -83,10 +106,6 @@ strength of subharmonics fades as they move away from harmonics in f0
 stack. Low values produce narrow sidebands, high values produce uniformly
 strong subharmonics}
 
-\item{rolloff_lipRad}{the effect of lip radiation on source spectrum, dB/oct
-(the default of +6 dB/oct produces a high-frequency boost when the mouth is
-open)}
-
 \item{trillDep}{amplitude modulation depth. 0: no change; 1: amplitude
 modulation with amplitude range equal to the dynamic range of the sound}
 
@@ -97,8 +116,6 @@ amplitude anchors}
 
 \item{overlap}{Fourier window overlap, \%}
 
-\item{windowLength_points}{Fourier window length, points}
-
 \item{samplingRate}{sampling frequency, Hz}
 
 \item{pitch_floor}{lower & upper bounds of f0}
@@ -108,6 +125,9 @@ amplitude anchors}
 \item{pitch_samplingRate}{sampling frequency of the pitch contour only, Hz. Low
 values can decrease processing time. A rule of thumb is to set this to
 the same value as \code{pitch_ceiling}}
+
+\item{throwaway_dB}{discard harmonics and noise that are quieter than this
+number (in dB) to save computational resources}
 }
 \description{
 Internal soundgen function.
