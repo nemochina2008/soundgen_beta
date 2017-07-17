@@ -36,8 +36,8 @@ ui = fluidPage(
                                     tabPanel("Syllables",
                                              sidebarLayout(
                                                sidebarPanel(
-                                                 sliderInput('sylLen', 'Syllable length, ms', value=permittedValues['sylLen','default'], min=permittedValues['sylLen', 'low'], max=permittedValues['sylLen', 'high'], step=permittedValues['sylLen','step']),
-                                                 shinyBS:::bsPopover(id='sylLen', title=NULL, content='Average duration of a continuous VOICED syllable (breathing is added separately and may fill in the pauses)', placement="right", trigger="hover"),
+                                                 sliderInput('sylLen', 'Syllable length, ms', value=permittedValues['sylLen','default'], min=0, max=permittedValues['sylLen', 'high'], step=permittedValues['sylLen','step']),
+                                                 shinyBS:::bsPopover(id='sylLen', title=NULL, content='Average duration of a continuous VOICED syllable (unvoiced noise is added separately and may fill in the pauses)', placement="right", trigger="hover"),
                                                  sliderInput('nSyl', 'Number of syllables', value=permittedValues['nSyl','default'], min=permittedValues['nSyl', 'low'], max=permittedValues['nSyl', 'high'], step=permittedValues['nSyl','step']),
                                                  shinyBS:::bsPopover(id='nSyl', title=NULL, content='Each sound consists of one or several syllables separated by pauses', placement="right", trigger="hover"),
                                                  sliderInput('pauseLen', 'Pause, ms', value=permittedValues['pauseLen','default'], min=permittedValues['pauseLen', 'low'], max=permittedValues['pauseLen', 'high'], step=permittedValues['pauseLen','step']),

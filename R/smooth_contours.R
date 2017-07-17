@@ -61,7 +61,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             main = '',
                             xlim = NULL,
                             ylim = NULL,
-                            samplingRate = 44100,
+                            samplingRate = 16000,
                             voiced = NULL,
                             contourLabel = NULL,
                             ...) {
@@ -90,7 +90,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
     anchors$time = anchors$time / max(anchors$time) # strictly 0 to 1
     duration_ms = len / samplingRate * 1000
   }
-  if (!is.numeric(duration_ms))
+  if (!is.numeric(duration_ms) | duration_ms == 0 | len == 0)
     return (NA)
 
   time = 1:len

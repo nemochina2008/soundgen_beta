@@ -8,7 +8,7 @@ getRolloff(pitch_per_gc = c(440), nHarmonics = 100, rolloff = -12,
   rolloffAdjust_per_octave = -2, rolloffAdjust_quadratic = 0,
   rolloffAdjust_quadratic_nHarm = 2, rolloff_quadratic_ceiling = NULL,
   rolloffAdjust_per_kHz = -6, baseline_Hz = 200, throwaway_dB = -120,
-  samplingRate = 44100, plot = FALSE)
+  samplingRate = 16000, plot = FALSE)
 }
 \arguments{
 \item{pitch_per_gc}{a vector of f0 per glottal cycle, Hz}
@@ -91,21 +91,21 @@ rolloff = getRolloff(pitch_per_gc = c(150, 800, 3000),
 
 # parabolic adjustment of lower harmonics
 rolloff = getRolloff(pitch_per_gc = 350, rolloffAdjust_quadratic = 0,
-  rolloffAdjust_quadratic_nHarm = 2, samplingRate = 16000, plot = TRUE)
+  rolloffAdjust_quadratic_nHarm = 2, plot = TRUE)
 # rolloffAdjust_quadratic_nHarm = 1 affects only f0
 rolloff = getRolloff(pitch_per_gc = 150, rolloffAdjust_quadratic = 30,
-  rolloffAdjust_quadratic_nHarm = 1, samplingRate = 16000, plot = TRUE)
+  rolloffAdjust_quadratic_nHarm = 1, plot = TRUE)
 # rolloffAdjust_quadratic_nHarm=2 or 3 affects only h1
 rolloff = getRolloff(pitch_per_gc = 150, rolloffAdjust_quadratic = 30,
-  rolloffAdjust_quadratic_nHarm = 2, samplingRate = 16000, plot = TRUE)
+  rolloffAdjust_quadratic_nHarm = 2, plot = TRUE)
 # rolloffAdjust_quadratic_nHarm = 4 affects h1 and h2, etc
 rolloff = getRolloff(pitch_per_gc = 150, rolloffAdjust_quadratic = 30,
-  rolloffAdjust_quadratic_nHarm = 4, samplingRate = 16000, plot = TRUE)
+  rolloffAdjust_quadratic_nHarm = 4, plot = TRUE)
 # negative rolloffAdjust_quadratic weakens lower harmonics
 rolloff = getRolloff(pitch_per_gc = 150, rolloffAdjust_quadratic = -20,
-  rolloffAdjust_quadratic_nHarm = 7, samplingRate = 16000, plot = TRUE)
+  rolloffAdjust_quadratic_nHarm = 7, plot = TRUE)
 # only harmonics below 2000 Hz are affected
 rolloff = getRolloff(pitch_per_gc = c(150, 600),
-  rolloffAdjust_quadratic = -20, rolloff_quadratic_ceiling = 2000, samplingRate = 16000,
+  rolloffAdjust_quadratic = -20, rolloff_quadratic_ceiling = 2000,
   plot = TRUE)
 }

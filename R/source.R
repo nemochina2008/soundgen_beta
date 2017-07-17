@@ -240,8 +240,7 @@ generateHarmonics = function(pitch,
       trend = c(randomWalk_trendStrength,-randomWalk_trendStrength),
       rw_smoothing = .3
     ) # plot (rw, type = 'l')
-    rw_0_100 = rw - min(rw)
-    rw_0_100 = rw_0_100 / max(rw_0_100) * 100
+    rw_0_100 = zeroOne(rw) * 100
     # plot (rw_0_100, type = 'l')
     rw_bin = getIntegerRandomWalk(
       rw_0_100,
@@ -325,7 +324,7 @@ generateHarmonics = function(pitch,
 
   ## prepare the harmonic stack
   # calculate the number of harmonics to generate (from lowest pitch to nyquist)
-  nHarmonics = ceiling(samplingRate / 2 - min(pitch_per_gc)) / min(pitch_per_gc)
+  nHarmonics = ceiling((samplingRate / 2 - min(pitch_per_gc)) / min(pitch_per_gc))
   # get rolloff
   rolloff_source = getRolloff(
     pitch_per_gc = pitch_per_gc,

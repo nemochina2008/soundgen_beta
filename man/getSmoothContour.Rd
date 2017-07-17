@@ -7,7 +7,7 @@
 getSmoothContour(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
   len = NULL, thisIsPitch = FALSE, method = c("spline", "loess")[2],
   value_floor = NULL, value_ceiling = NULL, plot = FALSE, main = "",
-  xlim = NULL, ylim = NULL, samplingRate = 44100, voiced = NULL,
+  xlim = NULL, ylim = NULL, samplingRate = 16000, voiced = NULL,
   contourLabel = NULL, ...)
 }
 \arguments{

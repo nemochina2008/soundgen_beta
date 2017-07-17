@@ -108,6 +108,7 @@ defaults = list(
   pitch_floor = 25,
   pitch_ceiling = 3500,
   pitch_samplingRate = 3500,
+  throwaway_dB = -120,
   pitchAnchors = list(
     time = c(0, .1, .9, 1),
     value = c(100, 150, 135, 100)

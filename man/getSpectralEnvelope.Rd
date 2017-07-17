@@ -100,18 +100,18 @@ FFT.
 # [a] with F1-F4 visible
 image(t(getSpectralEnvelope(nr = 512, nc = 50,
   exactFormants = soundgen:::convertStringToFormants('a'),
-  temperature = 0, samplingRate = 16000)))
+  temperature = 0)))
 # some "wiggling" of specified formants plus extra formants on top
 image(t(getSpectralEnvelope(nr = 512, nc = 50,
   exactFormants = soundgen:::convertStringToFormants('a'),
-  temperature = 0.1, extraFormants_stochastic = 10, samplingRate = 16000)))
+  temperature = 0.1, extraFormants_stochastic = 10)))
 # stronger extra formants
 image(t(getSpectralEnvelope(nr = 512, nc = 50,
   exactFormants = soundgen:::convertStringToFormants('a'),
-  temperature = 0.1, extraFormants_stochastic = 30, samplingRate = 16000)))
+  temperature = 0.1, extraFormants_stochastic = 30)))
 # a schwa based on the length of vocal tract = 15.5 cm
 image(t(getSpectralEnvelope(nr = 512, nc = 50, exactFormants = NA,
-  temperature = .1, vocalTract = 15.5, samplingRate = 16000)))
+  temperature = .1, vocalTract = 15.5)))
 
 # manual specification of formants
 image(t(getSpectralEnvelope(nr = 512, nc = 50,

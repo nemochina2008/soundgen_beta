@@ -4,13 +4,13 @@
 \alias{morphFormants}
 \title{Morph formants}
 \usage{
-morphFormants(f1, f2, nHybrids = 5)
+morphFormants(f1, f2, nMorphs = 5)
 }
 \arguments{
 \item{f1, f2}{dataframes specifying one formant of the two target sounds
 (different numbers of rows are ok)}
 
-\item{nHybrids}{length of morphing sequence}
+\item{nMorphs}{length of morphing sequence}
 }
 \description{
 Internal soundgen function.

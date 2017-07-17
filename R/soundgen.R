@@ -1,4 +1,4 @@
-## TODO: # check all documentation re sound synthesis
+## TODO: # sylLen = 0 or even outside the permitted bounds - don't try to wiggle, otherwise rnorm_bounded hangs!
 # mouth opening: see if abrupt transitions can be avoided as mouth opening goes from 0 to positive (some kind of smooth fun approaching 0?)
 # write vignettes
 # put hidden pars and global constants in a dataframe and give the user access to it!!!
@@ -40,12 +40,13 @@ NULL
 #' @param tempEffects a list of scale factors regulating the effect of
 #'   temperature on particular parameters. To change, specify just those pars
 #'   that you want to modify, don't rewrite the whole list (defaults are
-#'   hard-coded). \code{formDrift}: depth of random drift of formants;
+#'   hard-coded). \code{sylLenDep}: random variation of the duration of
+#'   syllables and pauses; \code{formDrift}: depth of random drift of formants;
 #'   \code{formDisp}: irregularity of the dispersion of stochastic formants;
 #'   \code{pitchDriftDep} amount of slow random drift of f0;
 #'   \code{pitchDriftFreq}: frequency of slow random drift of f0;
-#'   \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random fluctuations
-#'   of user-specified pitch / noise / amplitude anchors
+#'   \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random
+#'   fluctuations of user-specified pitch / noise / amplitude anchors
 #' @param maleFemale hyperparameter for shifting f0 contour, formants, and
 #'   vocalTract to make the speaker appear more male (-1...0) or more female
 #'   (0...+1).
@@ -182,6 +183,7 @@ soundgen = function(repeatBout = 1,
                     pitchAnchors_global = NA,
                     temperature = 0.025,
                     tempEffects = list(
+                      sylLenDep = .02,
                       formDrift = .3,
                       formDisp = .2,
                       pitchDriftDep = .5,
@@ -400,25 +402,30 @@ soundgen = function(repeatBout = 1,
   # START OF BOUT GENERATION
   for (b in 1:repeatBout) {
     # syllable segmentation
-    sylDur_s = rnorm_bounded(
-      n = 1,
-      mean = sylLen,
-      low = permittedValues['sylLen', 'low'],
-      high = permittedValues['sylLen', 'high'],
-      sd = (permittedValues['sylLen', 'high'] -
-           permittedValues['sylLen', 'low']) * temperature / 50,
-      roundToInteger = FALSE
-    )
+    if (sylLen >= permittedValues['sylLen', 'low'] && sylLen <= permittedValues['sylLen', 'high']) {
+      sylDur_s = rnorm_bounded(
+        n = 1,
+        mean = sylLen,
+        low = permittedValues['sylLen', 'low'],
+        high = permittedValues['sylLen', 'high'],
+        sd = (permittedValues['sylLen', 'high'] -
+                permittedValues['sylLen', 'low']) * temperature * tempEffects$sylLenDep,
+        roundToInteger = FALSE
+      )
+    } else {
+      sylDur_s = sylLen  # don't try to wiggle weird values, esp. 0
+    }
+
     pauseDur_s = rnorm_bounded(
       n = 1,
       mean = pauseLen,
       low = permittedValues['pauseLen', 'low'],
       high = permittedValues['pauseLen', 'high'],
       sd = (permittedValues['pauseLen', 'high'] -
-           permittedValues['pauseLen', 'low']) * temperature / 50,
+           permittedValues['pauseLen', 'low']) * temperature * tempEffects$sylLenDep,
       roundToInteger = FALSE
     )
-    syllables = divideIntoSyllables (
+    syllables = divideIntoSyllables(
       sylLen = sylDur_s,
       nSyl = nSyl,
       pauseLen = pauseDur_s,

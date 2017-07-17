@@ -5,7 +5,7 @@
 #' Morphs two dataframes of anchors, with two columns and at least two rows in
 #' each.
 #' @param a,b dataframes to morph
-#' @param nHybrids length of morphing sequence
+#' @param nMorphs length of morphing sequence
 #' @param method morphing method. 'smooth' equalizes contour lengths and takes a
 #'   weighted mean. 'perAnchor' is a more sophisticated algorithm that attempts
 #'   to match individual anchors
@@ -14,35 +14,37 @@
 #' @param matchIdx manual override of anchor matching: if you have a better idea
 #'   of which anchors should morph into each other, specify
 #' @param plot if TRUE, plots the morphing sequence of anchors
-#' @return A list of length nHybrids containing anchor dataframes for morphing
+#' @param ... other graphical pars passed on to \code{plot}
+#' @return A list of length nMorphs containing anchor dataframes for morphing
 #' @examples
 #' a = data.frame(time=c(0, .2, .9, 1), value=c(100, 110, 180, 110))
 #' b = data.frame(time=c(0, .3, .5, .8, 1), value=c(300, 220, 190, 400, 350))
 #' plot (a, type = 'b', ylim = c(0, 500))
 #' points (b, type = 'b', col = 'blue')
-#' m = soundgen:::morphDF (a, b, nHybrids = 15, method = 'smooth', plot = TRUE)
-#' m = soundgen:::morphDF (a, b, nHybrids = 15, method = 'perAnchor', plot = TRUE)
+#' m = soundgen:::morphDF(a, b, nMorphs = 15, method = 'smooth', plot = TRUE)
+#' m = soundgen:::morphDF(a, b, nMorphs = 15, method = 'perAnchor', plot = TRUE)
 #'
-#' m = soundgen:::morphDF (a = data.frame(time = c(0, 1), freq = c(700, 700)),
-#'                         b = data.frame(time = c(0, 1), freq = c(400, 600)),
-#'                         nHybrids = 5, method = 'perAnchor', plot = TRUE)
-#' m = soundgen:::morphDF (a = data.frame(time = c(-30, 120, 350), value = c(-120, 10, -120)),
-#'                         b = data.frame(time = c(50, 500), value = c(0, -30)),
-#'                         nHybrids = 10, method = 'perAnchor', plot = TRUE)
-#' m = soundgen:::morphDF (a = data.frame(time = c(-50, 1214), value = c(-50, -70)),
-#'                         b = data.frame(time = c(0, 49, 256), value = c(-120, 10, -120)),
-#'                         nHybrids = 8, method = 'perAnchor', plot = TRUE)
+#' m = soundgen:::morphDF(a = data.frame(time = c(0, 1), freq = c(700, 700)),
+#'                        b = data.frame(time = c(0, 1), freq = c(400, 600)),
+#'                        nMorphs = 5, method = 'perAnchor', plot = TRUE)
+#' m = soundgen:::morphDF(a = data.frame(time = c(-30, 120, 350), value = c(-120, 10, -120)),
+#'                        b = data.frame(time = c(50, 500), value = c(0, -30)),
+#'                        nMorphs = 10, method = 'perAnchor', plot = TRUE)
+#' m = soundgen:::morphDF(a = data.frame(time = c(-50, 1214), value = c(-50, -70)),
+#'                        b = data.frame(time = c(0, 49, 256), value = c(-120, 10, -120)),
+#'                        nMorphs = 8, method = 'perAnchor', plot = TRUE)
 morphDF = function(a,
                    b,
-                   nHybrids = 5,
+                   nMorphs = 5,
                    method = c('smooth', 'perAnchor')[2],
                    lenSmooth = 50,
                    matchIdx = NULL,
-                   plot = F) {
+                   plot = F,
+                   ...) {
   # example of expected input a & b: data.frame(time=c(0,1), value=c(-30,15))  NB: min 2 rows!!!
 
   if (identical(a, b)) {
-    return (rep(list(a), nHybrids))
+    return (rep(list(a), nMorphs))
   }
 
   if (is.list(a)) a = as.data.frame(a)
@@ -52,7 +54,7 @@ morphDF = function(a,
   mymin_x = min(min(a[, 1]), min(b[, 1]))
   mymax_y = max(max(a[, 2]), max(b[, 2]))
   mymin_y = min(min(a[, 2]), min(b[, 2]))
-  cols = rainbow(n = nHybrids)
+  cols = rainbow(n = nMorphs)
   out = list()
 
   if (method == 'smooth') {
@@ -60,23 +62,24 @@ morphDF = function(a,
     a_up = getSmoothContour(len = lenSmooth, anchors = a) # plot(a_up)
     b_up = getSmoothContour(len = lenSmooth, anchors = b) # plot(b_up)
 
-    idx = seq(0, 1, length.out = nHybrids)
+    idx = seq(0, 1, length.out = nMorphs)
     timeIdx_a = seq(a[1, 1], a[nrow(a), 1], length.out = lenSmooth)
     timeIdx_b = seq(b[1, 1], b[nrow(b), 1], length.out = lenSmooth)
     out[[1]] = data.frame(time = timeIdx_a, value = a_up)
     if (plot)
-      plot (
+      plot(
         out[[1]],
         col = cols[1],
         xlim = c(mymin_x, mymax_x),
-        ylim = c(mymin_y, mymax_y)
+        ylim = c(mymin_y, mymax_y),
+        ...
       )
     for (d in 2:length(idx)) {
       hybrid = a_up * (1 - idx[d]) + b_up * idx[d]
       hybrid_time = timeIdx_a * (1 - idx[d]) + timeIdx_b * idx[d]
       out[[d]] = data.frame(time = hybrid_time, value = hybrid)
       if (plot)
-        points (out[[d]], main = idx[d], col = cols[d])
+        points(out[[d]], main = idx[d], col = cols[d])
     }
   } else if (method == 'perAnchor') {
     ## Option 2: alternatively, overimpose both curves without upsampling
@@ -148,7 +151,7 @@ morphDF = function(a,
     # END OF ANCHORS MATCHING
 
     # morph
-    idx = seq(0, 1, length.out = nHybrids)
+    idx = seq(0, 1, length.out = nMorphs)
     out[[1]] = a[, 1:2]
     for (d in 1:length(idx)) {
       hybrid = a
@@ -160,16 +163,16 @@ morphDF = function(a,
       }
       hybrid = hybrid[!duplicated(hybrid[, 1:2]), ] # remove duplicate rows
       if (swap) {
-        out[[nHybrids - d + 1]] = hybrid[, 1:2]
+        out[[nMorphs - d + 1]] = hybrid[, 1:2]
       } else {
         out[[d]] = hybrid[, 1:2]
       }
       if (plot) {
         if (d == 1) {
-          plot (a[, 1:2], col = cols[1], xlim = c(mymin_x, mymax_x),
-                ylim = c(mymin_y, mymax_y), type = 'b')
+          plot(a[, 1:2], col = cols[1], xlim = c(mymin_x, mymax_x),
+               ylim = c(mymin_y, mymax_y), type = 'b', ...)
         } else {
-          points (hybrid[, 1:2], main = idx[d], col = cols[d], type = 'b')
+          points(hybrid[, 1:2], main = idx[d], col = cols[d], type = 'b')
         }
       }
     }
@@ -184,8 +187,8 @@ morphDF = function(a,
 #' Internal soundgen function.
 #' @param f1,f2 dataframes specifying one formant of the two target sounds
 #'   (different numbers of rows are ok)
-#' @param nHybrids length of morphing sequence
-morphFormants = function(f1, f2, nHybrids = 5) {
+#' @param nMorphs length of morphing sequence
+morphFormants = function(f1, f2, nMorphs = 5) {
   if (is.list(f1)) f1 = as.data.frame(f1)
   if (is.list(f2)) f2 = as.data.frame(f2)
   # for compatibility with morphDF(), make sure we have at least two anchors
@@ -197,9 +200,9 @@ morphFormants = function(f1, f2, nHybrids = 5) {
     f2 = rbind(f2, f2)
     f2$time[2] = 1
   }
-  h = morphDF(f1[, c(1, 2)], f2[, c(1, 2)], nHybrids = nHybrids)
-  h_amp = morphDF(f1[, c(1, 3)], f2[, c(1, 3)], nHybrids = nHybrids)
-  h_width = morphDF(f1[, c(1, 4)], f2[, c(1, 4)], nHybrids = nHybrids)
+  h = morphDF(f1[, c(1, 2)], f2[, c(1, 2)], nMorphs = nMorphs)
+  h_amp = morphDF(f1[, c(1, 3)], f2[, c(1, 3)], nMorphs = nMorphs)
+  h_width = morphDF(f1[, c(1, 4)], f2[, c(1, 4)], nMorphs = nMorphs)
   for (i in 1:length(h)) {
     h[[i]]$amp = h_amp[[i]]$amp
     h[[i]]$width = h_width[[i]]$width
@@ -211,8 +214,8 @@ morphFormants = function(f1, f2, nHybrids = 5) {
 #'
 #' Internal soundgen function.
 #' @param l1,l2 lists of formants (various lengths are ok)
-#' @param nHybrids length of morphing sequence
-#' @return A list of length nHybrids.
+#' @param nMorphs length of morphing sequence
+#' @return A list of length nMorphs.
 #' @examples
 #' l1 = list(f1 = data.frame(time = c(0, .5, 1),
 #'                           freq = c(700, 900, 1200),
@@ -234,7 +237,7 @@ morphFormants = function(f1, f2, nHybrids = 5) {
 #'                           amp = c(30),
 #'                           width = c(150)))
 #' ml = soundgen:::morphList(l1, l2, 4)
-morphList = function(l1, l2, nHybrids = 5) {
+morphList = function(l1, l2, nMorphs = 5) {
   # make sure both exactFormants lists contain equal numbers of formants
   while (length(l1) > length(l2)) {
     l2[[length(l2) + 1]] = l1[[length(l2) + 1]]
@@ -249,12 +252,12 @@ morphList = function(l1, l2, nHybrids = 5) {
   nFormants = length(l1)
 
   # morph one formant at a time
-  out = rep(list(l1), nHybrids)
+  out = rep(list(l1), nMorphs)
   for (f in 1:nFormants) {
-    temp = morphFormants(f1 = l1[[f]], f2 = l2[[f]], nHybrids)
+    temp = morphFormants(f1 = l1[[f]], f2 = l2[[f]], nMorphs)
     # a convoluted way of saving the output of morphFormants()
     # in appropriate slots in the output list
-    for (i in 1:nHybrids) {
+    for (i in 1:nMorphs) {
       out[[i]] [[f]] = temp[[i]]
     }
   }

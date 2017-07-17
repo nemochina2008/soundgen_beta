@@ -4,15 +4,15 @@
 \alias{morphList}
 \title{Morph lists}
 \usage{
-morphList(l1, l2, nHybrids = 5)
+morphList(l1, l2, nMorphs = 5)
 }
 \arguments{
 \item{l1, l2}{lists of formants (various lengths are ok)}
 
-\item{nHybrids}{length of morphing sequence}
+\item{nMorphs}{length of morphing sequence}
 }
 \value{
-A list of length nHybrids.
+A list of length nMorphs.
 }
 \description{
 Internal soundgen function.

@@ -4,7 +4,7 @@
 \alias{morph}
 \title{Morph sounds}
 \usage{
-morph(formula1, formula2, nHybrids, playMorphs = TRUE, savePath = NA,
+morph(formula1, formula2, nMorphs, playMorphs = TRUE, savePath = NA,
   samplingRate = 16000)
 }
 \arguments{
@@ -12,7 +12,7 @@ morph(formula1, formula2, nHybrids, playMorphs = TRUE, savePath = NA,
 \code{\link{soundgen}} that produce the two target sounds between which
 morphing will occur}
 
-\item{nHybrids}{the length of morphing sequence, including target sounds}
+\item{nMorphs}{the length of morphing sequence, including target sounds}
 
 \item{playMorphs}{if TRUE, the morphing sequence will be played}
 
@@ -24,7 +24,7 @@ saved there as individual .wav files (defaults to NA)}
 }
 \value{
 A list of two sublists ('formulas' and 'sounds'), each sublist of
-  length nHybrids. For ex., the formula for the second hybrid is
+  length nMorphs. For ex., the formula for the second hybrid is
   m$formulas[[2]], and the waveform is m$sounds[[2]]
 }
 \description{
@@ -34,10 +34,10 @@ other in a specified number of equal steps.
 }
 \examples{
 # write two formulas or copy-paste them from soundgen_app() or presets, for example:
-m = morph (formula1 = list(repeatBout = 2),
-             # OR: formula1 = 'soundgen(repeatBout = 2)',
-           formula2 = presets$Misc$Dog_bark,
-           nHybrids=5, playMorphs=TRUE)
+m = morph(formula1 = list(repeatBout = 2),
+          # equivalently: formula1 = 'soundgen(repeatBout = 2)',
+          formula2 = presets$Misc$Dog_bark,
+          nMorphs = 5, playMorphs = TRUE)
  # use $formulas to access formulas for each morph, $sounds for waveforms
  m$formulas[[4]]
  playme(m$sounds[[3]])

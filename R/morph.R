@@ -6,7 +6,7 @@
 #' @param formula1,formula2 lists of parameters for calling
 #'   \code{\link{soundgen}} that produce the two target sounds between which
 #'   morphing will occur
-#' @param nHybrids the length of morphing sequence, including target sounds
+#' @param nMorphs the length of morphing sequence, including target sounds
 #' @param playMorphs if TRUE, the morphing sequence will be played
 #' @param savePath if it is the path to an existing directory, morphs will be
 #'   saved there as individual .wav files (defaults to NA)
@@ -14,23 +14,23 @@
 #'   \code{formula1} and \code{formula2}!
 #' @export
 #' @return A list of two sublists ('formulas' and 'sounds'), each sublist of
-#'   length nHybrids. For ex., the formula for the second hybrid is
+#'   length nMorphs. For ex., the formula for the second hybrid is
 #'   m$formulas[[2]], and the waveform is m$sounds[[2]]
 #' @examples
 #' # write two formulas or copy-paste them from soundgen_app() or presets, for example:
-#' m = morph (formula1 = list(repeatBout = 2),
-#'              # OR: formula1 = 'soundgen(repeatBout = 2)',
-#'            formula2 = presets$Misc$Dog_bark,
-#'            nHybrids=5, playMorphs=TRUE)
+#' m = morph(formula1 = list(repeatBout = 2),
+#'           # equivalently: formula1 = 'soundgen(repeatBout = 2)',
+#'           formula2 = presets$Misc$Dog_bark,
+#'           nMorphs = 5, playMorphs = TRUE)
 #'  # use $formulas to access formulas for each morph, $sounds for waveforms
 #'  m$formulas[[4]]
 #'  playme(m$sounds[[3]])
-morph = function (formula1,
-                  formula2,
-                  nHybrids,
-                  playMorphs = TRUE,
-                  savePath = NA,
-                  samplingRate = 16000) {
+morph = function(formula1,
+                 formula2,
+                 nMorphs,
+                 playMorphs = TRUE,
+                 savePath = NA,
+                 samplingRate = 16000) {
   # convert formulas to lists
   if (is.character(formula1)) {
     formula1 = paste0('list', substr(formula1, 9, nchar(formula1)))
@@ -99,28 +99,73 @@ morph = function (formula1,
       f2$exactFormants_noise[[f]]$amp = 0
   }
 
+  # log-transform pitch and formant frequencies before morphing
+  if ('pitchAnchors' %in% names(f1)) {
+    f1$pitchAnchors$value = log(f1$pitchAnchors$value)
+    f2$pitchAnchors$value = log(f2$pitchAnchors$value)
+  }
+  if ('exactFormants' %in% names(f1)) {
+    for (l in 1:length(f1$exactFormants)) {
+      f1$exactFormants[[l]]$freq = log(f1$exactFormants[[l]]$freq)
+      f2$exactFormants[[l]]$freq = log(f2$exactFormants[[l]]$freq)
+    }
+  }
+  if ('exactFormants_noise' %in% names(f1)) {
+    for (l in 1:length(f1$exactFormants_noise)) {
+      f1$exactFormants_noise[[l]]$freq = log(f1$exactFormants_noise[[l]]$freq)
+      f2$exactFormants_noise[[l]]$freq = log(f2$exactFormants_noise[[l]]$freq)
+    }
+  }
+
   # f1 and f2 are now fully prepared: two target formulas,
   # both of the same length, including the same pars, in the same order
+
+  # MORPH THE FORMULAS
   m = f1
-  formulas = rep(list(f1), nHybrids)
+  formulas = rep(list(f1), nMorphs)
   sounds = list()
   for (p in 1:length(f1)) {
     # morph each element of the formula list according to its type
     if (class(f1[[p]]) == 'numeric') {
-      m[[p]] = seq(f1[[p]], f2[[p]], length.out = nHybrids)
+      m[[p]] = seq(f1[[p]], f2[[p]], length.out = nMorphs)
     } else if (names(f1[p]) %in% c('exactFormants', 'exactFormants_noise')) {
-      m[[p]] = morphList(f1[[p]], f2[[p]], nHybrids = nHybrids)
+      m[[p]] = morphList(f1[[p]], f2[[p]], nMorphs = nMorphs)
     } else {
-      m[[p]] = morphDF(as.data.frame(f1[[p]]), as.data.frame(f2[[p]]), nHybrids = nHybrids)
+      m[[p]] = morphDF(as.data.frame(f1[[p]]), as.data.frame(f2[[p]]), nMorphs = nMorphs)
     }
     # a convoluted way of saving the output of morphFormants() in appropriate
     # slots in the output list
-    for (h in 1:nHybrids) {
+    for (h in 1:nMorphs) {
       formulas[[h]] [[p]] = m[[p]] [[h]]
     }
   }
+  # END OF MORPHING THE FORMULAS
 
-  for (h in 1:nHybrids) {
+  # exponentiate pitch and formant frequencies after morphing
+  if ('pitchAnchors' %in% names(f1)) {
+    for (h in 1:nMorphs) {
+      formulas[[h]]$pitchAnchors$value = exp(formulas[[h]]$pitchAnchors$value)
+    }
+  }
+  if ('exactFormants' %in% names(f1)) {
+    for (h in 1:nMorphs) {
+      for (l in 1:length(f1$exactFormants)) {
+        formulas[[h]]$exactFormants[[l]]$freq =
+          exp(formulas[[h]]$exactFormants[[l]]$freq)
+      }
+    }
+  }
+  if ('exactFormants_noise' %in% names(f1)) {
+    for (h in 1:nMorphs) {
+      for (l in 1:length(f1$exactFormants_noise)) {
+        formulas[[h]]$exactFormants_noise[[l]]$freq =
+          exp(formulas[[h]]$exactFormants_noise[[l]]$freq)
+      }
+    }
+  }
+
+  # generate the morphs based on the formulas
+  for (h in 1:nMorphs) {
     sounds[[h]] = do.call(soundgen, formulas[[h]])
     if (playMorphs) playme(sounds[[h]], samplingRate = samplingRate)
     if (!is.na(savePath)){

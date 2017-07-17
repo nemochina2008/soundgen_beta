@@ -135,6 +135,8 @@ rnorm_bounded = function(n = 1,
                          roundToInteger = FALSE) {
   if (sum(mean > high | mean < low) > 0) {
     warning(paste('Some of the specified means are outside the low/high bounds! Mean =', mean))
+    mean[mean < low] = low
+    mean[mean > high] = high
   }
 
   if (length(mean) < n) mean = rep(mean[1], n)
@@ -162,7 +164,7 @@ rnorm_bounded = function(n = 1,
   for (i in 1:n) {
     while (out[i] < low[i] | out[i] > high[i]) {
       out[i] = rnorm(1, mean[i], sd[i]) # repeat until a suitable value is generated
-      out[roundToInteger] = round (out[roundToInteger], 0)
+      out[roundToInteger] = round(out[roundToInteger], 0)
     }
   }
   return(out)
