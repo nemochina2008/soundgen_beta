@@ -1,4 +1,4 @@
-## TODO: # sylLen = 0 or even outside the permitted bounds - don't try to wiggle, otherwise rnorm_bounded hangs!
+## TODO: # check warning in sigh (vignette) and consider reducing formant width with increasing vocalTract in stochastic formants (to avoid formants merging - check if this is theoretically meaningful!)
 # mouth opening: see if abrupt transitions can be avoided as mouth opening goes from 0 to positive (some kind of smooth fun approaching 0?)
 # write vignettes
 # put hidden pars and global constants in a dataframe and give the user access to it!!!
@@ -433,7 +433,7 @@ soundgen = function(repeatBout = 1,
       sylDur_max = permittedValues['sylLen', 'high'],
       pauseDur_min = permittedValues['pauseLen', 'low'],
       pauseDur_max = permittedValues['pauseLen', 'high'],
-      temperature = temperature
+      temperature = temperature * tempEffects$sylLenDep
     )
     syllableStartIdx = round(syllables[, 'start'] * samplingRate / 1000)
     syllableStartIdx[1] = 1
@@ -659,9 +659,19 @@ soundgen = function(repeatBout = 1,
                  windowLength_points - (overlap * windowLength_points / 100))
       nc = length(step) # number of windows for fft
       nr = windowLength_points / 2 # number of frequency bins for fft
-      movingFormants = max(unlist(lapply(exactFormants, length))) > 1 |
-        sum(mouthAnchors$value != .5) > 0 # are formants moving or constant?
+
+      # are formants moving or stationary?
+      if (is.list(exactFormants)) {
+        movingFormants = max(sapply(exactFormants, function(x) sapply(x, length))) > 1
+      } else {
+        movingFormants = FALSE
+      }
+      if (is.list(mouthAnchors) && sum(mouthAnchors$value != .5) > 0) {
+        movingFormants = TRUE
+      }
       nInt = ifelse(movingFormants, nc, 1)
+
+      # prepare the filter
       spectralEnvelope = getSpectralEnvelope(
         nr = nr,
         nc = nInt,
