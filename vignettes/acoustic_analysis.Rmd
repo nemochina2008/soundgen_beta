@@ -2,90 +2,158 @@
 title: "Acoustic analysis with soundgen"
 author: "Andrey Anikin"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    toc: true
 vignette: >
   %\VignetteIndexEntry{Acoustic analysis with soundgen}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
-## Purpose
+# Purpose
 
-Ever needed to extract a large number of acoustic predictors from a large number of audio files? Are you describing the vocal repertoire of a species, or using machine learning for acoustic classification, or comparing different classes of sounds acoustically? Soundgen offers routines for both high-precision analysis and rough-and-ready bulk processing of sounds. 
+There are numerous programs out there for performing acoustic analysis, including several open-source packages. For in-depth analysis of individual, relatively short mammalian sounds it's hard to beat <a href="http://www.fon.hum.uva.nl/praat/">PRAAT</a> (batch processing is possible, but a bit tricky because PRAAT uses its own, rather unusual scripting language). For bird sounds, a sophisticated tool is <a href="http://soundanalysispro.com/">Sound Analysis Pro</a>. In R, the most extensive toolkit by far is the <a href="https://cran.r-project.org/web/packages/seewave/index.html">seewave</a> package. Soundgen builds upon the functionality of seewave, adding specialized functions for sound synthesis (see the vignette on sound synthesis) and acoustic analysis, particularly pitch tracking and audio segmentation.
 
-Apart from being implemented in R, reasons to use `soundgen` for acoustic analysis might be: 
+Reasons to use `soundgen` for acoustic analysis might be: 
 
 1. User-friendly approach: a single call to the `analyzeFolder` function will give you a dataframe containing dozens of commonly used acoustic descriptors for each file in an entire folder. So if you'd rather get started with model-building without delving too deeply into acoustics, you are one line of code away from your dataset.
-1. Flexible pitch tracking: soundgen uses several popular methods of pitch detection in parallel, followed by their integration and post-processing. While the abundance of parameters may initially seem daunting, for those who do wish to delve deeply this makes soundgen's pitch tracker very versatile and offers a lot of power for high-precision analysis.
+1. Flexible pitch tracking: soundgen uses several popular methods of pitch detection in parallel, followed by their integration and postprocessing. While the abundance of parameters may initially seem daunting, for those who do wish to delve deeply this makes soundgen's pitch tracker very versatile and offers a lot of power for high-precision analysis.
 1. Audio segmentation with in-built optimization: the tools for syllable segmentation are again very flexible. Control parameters can even be optimized automatically, as long as you have a manually segmented training sample.
+
+To summarize, you might want to look at soudngen's tools for acoustic analysis if you are extracting a large number of acoustic predictors from a large number of audio files, for example:
+
+* describing the vocal repertoire of a species (clustering)
+* using machine learning for acoustic classification
+* comparing different classes of sounds in terms of specific acoustic predictors
 
 The most relevant functions are:
 
 * `analyze`: analyzes a single sound and extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per FFT frame.
 * `analyzeFolder`: same as `analyze` but applied to all .wav files in a folder
-* `segment`: finds syllables and bursts of energy in a single sound
+* `segment`: finds syllables and bursts of energy in a single sound using its amplitude envelope
 * `segmentFolder`: same as `segment` but applied to all .wav files in a folder
 * `optimizePars`: optimizes control parameters of `segment` or `analyze` aiming to reproduce manual segmentation of a training sample
+* `ssm`: produces a self-similarity matrix and calculates novelty as an alternative method of audio segmentation
 
-This vignette is designed to show how soundgen can be used effectively to perform acoustic analysis. It assumes that the reader is already familiar with key concepts of phonetics and bioacoustics. If case some parts of the presentation seem obscure, helpful sources for further reading are suggested below in References.
+*TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R with `tuneR::melfcc`, so there was no need to include it in soudngen. LPC is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`), but, to be perfectly honest, for serious formant analysis I would actually recommend using PRAAT and checking everything manually. You can thus start with `soundgen::analyze` to get a table of many common acoustic predictors and then add some more using other R packages and/or other software or manual measurements, or you could customize `soundgen::analyze` to extract additional predictors.*
 
-## Pitch tracking
-# Basic principles
-If you look at the source code of `soundgen::analyze`, you will see that almost all of it deals with a single acoustic characteristic: fundamental frequency (F0) or its perceptual equivalent, pitch. That's because pitch is both highly salient to listeners and notoriously difficult to measure accurately. Many of the large variety of existing pitch tracking algorithms were designed for analyzing a particular type of sound, often human speech. Soundgen's pitch tracker was written to analyze human non-linguistic vocalizations like screams and laughs. These sounds are much harsher and noisier than ordinary speech. In addition, the original corpus (Anikin & Persson, 2017) was collected from online videos, so that both sampling rate and microphone settings varied tremendously. From the very beginning, the focus was thus on developing a pitch tracker that would be robust to noise and recording conditions. 
+This vignette is designed to show how soundgen can be used effectively to perform acoustic analysis. It assumes that the reader is already familiar with key concepts of phonetics and bioacoustics. In case some parts of the presentation seem obscure, helpful sources for further reading are suggested below in References. 
 
-The approach followed with soundgen's pitch tracker is to use four different estimates of the fundamental frequency, each of which is particularly suited to certain types of sounds. Their output is then integrated and post-processed to generate the best overall estimate of frame-by-frame pitch. The four sources of pitch estimates are:
-  
-  1. Time domain: autocorrelation `pitchAutocor` (~PRAAT, see Boersma 1993). 
-  This is basically an R implementation of the algorithm used in the popular open-source program PRAAT. The basic idea is that a harmonic signal correlates with itself most strongly at a delay equal to the period of the lowest harmonic (F0). Peaks in the autocorrelation function are thus treated as potential pitch candidates. The only trick is to choose an appropriate windowing function and adjust for its own autocorrelation. Compared to other methods implemented in soundgen, pitch estimates based on autocorrelation appear to be particularly accurate for relatively high values of F0.
-  
-  1. Frequency domain: the lowest dominant frequency band `dom`. 
-  If the sound is harmonic, the spectrum of an FFT frame typically has little energy below F0. It is therefore likely that the first sizeable peak in the spectrum is in fact F0, and all we have to do is choose a reasonable threshold. Natually, there are cases of a missing fundamental and misleading low-frequency noises. Nevertheless, this ridiculously simple pitch estimate can also be ridiculously accurate - in fact, it was the most accurate approximation to manually labeled pitch values in the training corpus, largely because noisy sounds like roars and grunts lack clear harmonics but are perceived as voiced, and in such sounds the lowest dominant frequency band is exactly what listeners perceive as pitch. This simple estimate may thus be our best shot when the vocal cords are vibrating in a chaotic fashion (deterministic chaos).
-
-1. Frequency domain: cepstrum `pitchCep`.
-  Cepstrum is the FFT of log-spectrum. It may be a bit challenging to wrap one's head around, but the main idea is quite simple: just as FFT is a way to find periodicity in a signal, cepstrum is a way to find periodicity in the spectrum. In other words, if the spectrum contains regularly spaced harmonics, its FFT will contain a peak corresponding to this regularity. And since the distance between harmonics equals the fundamental frequency, this cepstral peak gives us F0. Cestral estimates are pretty useless when F0 is high (say, above 1 kHz), so soundgen automatically discounts the contribution of high-frequency cepstral estimates. Once integrated with other candidates, however, cepstral estimates do improve the overall accuracy of pitch tracking.
-  
-1. Frequency domain: ratios of harmonics `pitchSpec` (~BaNa, Ba et al. 2012).
-  All harmonics are multiples of the fundamental frequency. The ratios of two neighboring harmonics are thus predictably related to their number. For example, `(3 * F0) / (2 * F0) = 1.5`, so if we find two harmonics in the spectrum that have a ratio of exactly 1.5, it is likely that these are the first two harmonics, making it possible to calculate F0. This is the principle behind the spectral pitch estimate in soundgen, which seems to be particularly useful for noisy, low-pitched sounds.
-
-These four methods of pitch estimation are not treated as completely independent in soundgen. Autocorrelation is performed first to provide an initial guess at the likely pitch and harmonics-to-noise ratio (HNR) of an FFT frame, and then this information is used to adjust the expectations of the cepstral and spectral algorithms. In particular, if autocorrelation suggests that the pitch is high, confidence in cepstral estimates is attenuated; and if autocorrelation suggests that HNR is low, thresholds for spectral peak detection are raised, making spectral pitch estimates more conservative.
-  
-# Useful parameters
-To demonstrate acoustic analysis in practice, let's begin by generating a sound with a known pitch contour. To make pitch tracking less trivial and demonstrate some of the challenges, let's add some breathing noise (to make HNR low) as well as subharmonics and jitter (to make harmonics less distinct):
+# Acoustic analysis with `analyze`
+To demonstrate acoustic analysis in practice, let's begin by generating a sound with a known pitch contour. To make pitch tracking less trivial and demonstrate some of the challenges, let's add some noise, subharmonics, and jitter:
 ```{r}
 library(soundgen)
-s = soundgen(sylLen = 900, pitchAnchors = list(
-  time = c(0, .3, 1), value = c(300, 900, 100)),
-  noiseAnchors = list(time = c(0, 900, 1200), value = c(-40, 0,-40)),
-  subDep = 200, jitterDep = 0.5, pitchEffects_amount = 100, temperature = 0, 
-  plot = TRUE)
-# playme(s)
-```
-To analyze this sound with default settings, all we need to specify is the sampling rate (the default in soundgen is 16000 Hz):
-```{r, fig.height = 6, fig.width = 6}
-a = analyze(s, samplingRate = 16000, plot = TRUE)
+s1 = soundgen(sylLen = 900, temperature = 0,
+              pitchAnchors = list(time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
+              noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
+              subDep = 100, jitterDep = 0.5, pitchEffects_amount = 100)
+# playme(s1)  # replay as many times as needed w/o re-synthesizing the sound
 ```
 
-
-# Post-processing of pitch contour
-
-## Syllable segmentation
-
-## Self-similarity matrices
-
-## Figures
-
-The figure sizes have been customized so that you can easily put two images side-by-side. 
-
-```{r, fig.show = 'hold'}
-plot(1:10)
-plot(10:1)
+The contour of F0 is determined by our pitchAnchors, so we can calculate its true median pitch:
+```{r}
+true_pitch = getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
+                                             value = c(300, 900, 400, 2300)), 
+                              len = 1000)
+median(true_pitch)
 ```
 
-You can enable figure captions by `fig_caption: yes` in YAML:
 
-    output:
-      rmarkdown::html_vignette:
-        fig_caption: yes
+## Basic principles
+At the heart of acoustic analysis with soundgen is the Short-time Fourier Transform (STFT): we look at one short segment of sound at a time, analyze its spectrum using Fast Fourier Transform, and then move on to the next (perhaps overlapping) segment. As the analysis window slides along the signal, STFT shows which frequencies it contains at different points of time. The nitty-gritty of STFT is beyond the scope of this vignette, but it can be found in just about any textbook on phonetics, acoustics, digital signal processing, etc. For a quick R-focused introduction, see <a href="https://cran.r-project.org/web/packages/seewave/vignettes/seewave_analysis.pdf">seewave vignette</a>. 
+Putting FFTs of all segments (frames) together, we get a spectrogram. `analyze` calls another soundgen function, `spec`, to produce a spectrogram and then plot pitch candidates on top of it. `spec` is a modified version of `seewave::spectro` with added routines for removing background noise, controlling contrast and brightness, adding median smoothing, etc (see the examples in `?soundgen::spec`). To analyze a sound with default settings and plot its spectrogram, all we need to specify is its sampling rate (the default in soundgen is 16000 Hz):
 
-Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+```{r fig.show = "hold", fig.height = 5, fig.width = 7}
+a1 = analyze(s1, samplingRate = 16000, plot = TRUE)
+summary(a1)  # many acoustic predictors measured for each FFT frame
+median(true_pitch)  # true value, as synthesized above
+median(a1$pitch, na.rm = TRUE)  # our estimate: way off, mostly b/c of misleading subharmonics
+```
 
+There are several key parameters that control the behavior of STFT and affect all extracted acoustic variables. The same parameters serve as arguments to `spec` and control the spectrogram. As a result, you can immediately see what frame-by-frame input you have fed into the algorithm for acoustic analysis by visually inspecting the produced spectrogram. For example, if you can hear F0, but can't see individual harmonics in the spectrogram, the pitch tracker probably will not see them, either, and will fail to detect F0 correctly. The usual remedy is to adjust STFT settings:
+
+* `windowLength`: the length of sliding STFT window. Longer windows (e.g., 40 - 50 ms) improve frequency resolution at the expense of time resolution, so they are good for detecting relatively low, slowly changing F0, as in human moans or grunts. Shorter windows (e.g., 5 - 10 ms) improve time resolution at the expense of frequency resolution, so they are good for visualizing formants or detecting high, rapidly changing F0 as in bird songs or mammalian whistles.
+* `step`: the step of sliding STFT window. For example, if `windowLength = 50` and `step = 25`, each time we move the analysis frame, there is a 50% overlap with the previous frame. This introduces redundancy into the analysis, but it also - to some limited extent - improves time resolution while maintaining relatively high frequency resolution. The main cost of small steps (large overlap) is processing time, but very large overlap is not always desirable, even when processing time is not an issue. If some audio segments are problematic (e.g., very noisy), pitch contour may actually be more accurate with relatively large steps and more smoothing. It is therefore best to check the results with different steps and/or run formal optimization.
+* `wn`: the type of windowing function used to taper the analysis frame during STFT. In practice the windowing function doesn't seem to have a major effect on the result, as long as you choose something reasonable like gaussian, hanning,or bartlett. 
+* `zp`: zero-padding. You can use a short FFT window and improve its frequency resolution by padding each FFT frame with zeroes. This is a computational trick that - again, to some limited extent - improves frequency resolution while maintaining relatively high time resolution. 
+
+
+
+## Pitch tracking
+If you look at the source code of `soundgen::analyze`, you will see that almost all of it deals with a single acoustic characteristic: fundamental frequency (F0) or its perceptual equivalent, pitch. That's because pitch is both highly salient to listeners and notoriously difficult to measure accurately. Many of the large variety of existing pitch tracking algorithms were designed for analyzing a particular type of sound, usually human speech. Soundgen's pitch tracker was written to analyze human non-linguistic vocalizations like screams and laughs. These sounds are much harsher and noisier than ordinary speech. In addition, the original corpus (Anikin & Persson, 2017) was collected from online videos, so that both sampling rate and microphone settings varied tremendously. From the very beginning, the focus was thus on developing a pitch tracker that would be robust to noise and recording conditions. 
+
+The approach followed with soundgen's pitch tracker is to use several different estimates of the fundamental frequency, each of which is particularly suited to certain types of sounds. You can use any of them individually, but their output is also automatically integrated and postprocessed so as to generate the best overall estimate of frame-by-frame pitch. There are four currently implemented classes of pitch estimates in soundgen:
+  
+  1. Time domain: autocorrelation `pitchAutocor` (~PRAAT: see Boersma, 1993). 
+  This is basically an R implementation of the algorithm used in the popular open-source program PRAAT. The basic idea is that a harmonic signal correlates with itself most strongly at a delay equal to the period of the lowest harmonic (F0). Peaks in the autocorrelation function are thus treated as potential pitch candidates. The main trick is to choose an appropriate windowing function and adjust for its own autocorrelation. Compared to other methods implemented in soundgen, pitch estimates based on autocorrelation appear to be particularly accurate for relatively high values of F0.
+  
+  1. Frequency domain: the lowest dominant frequency band `dom`. 
+  If the sound is harmonic and relatively noise-free, the spectrum of an FFT frame typically has little energy below F0. It is therefore likely that the first sizeable peak in the spectrum is in fact F0, and all we have to do is choose a reasonable threshold. Natually, there are cases of a missing fundamental and misleading low-frequency noises. Nevertheless, this simple estimate may be our best shot when the vocal cords are vibrating in a chaotic fashion (deterministic chaos). The reason is that sounds like roars and grunts lack clear harmonics but are perceived as voiced, and the lowest dominant frequency band corresponds to perceived pitch. 
+
+1. Frequency domain: cepstrum `pitchCep`.
+  Cepstrum is the FFT of log-spectrum. It may be a bit challenging to wrap one's head around, but the main idea is quite simple: just as FFT is a way to find periodicity in a signal, cepstrum is a way to find periodicity in the spectrum. In other words, if the spectrum contains regularly spaced harmonics, its FFT will contain a peak corresponding to this regularity. And since the distance between harmonics equals the fundamental frequency, this cepstral peak gives us F0. Cestral estimates are pretty useless when F0 is high (say, above 1 kHz), so soundgen automatically discounts the contribution of high-frequency cepstral estimates. Cepstral pitch candidates are disabled by default, since this method is both slower and less robust for human non-linguistic vocalizations. Depending on the type of analyzed audio, however, both the accuracy of different pitch tracking methods and their optimal parameters may change (see the section on optimization below).
+  
+1. Frequency domain: ratios of harmonics `pitchSpec` (~BaNa, Ba et al. 2012).
+  All harmonics are multiples of the fundamental frequency. The ratio of two neighboring harmonics is thus predictably related to their rank relative to F0. For example, `(3 * F0) / (2 * F0) = 1.5`, so if we find two harmonics in the spectrum that have a ratio of exactly 1.5, it is likely that these are the first two harmonics, making it possible to calculate F0. This is the principle behind the spectral pitch estimate in soundgen, which seems to be particularly useful for noisy, relatively low-pitched sounds.
+
+These four methods of pitch estimation are not treated as completely independent in soundgen. Autocorrelation is performed first to provide an initial guess at the likely pitch and harmonics-to-noise ratio (HNR) of an FFT frame, and then this information is used to adjust the expectations of the cepstral and spectral algorithms. In particular, if autocorrelation suggests that the pitch is high, confidence in cepstral estimates is attenuated; and if autocorrelation suggests that HNR is low, thresholds for spectral peak detection are raised, making spectral pitch estimates more conservative.
+
+## General settings
+
+prior
+silence = 0.04,
+entropy_threshold = 0.6
+
+## Pitch tracking methods
+The plot above shows a spectrogram of the sound with overlaid pitch candidates: yellow circles = autocorrelation pitch estimate (`pitchAutocor`), red triangles = spectral pitch estimate (`pitchSpec`), orange crosses = lowest dominant frequency band (`dom`). The size of each point shows the certainty of estimation: smaller points are calculated with lower certainty and have less weight when all candidates are integrated into the final pitch contour (blue line). To specify which pitch tracking methods should be employed, use `pitch_methods`. For example, we can include cepstral estimates instead of spectral pitch estimates. For this particular example, this combination of methods produces a more reasonable estimate of median pitch, although it misses several voiced frames at the beginning of the sound:
+
+```{r fig.show = "hold", fig.height = 5, fig.width = 7}
+a2 = analyze(s1, samplingRate = 16000, plot = TRUE, pitch_methods = c('autocor', 'cep', 'dom'))
+median(a2$pitch, na.rm = TRUE)
+```
+
+To see how different methods of pitch estimation in soudngen can be tweaked and optimized, let's look at the parameters of each method in turn.
+
+### Autocorrelation
+The key parameter for pitch tracking using the autocorrelation method is `voiced_threshold_autocor`, which defaults to 0.7. This means that peaks in the autocorrelation function have to be at least 0.7 high (1 = perfect autocorrelation). 
+
+autocor_smoothing_width = NULL,
+                   
+```{r fig.show = "hold", fig.height = 5, fig.width = 7}
+a3 = analyze(s1, samplingRate = 16000, plot = TRUE, pitch_methods = 'autocor')
+```
+
+
+### Lowest dominant frequency band
+
+### Cepstrum
+
+### BaNa (spectrum)
+
+### Other pitch tracking parameters
+                   min_voiced_cands = 'autom',
+                   pitch_floor = 75,
+                   pitch_ceiling = 3500,
+                   nCands = 1,
+
+## Postprocessing of pitch contour
+To see what postprocessing achieves, let's first turn it off completely:
+```{r}
+# a = 
+```
+
+# Syllable segmentation
+
+# Self-similarity matrices
+
+
+
+```{r}
+
+```
+
+# References
+Boersma, 1993
+Anikin & Persson, 2017
+Ba et al. 2012

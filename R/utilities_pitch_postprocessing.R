@@ -1,4 +1,4 @@
-### UTILITIES FOR POST-PROCESSING OF PITCH CONTOURS ###
+### UTILITIES FOR POSTPROCESSING OF PITCH CONTOURS ###
 
 #' Pathfinder
 #'
@@ -27,7 +27,7 @@
 pathfinder = function(pitchCands,
                       pitchCert,
                       certWeight = 0.5,
-                      postprocess = c('none', 'fast', 'slow')[2],
+                      pathfinding = c('none', 'fast', 'slow')[2],
                       control_anneal = list(maxit = 5000, temp = 1000),
                       interpolWindow = 3,
                       interpolTolerance = 0.05,
@@ -89,15 +89,15 @@ pathfinder = function(pitchCands,
 
   ## PATH-FINDING
   # find the best path through frame-by-frame pitch candidates
-  if (postprocess == 'fast') {
-    bestPath = postprocess_fast(
+  if (pathfinding == 'fast') {
+    bestPath = pathfinding_fast(
       pitchCands = pitchCands,
       pitchCert = pitchCert,
       pitchCenterGravity = pitchCenterGravity,
       certWeight = certWeight
     )
-  } else if (postprocess == 'slow') {
-    bestPath = postprocess_slow(
+  } else if (pathfinding == 'slow') {
+    bestPath = pathfinding_slow(
       pitchCands = pitchCands,
       pitchCert = pitchCert,
       certWeight = certWeight,
@@ -193,7 +193,7 @@ interpolate = function(pitchCands,
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
-postprocess_fast = function(pitchCands = pitchCands,
+pathfinding_fast = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             pitchCenterGravity = pitchCenterGravity,
                             certWeight = certWeight) {
@@ -283,7 +283,7 @@ costJumps = function(cand1, cand2) {
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
-postprocess_slow = function(pitchCands = pitchCands,
+pathfinding_slow = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             certWeight = certWeight,
                             pitchCenterGravity = pitchCenterGravity,
@@ -318,8 +318,8 @@ postprocess_slow = function(pitchCands = pitchCands,
 #'
 #' Internal soundgen function.
 #'
-#' Internal helper function for post-processing of pitch contours called by
-#' \code{\link{postprocess_slow}}. Calculates the cost of a particular path
+#' Internal helper function for postprocessing of pitch contours called by
+#' \code{\link{pathfinding_slow}}. Calculates the cost of a particular path
 #' through pitch candidates based on pitch jumps and distance from
 #' high-certainty candidates.
 #' @param path evaluated path through pitch candidates (as integers specifying
@@ -360,8 +360,8 @@ costPerPath = function(path,
 #'
 #' Internal soundgen function.
 #'
-#' Internal helper function for post-processing of pitch contours called by
-#' \code{\link{postprocess_slow}}. Generates proposals for new paths through
+#' Internal helper function for postprocessing of pitch contours called by
+#' \code{\link{pathfinding_slow}}. Generates proposals for new paths through
 #' pitch candidates. It gives up and returns NA after 100 attempts, which stops
 #' annealing - so the adaptation of pitch contour doesn't happen if
 #' @param path currently evaluated path

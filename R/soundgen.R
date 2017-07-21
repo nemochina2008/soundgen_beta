@@ -1,7 +1,6 @@
-## TODO: # check warning in sigh (vignette) and consider reducing formant width with increasing vocalTract in stochastic formants (to avoid formants merging - check if this is theoretically meaningful!)
+## TODO: # consider reducing formant width with increasing vocalTract in stochastic formants (to avoid formants merging - check if this is theoretically meaningful!)
 # mouth opening: see if abrupt transitions can be avoided as mouth opening goes from 0 to positive (some kind of smooth fun approaching 0?)
 # write vignettes
-# put hidden pars and global constants in a dataframe and give the user access to it!!!
 # soundgen(creakyBreathy = 1, play = TRUE): check what makes the clicks at start/end of breathing
 
 

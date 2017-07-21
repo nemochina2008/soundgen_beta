@@ -68,14 +68,15 @@
 #' @param shortest_pause the smallest gap between voiced syllables (ms) that
 #'   means they shouldn't be merged into one voiced syllable
 #' @param interpolWindow,interpolTolerance,interpolCert control the behavior of
-#'   interpolation algorithm when post-processing pitch candidates. See
+#'   interpolation algorithm when postprocessing pitch candidates. To turn off
+#'   interpolation, set \code{interpolWindow} to NULL. See
 #'   \code{\link{pathfinder}} for details.
-#' @param postprocess method of postprocessing pitch candidates to find the
-#'   optimal pitch contour: 'slow' for annealing, 'fast' for a simple heuristic,
-#'   'none' for none. See \code{\link{pathfinder}} for details.
-#' @param control_anneal a list of control parameters for post-processing of
+#' @param pathfinding method of finding the optimal path through pitch
+#'   candidates: 'slow' for annealing, 'fast' for a simple heuristic, 'none' for
+#'   none. See \code{\link{pathfinder}} for details.
+#' @param control_anneal a list of control parameters for postprocessing of
 #'   pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
-#'   only relevant if \code{postprocess} is 'slow'
+#'   only relevant if \code{pathfinding} is 'slow'
 #' @param certWeight (0 to 1) in pitch postprocessing, specifies how much we
 #'   prioritize the certainty of pitch candidates vs. pitch jumps / the internal
 #'   tension of the resulting pitch curve. High certWeight: we mostly pay
@@ -86,7 +87,8 @@
 #'   path through pitch candidates is further processed to minimize the elastic
 #'   force acting on pitch contour. Note that this imposes some smoothing and
 #'   thus creates pitch values that were not among candidates. The exact value
-#'   of \code{snake_step} controls the speed of snake adaptation.
+#'   of \code{snake_step} controls the speed of snake adaptation. To turn off
+#'   the snake module, set \code{snake_step} to NULL
 #' @param snake_plot if TRUE, plots the snake (pitch postprocessing)
 #' @param smooth_idx,smooth_vars if \code{smooth_idx} is a positive number,
 #'   contours of the variables in \code{smooth_vars} are smoothed using a
@@ -96,6 +98,8 @@
 #'   smoothing). \code{smooth_idx} controls both the tolerated deviance and the
 #'   size of the window for calculating a moving median. \code{smooth_idx} of 1
 #'   corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.
+#'   To turn off the median smoothing, set \code{smooth_idx} or
+#'   \code{smooth_vars} to NULL.
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
 #' @param savePath if a valid path is specified, the plot is saved in this
 #'   folder (defaults to NA)
@@ -114,30 +118,30 @@
 #'   (pitchSpec).
 #' @export
 #' @examples
-#' sound1 = soundgen(sylDur_mean = 900, pitchAnchors = list(
+#' sound1 = soundgen(sylLen = 900, pitchAnchors = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
-#'   breathingAnchors = list(time = c(0, 900), value = c(-40, 00)),
+#'   noiseAnchors = list(time = c(0, 900), value = c(-40, 00)),
 #'   temperature = 0)
 #' playme(sound1, 16000)
 #' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
-#' # or, to improve the quality of post-processing:
-#' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
+#' # or, to improve the quality of postprocessing:
+#' a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
 #' median(a1$pitch, na.rm = TRUE)  # 614 Hz
 #' # (can vary, since postprocessing is stochastic)
 #' # compare to the true value:
 #' median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
-#'   value = c(300, 900, 400, 2300)), len = 1000))  # 611 Hz
+#'   value = c(300, 900, 400, 2300)), len = 1000))
 #'
 #' # the same pitch contour, but harder to analyze b/c of subharmonics and jitter
-#' sound2 = soundgen(sylDur_mean = 900, pitchAnchors = list(
+#' sound2 = soundgen(sylLen = 900, pitchAnchors = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
-#'   breathingAnchors = list(time = c(0, 900), value = c(-40, 20)),
-#'   sidebands_width = 200, jitterDep = 0.5, noiseAmount = 100, temperature = 0)
+#'   noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
+#'   subDep = 100, jitterDep = 0.5, pitchEffects_amount = 100, temperature = 0)
 #' playme(sound2, 16000)
-#' a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
+#' a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
 #' # many pitch candidates are off, but the overall contour and estimate of
-#' # median pitch are pretty similar:
-#' median(a2$pitch, na.rm = TRUE)  # 622 Hz (can vary, since post-processing is stochastic)
+#' # median pitch should be pretty accurate:
+#' median(a2$pitch, na.rm = TRUE)  # 622 Hz (can vary, since postprocessing is stochastic)
 #' median(a2$HNR, na.rm = TRUE)  # HNR of 3-4 dB
 #'
 #' # Fancy plotting options:
@@ -182,7 +186,7 @@ analyze = function(x,
                    interpolWindow = 3,
                    interpolTolerance = 0.3,
                    interpolCert = 0.3,
-                   postprocess = c('none', 'fast', 'slow')[2],
+                   pathfinding = c('none', 'fast', 'slow')[2],
                    control_anneal = list(maxit = 5000, temp = 1000),
                    certWeight = .5,
                    snake_step = 0.05,
@@ -296,7 +300,7 @@ analyze = function(x,
     sqrt(mean(sound[myseq[x]:(myseq[x] + windowLength_points)] ^ 2))
   })
   # dynamically adjust silence threshold
-  silence_threshold = max (silence, min(ampl))
+  silence = max(silence, min(ampl))
 
   # calculate entropy of each frame within the most relevant
   # vocal range only: 50 to 6000 Hz
@@ -445,7 +449,7 @@ analyze = function(x,
         pitchCands = pitchCands[, myseq, drop = FALSE],
         pitchCert = pitchCert[, myseq, drop = FALSE],
         certWeight = certWeight,
-        postprocess = postprocess,
+        pathfinding = pathfinding,
         control_anneal = control_anneal,
         interpolWindow = interpolWindow,
         interpolTolerance = interpolTolerance,
@@ -592,7 +596,7 @@ analyze = function(x,
 #' # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
-#' s = analyzeFolder(myfolder, postprocess = 'slow', verbose = TRUE)
+#' s = analyzeFolder(myfolder, pathfinding = 'slow', verbose = TRUE)
 #'
 #' # Check accuracy: import manually verified pitch values (our "key")
 #' key = pitch_manual  # a vector of 260 floats
@@ -635,7 +639,7 @@ analyzeFolder = function (myfolder,
                           interpolWindow = 3,
                           interpolTolerance = 0.3,
                           interpolCert = 0.3,
-                          postprocess = c('none', 'fast', 'slow')[2],
+                          pathfinding = c('none', 'fast', 'slow')[2],
                           control_anneal = list(maxit = 5000, temp = 1000),
                           certWeight = .5,
                           snake_step = 0.05,
@@ -698,7 +702,7 @@ analyzeFolder = function (myfolder,
     interpolWindow = interpolWindow,
     interpolTolerance = interpolTolerance,
     interpolCert = interpolCert,
-    postprocess = postprocess,
+    pathfinding = pathfinding,
     control_anneal = control_anneal,
     certWeight = certWeight,
     snake_step = snake_step,
