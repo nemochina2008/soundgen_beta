@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 output: 
   rmarkdown::html_vignette:
     toc: true
+    toc_depth: 4
 vignette: >
   %\VignetteIndexEntry{Acoustic analysis with soundgen}
   %\VignetteEngine{knitr::rmarkdown}
@@ -44,11 +45,11 @@ This vignette is designed to show how soundgen can be used effectively to perfor
 To demonstrate acoustic analysis in practice, let's begin by generating a sound with a known pitch contour. To make pitch tracking less trivial and demonstrate some of the challenges, let's add some noise, subharmonics, and jitter:
 ```{r}
 library(soundgen)
-s1 = soundgen(sylLen = 900, temperature = 0,
-              pitchAnchors = list(time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
-              noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
-              subDep = 100, jitterDep = 0.5, pitchEffects_amount = 100)
-# playme(s1)  # replay as many times as needed w/o re-synthesizing the sound
+s = soundgen(sylLen = 900, temperature = 0,
+             pitchAnchors = list(time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
+             noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
+             subDep = 100, jitterDep = 0.5, pitchEffects_amount = 100)
+# playme(s)  # replay as many times as needed w/o re-synthesizing the sound
 ```
 
 The contour of F0 is determined by our pitchAnchors, so we can calculate its true median pitch:
@@ -56,7 +57,7 @@ The contour of F0 is determined by our pitchAnchors, so we can calculate its tru
 true_pitch = getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
                                              value = c(300, 900, 400, 2300)), 
                               len = 1000)
-median(true_pitch)  # 611 Hz
+# median(true_pitch)  # 611 Hz
 ```
 
 
@@ -65,7 +66,7 @@ At the heart of acoustic analysis with soundgen is the Short-time Fourier Transf
 Putting the spectra of all frames together, we get a spectrogram. `analyze` calls another soundgen function, `spec`, to produce a spectrogram and then plot pitch candidates on top of it. `spec` is a modified version of `seewave::spectro` with added routines for removing background noise, controlling contrast and brightness, adding median smoothing, etc (see the examples in `?soundgen::spec`). To analyze a sound with default settings and plot its spectrogram, all we need to specify is its sampling rate (the default in soundgen is 16000 Hz):
 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
-a1 = analyze(s1, samplingRate = 16000, plot = TRUE)
+a1 = analyze(s, samplingRate = 16000, plot = TRUE)
 # summary(a1)  # many acoustic predictors measured for each FFT frame
 median(true_pitch)  # true value, as synthesized above
 median(a1$pitch, na.rm = TRUE)  # our estimate: way off, mainly b/c of misleading subharmonics
@@ -77,68 +78,121 @@ There are several key parameters that control the behavior of STFT and affect al
 * `step`: the step of sliding STFT window. For example, if `windowLength = 50` and `step = 25`, each time we move the analysis frame, there is a 50% overlap with the previous frame. This introduces redundancy into the analysis, but it also - to some limited extent - improves time resolution while maintaining relatively high frequency resolution. The main cost of small steps (large overlap) is processing time, but very large overlap is not always desirable, even when processing time is not an issue. If some audio segments are problematic (e.g., very noisy), pitch contour may actually be more accurate with relatively large steps and more smoothing. It is therefore best to check the results with different steps and/or run formal optimization (remember to adjust smoothing and other postprocessing parameters together with STFT settings).
 * `wn`: the type of windowing function used to taper the analysis frame during STFT. In practice the windowing function doesn't seem to have a major effect on the result, as long as you choose something reasonable like gaussian, hanning, or bartlett. 
 * `zp`: zero-padding. You can use a short STFT window and improve its frequency resolution by padding each frame with zeroes. This is a computational trick that - again, to some limited extent - improves frequency resolution while maintaining relatively high time resolution. 
-* `silence`: frames with amplitude below silence threshold are not analyzed. Quiet frames are harder to analyze, because their signal-to-noise ratio is lower. As a result, we want to strike a good balance. Setting `silence` too low (close to 0) produces a lot of garbage, as the algorithm tries to analyze frames that are essentially just background noise without any signal. Setting `silence` too high (close to 1) excludes too many perfectly good frames, misrepresenting the signal. In soundgen `silence` is dynamically updated: it can never be lower than specified, but if the minimum root mean square amplitude of a frame is high than  as max(silence, min(RMS ampl))
-#'   actual silence threshold may be higher depending on the quietest frame, but
-#'   it will never be lower than this specified number.
-* `entropy_threshold`
-
+* `silence`: frames with amplitude below silence threshold are not analyzed at all. Quiet frames are harder to analyze, because their signal-to-noise ratio is lower. As a result, we want to strike a good balance. Setting `silence` too low (close to 0) produces a lot of garbage, as the algorithm tries to analyze frames that are essentially just background noise without any signal. Setting `silence` too high (close to 1) excludes too many perfectly good frames, misrepresenting the signal. In soundgen `silence` is dynamically updated: it can never be lower than specified, but it may be raised the minimum root mean square amplitude of all frames, if this minimum is higher than `silence`. This ensures that empty frames are not analyzed in recordings with high levels of steady background noise (e.g., microphone hiss).
 
 ## Pitch tracking
 If you look at the source code of `soundgen::analyze`, you will see that almost all of it deals with a single acoustic characteristic: fundamental frequency (F0) or its perceptual equivalent, pitch. That's because pitch is both highly salient to listeners and notoriously difficult to measure accurately. Many of the large variety of existing pitch tracking algorithms were designed for analyzing a particular type of sound, usually human speech. Soundgen's pitch tracker was written to analyze human non-linguistic vocalizations like screams and laughs. These sounds are much harsher and noisier than ordinary speech. In addition, the original corpus (Anikin & Persson, 2017) was collected from online videos, so that both sampling rate and microphone settings varied tremendously. From the very beginning, the focus was thus on developing a pitch tracker that would be robust to noise and recording conditions. 
 
-The approach followed with soundgen's pitch tracker is to use several different estimates of the fundamental frequency, each of which is particularly suited to certain types of sounds. You can use any of them individually, but their output is also automatically integrated and postprocessed so as to generate the best overall estimate of frame-by-frame pitch. There are four currently implemented classes of pitch estimates in soundgen:
-  
-  1. Time domain: autocorrelation `pitchAutocor` (~PRAAT: see Boersma, 1993). 
-  This is basically an R implementation of the algorithm used in the popular open-source program PRAAT. The basic idea is that a harmonic signal correlates with itself most strongly at a delay equal to the period of the lowest harmonic (F0). Peaks in the autocorrelation function are thus treated as potential pitch candidates. The main trick is to choose an appropriate windowing function and adjust for its own autocorrelation. Compared to other methods implemented in soundgen, pitch estimates based on autocorrelation appear to be particularly accurate for relatively high values of F0.
-  
-  1. Frequency domain: the lowest dominant frequency band `dom`. 
-  If the sound is harmonic and relatively noise-free, the spectrum of an FFT frame typically has little energy below F0. It is therefore likely that the first sizeable peak in the spectrum is in fact F0, and all we have to do is choose a reasonable threshold. Natually, there are cases of a missing fundamental and misleading low-frequency noises. Nevertheless, this simple estimate may be our best shot when the vocal cords are vibrating in a chaotic fashion (deterministic chaos). The reason is that sounds like roars and grunts lack clear harmonics but are perceived as voiced, and the lowest dominant frequency band corresponds to perceived pitch. 
+The approach followed with soundgen's pitch tracker is to use several different estimates of the fundamental frequency, each of which is particularly suited to certain types of sounds. You can use any of them individually, but their output is also automatically integrated and postprocessed so as to generate the best overall estimate of frame-by-frame pitch. There are four currently implemented classes of pitch estimates in soundgen: autocorrelation, lowest dominant frequency, cepstrum, and BaNa. These four methods of pitch estimation are not treated as completely independent in soundgen. Autocorrelation is performed first to provide an initial guess at the likely pitch and harmonics-to-noise ratio (HNR) of an FFT frame, and then this information is used to adjust the expectations of the cepstral and spectral algorithms. In particular, if autocorrelation suggests that the pitch is high, confidence in cepstral estimates is attenuated; and if autocorrelation suggests that HNR is low, thresholds for spectral peak detection are raised, making spectral pitch estimates more conservative. 
 
-1. Frequency domain: cepstrum `pitchCep`.
-  Cepstrum is the FFT of log-spectrum. It may be a bit challenging to wrap one's head around, but the main idea is quite simple: just as FFT is a way to find periodicity in a signal, cepstrum is a way to find periodicity in the spectrum. In other words, if the spectrum contains regularly spaced harmonics, its FFT will contain a peak corresponding to this regularity. And since the distance between harmonics equals the fundamental frequency, this cepstral peak gives us F0. Cestral estimates are pretty useless when F0 is high (say, above 1 kHz), so soundgen automatically discounts the contribution of high-frequency cepstral estimates. Cepstral pitch candidates are disabled by default, since this method is both slower and less robust for human non-linguistic vocalizations. Depending on the type of analyzed audio, however, both the accuracy of different pitch tracking methods and their optimal parameters may change (see the section on optimization below).
-  
-1. Frequency domain: ratios of harmonics `pitchSpec` (~BaNa, Ba et al. 2012).
-  All harmonics are multiples of the fundamental frequency. The ratio of two neighboring harmonics is thus predictably related to their rank relative to F0. For example, `(3 * F0) / (2 * F0) = 1.5`, so if we find two harmonics in the spectrum that have a ratio of exactly 1.5, it is likely that these are the first two harmonics, making it possible to calculate F0. This is the principle behind the spectral pitch estimate in soundgen, which seems to be particularly useful for noisy, relatively low-pitched sounds.
-
-These four methods of pitch estimation are not treated as completely independent in soundgen. Autocorrelation is performed first to provide an initial guess at the likely pitch and harmonics-to-noise ratio (HNR) of an FFT frame, and then this information is used to adjust the expectations of the cepstral and spectral algorithms. In particular, if autocorrelation suggests that the pitch is high, confidence in cepstral estimates is attenuated; and if autocorrelation suggests that HNR is low, thresholds for spectral peak detection are raised, making spectral pitch estimates more conservative.
-
-## General settings
-
-prior
-silence = 0.04,
-entropy_threshold = 0.6
-
-## Pitch tracking methods
-The plot above shows a spectrogram of the sound with overlaid pitch candidates: yellow circles = autocorrelation pitch estimate (`pitchAutocor`), red triangles = spectral pitch estimate (`pitchSpec`), orange crosses = lowest dominant frequency band (`dom`). The size of each point shows the certainty of estimation: smaller points are calculated with lower certainty and have less weight when all candidates are integrated into the final pitch contour (blue line). To specify which pitch tracking methods should be employed, use `pitch_methods`. For example, we can include cepstral estimates instead of spectral pitch estimates. For this particular example, this combination of methods produces a more reasonable estimate of median pitch, although it misses several voiced frames at the beginning of the sound:
-
+The plot below shows a spectrogram of the sound with overlaid pitch candidates: yellow circles = autocorrelation pitch estimate (`pitchAutocor`), red triangles = spectral pitch estimate (`pitchSpec`), orange crosses = lowest dominant frequency band (`dom`). The size of each point shows the certainty of estimation: smaller points are calculated with lower certainty and have less weight when all candidates are integrated into the final pitch contour (blue line). To specify which pitch tracking methods should be employed, use `pitch_methods`. For example, we can include cepstral estimates instead of spectral pitch estimates:
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
-a2 = analyze(s1, samplingRate = 16000, plot = TRUE, pitch_methods = c('autocor', 'cep', 'dom'))
-median(a2$pitch, na.rm = TRUE)
+a = analyze(s, samplingRate = 16000, plot = TRUE, pitch_methods = c('autocor', 'cep', 'dom'))
 ```
 
-To see how different methods of pitch estimation in soudngen can be tweaked and optimized, let's look at the parameters of each method in turn.
+### General settings
+`analyze` has a few arguments that affect all methods of pitch tracking:
 
-### Autocorrelation
-The key parameter for pitch tracking using the autocorrelation method is `voiced_threshold_autocor`, which defaults to 0.7. This means that peaks in the autocorrelation function have to be at least 0.7 high (1 = perfect autocorrelation). 
+* `pitch_floor`, `pitch_ceiling`: absolute thresholds for pitch candidates. No values outside these bounds will be considered.
+* `entropy_threshold`: all non-silent frames are analyzed to produce basic spectral descriptives. However, pitch tracking is both computationally costly and can be misleading if applied to obviously voiceless frames. To define what an "obviously voiceless" frame is, we set some cutoff value of Weiner entropy, above which we don't want to even try pitch tracking. To disable this feature and track pitch in all non-silent frames, set `entropy_threshold` to 1.
+* `prior_mean` and `prior_sd` specify the mean and sd of gamma distribution describing our prior knowledge about the most likely pitch values. The prior works by scaling the certainties associated with particular pitch candidates: candidates more than a couple of `prior_sd`'s from `prior_mean` have their weight reduced to nearly zero. The final pitch contour can still pass through low-certainty candidates, however, especially if no better candidates are available. You can therefore think of the prior as a soft alternative (or addition) to `pitch_floor` and `pitch_ceiling`. Based on my limited testing, the mildly informative default prior in `analyze` does improve the accuracy of pitch tracking in human vocalizations. Prior values are specified in semitones above C0, and densities are calculated on the musical scale. For example, if we expect F0 values of about 300 Hz ± half an octave (6 semitones) up or down, a prior can be defined as `prior_mean = HzToSemitones(300), prior_sd = 6`. For convenience, the prior can be plotted directly from `analyze`:
 
-autocor_smoothing_width = NULL,
+```{r fig.show = "hold", fig.height = 5, fig.width = 7}
+par(mfrow = c(1, 2))
+# default prior in soundgen
+a1 = analyze(s, samplingRate = 16000, plot = FALSE, plot_prior = TRUE,
+             prior_mean = HzToSemitones(300), prior_sd = 6)  
+# narrow peak at 2 kHz
+a2 = analyze(s, samplingRate = 16000, plot = FALSE, plot_prior = TRUE,
+             prior_mean = HzToSemitones(2000), prior_sd = 1)
+par(mfrow = c(1, 1))
+``` 
+
+* `nCands`: maximum number of pitch candidates to use per method. This only affects `pitchAutocor`, `pitchCep`, and `pitchSpec`. `dom` never returns more than one candidate per frame, since it doesn't make sense to consider several lowest dominant frequency bands - this simply drags the final pitch contour upwards without improving the accuracy.
+* `min_voiced_cands`: minimum number of pitch candidates that have to be defined to consider a frame voiced. It defaults to 'autom', which means 2 if `dom` is among the candidates and 1 otherwise. The reason is that `dom` is usually defined, even if the frame is clearly voiceless.
+
+Here is an example of changing most of the general pitch-tracking settings mentioned above:
+```{r fig.show = "hold", fig.height = 5, fig.width = 7}
+a = analyze(s, samplingRate = 16000, plot = TRUE,
+            # shorter FFT frame (wide-band spectrogram): masks subharmonics
+            windowLength = 10, step = 5,
+            # remove absolute limitations on F0
+            pitch_floor = NULL, pitch_ceiling = NULL,  
+             # more frames excluded from pitch tracking as "noise"
+            entropy_threshold = .2,                   
+             # expect higher F0 than default
+            prior_mean = HzToSemitones(1000), prior_sd = 6,
+            # multiple candidates per method allowed
+            nCands = 2,
+            # some method-specific settings
+            pitch_methods = c('autocor', 'cep', 'dom'), zpCep = 1024)
+```
+
+### Pitch tracking methods
+Having looked at the general settings, it is time to consider the theoretical principles behind each pitch tracking method, together with arguments to `analyze` that can be used to tweak each one.
+  
+#### Autocorrelation
+Time domain: pitch by autocorrelation, PRAAT, `pitchAutocor`.
+  
+This is an R implementation of the algorithm used in the popular open-source program PRAAT (Boersma, 1993). The basic idea is that a harmonic signal correlates with itself most strongly at a delay equal to the period of the lowest harmonic (F0). Peaks in the autocorrelation function are thus treated as potential pitch candidates. The main trick is to choose an appropriate windowing function and adjust for its own autocorrelation. Compared to other methods implemented in soundgen, pitch estimates based on autocorrelation appear to be particularly accurate for relatively high values of F0. The settings that control `pitchAutocor` are:
+  
+  * `autocor_threshold`: voicing threshold, defaults to 0.7. This means that peaks in the autocorrelation function have to be at least 0.7 in height (1 = perfect autocorrelation). 
+  * `autocor_smoothing_width`: 
                    
+To use only autocorrelation pitch tracking, but with lower voicing threshold and more candidates than the defaults, we can do something like this (prior is disabled so as not to influence the certainties of different pitch candidates):
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
-a3 = analyze(s1, samplingRate = 16000, plot = TRUE, pitch_methods = 'autocor')
+a = analyze(s, samplingRate = 16000, plot = TRUE, prior_mean = NA,
+            pitch_methods = 'autocor',
+            autocor_threshold = .3,
+            nCands = 2)
 ```
 
+#### Lowest dominant frequency
+Frequency domain: the lowest dominant frequency band, `dom`. 
 
-### Lowest dominant frequency band
+If the sound is harmonic and relatively noise-free, the spectrum of a frame typically has little energy below F0. It is therefore likely that the first sizeable peak in the spectrum is in fact F0, and all we have to do is choose a reasonable threshold. Natually, there are cases of a missing fundamental and misleading low-frequency noises. Nevertheless, this simple estimate is often surprisingly accurate, and it may be our best shot when the vocal cords are vibrating in a chaotic fashion (deterministic chaos). Sounds like roars lack clear harmonics but are perceived as voiced, and the lowest dominant frequency band often corresponds to perceived pitch. 
+  
+The settings that control `dom` are:
+  
+  * `dom_threshold` (defaults to 0.1, range 0 to 1): to find the lowest dominant frequency band, we look for the lowest frequency with amplitude at least `dom_threshold`. This key setting has to be high enough to exclude accidental low-frequency noises, but low enough not to miss the lowest harmonic. As a result, the optimal level depends a lot on the type of sound analyzed and recording conditions.
+  * `dom_smoothing` (defaults to 220 Hz): the width of smoothing interval (Hz) for finding the lowest spectral peak. The idea is that we are less likely to hit upon some accidental spectral noise and find the lowest harmonic (or the lowest spectral band with significant power) if we apply some smoothing to the spectrum of an FFT frame. 
+  
+For the sound we are trying to analyze, we can increase `dom_smoothing` and/or raise `dom_threshold` to ignore the subharmonics and trace the true pitch contour:
+  
+```{r fig.show = "hold", fig.height = 5, fig.width = 7}
+a = analyze(s, samplingRate = 16000, plot = TRUE, prior_mean = NA,
+            pitch_methods = 'dom',
+            dom_threshold = .3,
+            dom_smoothing = 500)
+```
 
-### Cepstrum
+#### Cepstrum
+Frequency domain: pitch by cepstrum, `pitchCep`.
 
-### BaNa (spectrum)
+Cepstrum is the FFT of log-spectrum. It may be a bit challenging to wrap one's head around, but the main idea is quite simple: just as FFT is a way to find periodicity in a signal, cepstrum is a way to find periodicity in the spectrum. In other words, if the spectrum contains regularly spaced harmonics, its FFT will contain a peak corresponding to this regularity. And since the distance between harmonics equals the fundamental frequency, this cepstral peak gives us F0. Actually, in soundgen the FFT is applied to raw spectrum, not log-spectrum, since it appears to produce better results. Cepstrum is not very useful when F0 is so high that the spectrum contains only a few harmonics, so soundgen automatically discounts the contribution of high-frequency cepstral estimates. Cepstral pitch tracking is disabled by default, since this method is both slower and less robust for human non-linguistic vocalizations. Depending on the type of analyzed audio, however, both the accuracy of different pitch tracking methods and their optimal parameters may change (see the section on optimization below).
 
-### Other pitch tracking parameters
-                   min_voiced_cands = 'autom',
-                   pitch_floor = 75,
-                   pitch_ceiling = 3500,
-                   nCands = 1,
+The settings that control `pitchCep` are:
+
+* `cep_threshold`: voicing threshold (defaults to 0.45).
+* `cep_smoothing`: the width of smoothing interval (in bins) for finding peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller odd numbers for lower values of sampling rate.
+* `zpCep` (defaults to 2 ^ 13): zero-padding of the spectrum used for cepstral pitch detection (points). Zero-padding improves the precision of cepstral pitch detection quite noticeably, but it also slows down the algorithm.
+
+```{r fig.show = "hold", fig.height = 5, fig.width = 7}
+a = analyze(s, samplingRate = 16000, plot = TRUE, prior_mean = NA,
+            pitch_methods = 'cep',
+            cep_threshold = .2,
+            nCands = 2,
+            zpCep = 2 ^ 8)
+```
+  
+#### Spectrum
+Frequency domain: ratios of harmonics, BaNa, `pitchSpec`. 
+  All harmonics are multiples of the fundamental frequency. The ratio of two neighboring harmonics is thus predictably related to their rank relative to F0. For example, `(3 * F0) / (2 * F0) = 1.5`, so if we find two harmonics in the spectrum that have a ratio of exactly 1.5, it is likely that these are the first two harmonics, making it possible to calculate F0 (Ba et al. 2012). This is the principle behind the spectral pitch estimate in soundgen, which seems to be particularly useful for noisy, relatively low-pitched sounds.
+
+
+
+
+*TIP As you can guess by now, any pitch tracking method can be tweaked to produce nearly perfect results for any one particular sound (read: to agree with human intuition). The real trick is to find settings that would be accurate on average, across a wide range of sounds and recording conditions. The default settings in `analyze` are the result of optimization again manually verified pitch measurements of a corpus of 260 human non-linguistic vocalizations. For other material, you will need to do your own manual tweaking and/or optimization.*
 
 ## Postprocessing of pitch contour
 To see what postprocessing achieves, let's first turn it off completely:
@@ -146,7 +200,7 @@ To see what postprocessing achieves, let's first turn it off completely:
 # a = 
 ```
 
-# Syllable segmentation
+# Syllable segmentation with `segment`
 
 # Self-similarity matrices
 

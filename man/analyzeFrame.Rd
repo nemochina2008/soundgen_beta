@@ -6,12 +6,13 @@
 \usage{
 analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
   trackPitch = TRUE, pitch_methods = c("autocor", "cep", "spec", "dom"),
-  cutoff_freq = 6000, dom_threshold = 0.1, dom_smoothing_width = NULL,
-  voiced_threshold_autocor = 0.75, autocor_smoothing_width = NULL,
-  voiced_threshold_cep = 0.45, zpCep = 2^13, voiced_threshold_spec = 0.45,
-  specPitchThreshold_nullNA = 0.8, pitchSpec_only_peak_weight = 0.6,
-  width_spec = 100, slope_spec = 0.1, merge_semitones = 1,
-  pitch_floor = 75, pitch_ceiling = 3500, nCands = 1)
+  cutoff_freq = 6000, dom_threshold = 0.1, dom_smoothing = 220,
+  autocor_threshold = 0.75, autocor_smoothing_width = NULL,
+  cep_threshold = 0.45, cep_smoothing = 3, zpCep = 2^13,
+  spec_threshold = 0.45, specPitchThreshold_nullNA = 0.8,
+  pitchSpec_only_peak_weight = 0.6, width_spec = 100, slope_spec = 0.1,
+  merge_semitones = 1, pitch_floor = 75, pitch_ceiling = 3500,
+  nCands = 1)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
@@ -37,35 +38,35 @@ original sampling rate varies across different analyzed audio files}
 do short-term FFT and take the lowest frequency with amplitude at least
 dom_threshold}
 
-\item{dom_smoothing_width}{the width of smoothing interval (Hz) for finding
-the lowest spectral peak (lowest dominant frequency band). If \code{NULL},
-defaults to ~220 Hz}
+\item{dom_smoothing}{the width of smoothing interval (Hz) for finding
+the lowest spectral peak (lowest dominant frequency band)}
 
-\item{voiced_threshold_autocor}{(0
-to 1) separate thresholds for detecting pitch candidates with three
-different methods: autocorrelation, cepstrum, and BaNa algorithm (see
-Details). Note that HNR is still calculated for frames considered to be
-unvoiced.}
+\item{autocor_threshold}{(0 to 1) separate
+voicing thresholds for detecting pitch candidates with three different
+methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+that HNR is still calculated for frames considered to be unvoiced.}
 
-\item{autocor_smoothing_width}{the width of smoothing interval (points) for
+\item{autocor_smoothing_width}{the width of smoothing interval (in bins) for
 finding peaks in the autocorrelation function. Defaults to 7 for sampling
 rate 44100 and smaller odd numbers for lower values of sampling rate}
 
-\item{voiced_threshold_cep}{(0
-to 1) separate thresholds for detecting pitch candidates with three
-different methods: autocorrelation, cepstrum, and BaNa algorithm (see
-Details). Note that HNR is still calculated for frames considered to be
-unvoiced.}
+\item{cep_threshold}{(0 to 1) separate
+voicing thresholds for detecting pitch candidates with three different
+methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+that HNR is still calculated for frames considered to be unvoiced.}
+
+\item{cep_smoothing}{the width of smoothing interval (in bins) for finding
+peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller
+odd numbers for lower values of sampling rate}
 
 \item{zpCep}{zero-padding of the spectrum used for cepstral pitch detection
 (points). Improves the precision of cepstral pitch detection quite
 noticeably.}
 
-\item{voiced_threshold_spec}{(0
-to 1) separate thresholds for detecting pitch candidates with three
-different methods: autocorrelation, cepstrum, and BaNa algorithm (see
-Details). Note that HNR is still calculated for frames considered to be
-unvoiced.}
+\item{spec_threshold}{(0 to 1) separate
+voicing thresholds for detecting pitch candidates with three different
+methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+that HNR is still calculated for frames considered to be unvoiced.}
 
 \item{specPitchThreshold_nullNA}{when looking for putative
 harmonics in the spectrum, the threshold for peak detection is calculated as
@@ -94,8 +95,8 @@ merged with boosted certainty (BaNa - spectral pitch tracking)}
 
 \item{pitch_ceiling}{bounds for pitch candidates (Hz)}
 
-\item{nCands}{maximum number of pitch candidates to use per method (dom and
-cepstrum always use only one candidate each).}
+\item{nCands}{maximum number of pitch candidates to use per method (except
+for \code{dom}, which returns at most one candidate per frame)}
 }
 \value{
 Returns a list with two components: $pitch_array contains pitch

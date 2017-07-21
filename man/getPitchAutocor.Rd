@@ -5,21 +5,20 @@
 \title{Autocorrelation pitch tracker}
 \usage{
 getPitchAutocor(autoCorrelation, autocor_smoothing_width = NULL,
-  voiced_threshold_autocor, pitch_floor, pitch_ceiling, samplingRate, nCands)
+  autocor_threshold, pitch_floor, pitch_ceiling, samplingRate, nCands)
 }
 \arguments{
 \item{autoCorrelation}{pre-calculated autocorrelation of the input frame
 (computationally more efficient than to do it here)}
 
-\item{autocor_smoothing_width}{the width of smoothing interval (points) for
+\item{autocor_smoothing_width}{the width of smoothing interval (in bins) for
 finding peaks in the autocorrelation function. Defaults to 7 for sampling
 rate 44100 and smaller odd numbers for lower values of sampling rate}
 
-\item{voiced_threshold_autocor}{(0
-to 1) separate thresholds for detecting pitch candidates with three
-different methods: autocorrelation, cepstrum, and BaNa algorithm (see
-Details). Note that HNR is still calculated for frames considered to be
-unvoiced.}
+\item{autocor_threshold}{(0 to 1) separate
+voicing thresholds for detecting pitch candidates with three different
+methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+that HNR is still calculated for frames considered to be unvoiced.}
 
 \item{pitch_floor}{bounds for pitch candidates (Hz)}
 
@@ -27,8 +26,8 @@ unvoiced.}
 
 \item{samplingRate}{sampling rate (Hz)}
 
-\item{nCands}{maximum number of pitch candidates to use per method (dom and
-cepstrum always use only one candidate each).}
+\item{nCands}{maximum number of pitch candidates to use per method (except
+for \code{dom}, which returns at most one candidate per frame)}
 }
 \value{
 Returns a list of $HNR (NA or numeric) and $pitchAutocor_array

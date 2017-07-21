@@ -4,9 +4,9 @@
 \alias{getPitchSpec}
 \title{BaNa pitch tracker}
 \usage{
-getPitchSpec(frame, width_spec, slope_spec, bin, HNR = NULL,
-  voiced_threshold_spec, specPitchThreshold_nullNA, pitchSpec_only_peak_weight,
-  pitch_floor, pitch_ceiling, merge_semitones, nCands)
+getPitchSpec(frame, width_spec, slope_spec, bin, HNR = NULL, spec_threshold,
+  specPitchThreshold_nullNA, pitchSpec_only_peak_weight, pitch_floor,
+  pitch_ceiling, merge_semitones, nCands)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
@@ -25,11 +25,10 @@ to catch weak harmonics (BaNa - spectral pitch tracking)}
 
 \item{HNR}{harmonics-to-noise ratio returned by \code{\link{getPitchAutocor}}}
 
-\item{voiced_threshold_spec}{(0
-to 1) separate thresholds for detecting pitch candidates with three
-different methods: autocorrelation, cepstrum, and BaNa algorithm (see
-Details). Note that HNR is still calculated for frames considered to be
-unvoiced.}
+\item{spec_threshold}{(0 to 1) separate
+voicing thresholds for detecting pitch candidates with three different
+methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+that HNR is still calculated for frames considered to be unvoiced.}
 
 \item{specPitchThreshold_nullNA}{when looking for putative
 harmonics in the spectrum, the threshold for peak detection is calculated as
@@ -49,8 +48,8 @@ much we trust the BaNa estimate vs. the autocorrelation estimate of f0.}
 \item{merge_semitones}{pitch candidates within \code{merge_semitones} are
 merged with boosted certainty (BaNa - spectral pitch tracking)}
 
-\item{nCands}{maximum number of pitch candidates to use per method (dom and
-cepstrum always use only one candidate each).}
+\item{nCands}{maximum number of pitch candidates to use per method (except
+for \code{dom}, which returns at most one candidate per frame)}
 }
 \value{
 Returns either NULL or a dataframe of pitch candidates.

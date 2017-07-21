@@ -8,31 +8,34 @@
 #'
 #' @inheritParams spec
 #' @param silence (0 to 1) frames with mean abs amplitude below silence
-#'   threshold are not analyzed. NB: this number is dynamically updated: the
-#'   actual silence threshold may be higher depending on the quietest frame, but
-#'   it will never be lower than this specified number.
-#' @param entropy_threshold frames with entropy above \code{entropy_threshold}
-#'   are not analyzed (assumed to be just noise)
-#' @param zpCep zero-padding of the spectrum used for cepstral pitch detection
-#'   (points). Improves the precision of cepstral pitch detection quite
-#'   noticeably.
+#'   threshold are not analyzed at all. NB: this number is dynamically updated:
+#'   the actual silence threshold may be higher depending on the quietest frame,
+#'   but it will never be lower than this specified number.
+#' @param entropy_threshold pitch tracking is not applied to frames with entropy
+#'   above \code{entropy_threshold} (assumed to be just noise), but other
+#'   spectral descriptives are still calculated
 #' @param pitch_methods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 #'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band
+#' @param pitch_floor,pitch_ceiling bounds for pitch candidates (Hz)
+#' @param nCands maximum number of pitch candidates to use per method (except
+#'   for \code{dom}, which returns at most one candidate per frame)
 #' @param min_voiced_cands minimum number of pitch candidates that have to be
 #'   defined to consider a frame voiced (defaults to 2 if \code{dom} is among
 #'   the candidates and 1 otherwise)
-#' @param pitch_floor,pitch_ceiling bounds for pitch candidates (Hz)
-#' @param nCands maximum number of pitch candidates to use per method (dom and
-#'   cepstrum always use only one candidate each).
-#' @param voiced_threshold_autocor,voiced_threshold_cep,voiced_threshold_spec (0
-#'   to 1) separate thresholds for detecting pitch candidates with three
-#'   different methods: autocorrelation, cepstrum, and BaNa algorithm (see
-#'   Details). Note that HNR is still calculated for frames considered to be
-#'   unvoiced.
-#' @param autocor_smoothing_width the width of smoothing interval (points) for
+#' @param autocor_threshold,cep_threshold,spec_threshold (0 to 1) separate
+#'   voicing thresholds for detecting pitch candidates with three different
+#'   methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+#'   that HNR is still calculated for frames considered to be unvoiced.
+#' @param autocor_smoothing_width the width of smoothing interval (in bins) for
 #'   finding peaks in the autocorrelation function. Defaults to 7 for sampling
 #'   rate 44100 and smaller odd numbers for lower values of sampling rate
+#' @param cep_smoothing the width of smoothing interval (in bins) for finding
+#'   peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller
+#'   odd numbers for lower values of sampling rate
+#' @param zpCep zero-padding of the spectrum used for cepstral pitch detection
+#'   (points). Improves the precision of cepstral pitch detection quite
+#'   noticeably.
 #' @param specPitchThreshold_nullNA,slope_spec when looking for putative
 #' harmonics in the spectrum, the threshold for peak detection is calculated as
 #' \code{specPitchThreshold_nullNA * (1 - HNR * slope_spec)}. For noisy sounds the
@@ -59,9 +62,8 @@
 #' @param dom_threshold (0 to 1) to find the lowest dominant frequency band, we
 #'   do short-term FFT and take the lowest frequency with amplitude at least
 #'   dom_threshold
-#' @param dom_smoothing_width the width of smoothing interval (Hz) for finding
-#'   the lowest spectral peak (lowest dominant frequency band). If \code{NULL},
-#'   defaults to ~220 Hz
+#' @param dom_smoothing the width of smoothing interval (Hz) for finding
+#'   the lowest spectral peak (lowest dominant frequency band)
 #' @param shortest_syl the smallest length of a voiced segment (ms) that
 #'   constitutes a syllable (shorter segments will be replaced by NA as if
 #'   unvoiced)
@@ -160,18 +162,19 @@ analyze = function(x,
                    wn = 'gaussian',
                    step = 25,
                    zp = 0,
-                   zpCep = 2 ^ 13,
                    pitch_methods = c('autocor', 'spec', 'dom'),
                    min_voiced_cands = 'autom',
                    pitch_floor = 75,
                    pitch_ceiling = 3500,
                    nCands = 1,
                    dom_threshold = 0.1,
-                   dom_smoothing_width = NULL,
-                   voiced_threshold_autocor = 0.7,
+                   dom_smoothing = 220,
+                   autocor_threshold = 0.7,
                    autocor_smoothing_width = NULL,
-                   voiced_threshold_cep = 0.45,
-                   voiced_threshold_spec = 0.3,
+                   cep_threshold = 0.45,
+                   cep_smoothing = NULL,
+                   zpCep = 2 ^ 13,
+                   spec_threshold = 0.3,
                    specPitchThreshold_nullNA = 0.35,
                    pitchSpec_only_peak_weight = 0.4,
                    slope_spec = 0.8,
@@ -234,9 +237,17 @@ analyze = function(x,
   }
   sound = sound / max(abs(max(sound)), abs(min(sound)))
 
+  # some derived pars, defaults
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
-  # windowLength_points = 2^round (log(windowLength * samplingRate /1000)/log(2), 0) # to ensure that the window length in points is a power of 2, say 2048 or 1024
+  # to ensure that the window length in points is a power of 2, say 2048 or 1024:
+  # windowLength_points = 2^round (log(windowLength * samplingRate /1000)/log(2), 0)
   duration = length(sound) / samplingRate
+  if (!is.numeric(pitch_floor) || pitch_floor <= 0) {
+    pitch_floor = 1
+    } # 1 Hz ~ 4 octraves below C0
+  if (!is.numeric(pitch_ceiling) || pitch_ceiling <= samplingRate / 2) {
+    pitch_ceiling = samplingRate / 2  # Nyquist
+  }
 
   # Set up filter for calculating pitchAutocor
   filter = ftwindow_modif(2 * windowLength_points, wn = wn) # plot(filter, type='l')
@@ -355,11 +366,12 @@ analyze = function(x,
       trackPitch = cond_entropy[i],
       pitch_methods = pitch_methods,
       cutoff_freq = cutoff_freq,
-      voiced_threshold_autocor = voiced_threshold_autocor,
+      autocor_threshold = autocor_threshold,
       autocor_smoothing_width = autocor_smoothing_width,
-      voiced_threshold_cep = voiced_threshold_cep,
+      cep_threshold = cep_threshold,
+      cep_smoothing = cep_smoothing,
       zpCep = zpCep,
-      voiced_threshold_spec = voiced_threshold_spec,
+      spec_threshold = spec_threshold,
       specPitchThreshold_nullNA = specPitchThreshold_nullNA,
       slope_spec = slope_spec,
       width_spec = width_spec,
@@ -367,7 +379,7 @@ analyze = function(x,
       pitch_floor = pitch_floor,
       pitch_ceiling = pitch_ceiling,
       dom_threshold = dom_threshold,
-      dom_smoothing_width = dom_smoothing_width,
+      dom_smoothing = dom_smoothing,
       pitchSpec_only_peak_weight = pitchSpec_only_peak_weight,
       nCands = nCands
     )
@@ -575,7 +587,7 @@ analyze = function(x,
   if (plot_prior) {
     freqs = seq(1, HzToSemitones(samplingRate / 2), length.out = 1000)
     prior = dgamma(freqs, shape = shape, rate = rate) / prior_normalizer
-    plot(semitonesToHz(freqs), prior, type = 'l', xlab = 'Freq, Hz',
+    plot(semitonesToHz(freqs), prior, type = 'l', xlab = 'Frequency, Hz',
          ylab = 'Multiplier of certainty', main = 'Prior beliefs in pitch values')
   }
 
@@ -622,18 +634,19 @@ analyzeFolder = function (myfolder,
                           wn = 'gaussian',
                           step = 25,
                           zp = 0,
-                          zpCep = 2 ^ 13,
                           pitch_methods = c('autocor', 'cep', 'spec', 'dom'),
                           min_voiced_cands = 'autom',
                           pitch_floor = 75,
                           pitch_ceiling = 3500,
                           nCands = 1,
                           dom_threshold = 0.1,
-                          dom_smoothing_width = NULL,
-                          voiced_threshold_autocor = 0.7,
+                          dom_smoothing = 220,
+                          autocor_threshold = 0.7,
                           autocor_smoothing_width = NULL,
-                          voiced_threshold_cep = 0.45,
-                          voiced_threshold_spec = 0.3,
+                          cep_threshold = 0.45,
+                          cep_smoothing = 3,
+                          zpCep = 2 ^ 13,
+                          spec_threshold = 0.3,
                           specPitchThreshold_nullNA = 0.35,
                           pitchSpec_only_peak_weight = 0.4,
                           slope_spec = 0.8,
@@ -687,15 +700,16 @@ analyzeFolder = function (myfolder,
     wn = wn,
     step = step,
     zp = zp,
-    zpCep = zpCep,
     pitch_methods = pitch_methods,
     pitch_floor = pitch_floor,
     pitch_ceiling = pitch_ceiling,
     nCands = nCands,
-    voiced_threshold_autocor = voiced_threshold_autocor,
+    autocor_threshold = autocor_threshold,
     autocor_smoothing_width = autocor_smoothing_width,
-    voiced_threshold_cep = voiced_threshold_cep,
-    voiced_threshold_spec =voiced_threshold_spec,
+    cep_threshold = cep_threshold,
+    cep_smoothing = cep_smoothing,
+    zpCep = zpCep,
+    spec_threshold = spec_threshold,
     specPitchThreshold_nullNA = specPitchThreshold_nullNA,
     slope_spec = slope_spec,
     width_spec = width_spec,
@@ -705,7 +719,7 @@ analyzeFolder = function (myfolder,
     prior_sd = prior_sd,
     cutoff_freq = cutoff_freq,
     dom_threshold = dom_threshold,
-    dom_smoothing_width = dom_smoothing_width,
+    dom_smoothing = dom_smoothing,
     shortest_syl = shortest_syl,
     shortest_pause = shortest_pause,
     interpolWindow = interpolWindow,

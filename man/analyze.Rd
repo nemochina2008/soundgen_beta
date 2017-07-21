@@ -5,12 +5,12 @@
 \title{Analyze sound}
 \usage{
 analyze(x, samplingRate = NULL, silence = 0.04, entropy_threshold = 0.6,
-  windowLength = 50, wn = "gaussian", step = 25, zp = 0, zpCep = 2^13,
+  windowLength = 50, wn = "gaussian", step = 25, zp = 0,
   pitch_methods = c("autocor", "spec", "dom"), min_voiced_cands = "autom",
   pitch_floor = 75, pitch_ceiling = 3500, nCands = 1,
-  dom_threshold = 0.1, dom_smoothing_width = NULL,
-  voiced_threshold_autocor = 0.7, autocor_smoothing_width = NULL,
-  voiced_threshold_cep = 0.45, voiced_threshold_spec = 0.3,
+  dom_threshold = 0.1, dom_smoothing = 220, autocor_threshold = 0.7,
+  autocor_smoothing_width = NULL, cep_threshold = 0.45,
+  cep_smoothing = NULL, zpCep = 2^13, spec_threshold = 0.3,
   specPitchThreshold_nullNA = 0.35, pitchSpec_only_peak_weight = 0.4,
   slope_spec = 0.8, width_spec = 150, merge_semitones = 1,
   prior_mean = HzToSemitones(300), prior_sd = 6, plot_prior = FALSE,
@@ -33,12 +33,13 @@ samplingRate}
 \code{x} is a numeric vector, rather than a .wav file)}
 
 \item{silence}{(0 to 1) frames with mean abs amplitude below silence
-threshold are not analyzed. NB: this number is dynamically updated: the
-actual silence threshold may be higher depending on the quietest frame, but
-it will never be lower than this specified number.}
+threshold are not analyzed at all. NB: this number is dynamically updated:
+the actual silence threshold may be higher depending on the quietest frame,
+but it will never be lower than this specified number.}
 
-\item{entropy_threshold}{frames with entropy above \code{entropy_threshold}
-are not analyzed (assumed to be just noise)}
+\item{entropy_threshold}{pitch tracking is not applied to frames with entropy
+above \code{entropy_threshold} (assumed to be just noise), but other
+spectral descriptives are still calculated}
 
 \item{windowLength}{length of fft window, ms}
 
@@ -48,10 +49,6 @@ blackman, flattop}
 \item{step}{fft step, ms}
 
 \item{zp}{zero padding, points}
-
-\item{zpCep}{zero-padding of the spectrum used for cepstral pitch detection
-(points). Improves the precision of cepstral pitch detection quite
-noticeably.}
 
 \item{pitch_methods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
@@ -63,26 +60,32 @@ the candidates and 1 otherwise)}
 
 \item{pitch_floor, pitch_ceiling}{bounds for pitch candidates (Hz)}
 
-\item{nCands}{maximum number of pitch candidates to use per method (dom and
-cepstrum always use only one candidate each).}
+\item{nCands}{maximum number of pitch candidates to use per method (except
+for \code{dom}, which returns at most one candidate per frame)}
 
 \item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least
 dom_threshold}
 
-\item{dom_smoothing_width}{the width of smoothing interval (Hz) for finding
-the lowest spectral peak (lowest dominant frequency band). If \code{NULL},
-defaults to ~220 Hz}
+\item{dom_smoothing}{the width of smoothing interval (Hz) for finding
+the lowest spectral peak (lowest dominant frequency band)}
 
-\item{voiced_threshold_autocor, voiced_threshold_cep, voiced_threshold_spec}{(0
-to 1) separate thresholds for detecting pitch candidates with three
-different methods: autocorrelation, cepstrum, and BaNa algorithm (see
-Details). Note that HNR is still calculated for frames considered to be
-unvoiced.}
+\item{autocor_threshold, cep_threshold, spec_threshold}{(0 to 1) separate
+voicing thresholds for detecting pitch candidates with three different
+methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+that HNR is still calculated for frames considered to be unvoiced.}
 
-\item{autocor_smoothing_width}{the width of smoothing interval (points) for
+\item{autocor_smoothing_width}{the width of smoothing interval (in bins) for
 finding peaks in the autocorrelation function. Defaults to 7 for sampling
 rate 44100 and smaller odd numbers for lower values of sampling rate}
+
+\item{cep_smoothing}{the width of smoothing interval (in bins) for finding
+peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller
+odd numbers for lower values of sampling rate}
+
+\item{zpCep}{zero-padding of the spectrum used for cepstral pitch detection
+(points). Improves the precision of cepstral pitch detection quite
+noticeably.}
 
 \item{specPitchThreshold_nullNA, slope_spec}{when looking for putative
 harmonics in the spectrum, the threshold for peak detection is calculated as
