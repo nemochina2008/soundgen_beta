@@ -4,7 +4,7 @@
 \alias{pathfinder}
 \title{Pathfinder}
 \usage{
-pathfinder(pitchCands, pitchCert, certWeight = 0.5, postprocess = c("none",
+pathfinder(pitchCands, pitchCert, certWeight = 0.5, pathfinding = c("none",
   "fast", "slow")[2], control_anneal = list(maxit = 5000, temp = 1000),
   interpolWindow = 3, interpolTolerance = 0.05, interpolCert = 0.3,
   snake_step = 0.05, snake_plot = FALSE)
@@ -23,13 +23,13 @@ attention to our certainty in particular pitch candidates; low certWeight:
 we are more concerned with avoiding rapid pitch fluctuations in our
 contour.}
 
-\item{postprocess}{method of postprocessing pitch candidates to find the
-optimal pitch contour: 'slow' for annealing, 'fast' for a simple heuristic,
-'none' for none. See \code{\link{pathfinder}} for details.}
+\item{pathfinding}{method of finding the optimal path through pitch
+candidates: 'slow' for annealing, 'fast' for a simple heuristic, 'none' for
+none. See \code{\link{pathfinder}} for details.}
 
-\item{control_anneal}{a list of control parameters for post-processing of
+\item{control_anneal}{a list of control parameters for postprocessing of
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
-only relevant if \code{postprocess} is 'slow'}
+only relevant if \code{pathfinding} is 'slow'}
 
 \item{interpolWindow}{when interpolating pitch candidates, the median is
 calculated over \code{± interpolWindow}}
@@ -48,7 +48,8 @@ candidates are assigned a certainty equal to \code{interpolCert}}
 path through pitch candidates is further processed to minimize the elastic
 force acting on pitch contour. Note that this imposes some smoothing and
 thus creates pitch values that were not among candidates. The exact value
-of \code{snake_step} controls the speed of snake adaptation.}
+of \code{snake_step} controls the speed of snake adaptation. To turn off
+the snake module, set \code{snake_step} to NULL}
 
 \item{snake_plot}{if TRUE, plots the snake (pitch postprocessing)}
 }

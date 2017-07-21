@@ -99,30 +99,33 @@ findVoicedSegments = function(pitchCands,
 #' @param autoCorrelation pre-calculated autocorrelation of the input frame
 #'   (computationally more efficient than to do it here)
 #' @param samplingRate sampling rate (Hz)
+#' @param trackPitch if TRUE, attempt to find F0 in this frame (FALSE if entropy
+#'   is above some threshold - specified in \code{\link{analyze}})
 #' @inheritParams analyze
 #' @return Returns a list with two components: $pitch_array contains pitch
 #'   candidates for the frame, and $summaries contains other acoustic predictors
 #'   like HNR, specSlope, etc.
-analyzeFrame = function (frame,
-                         autoCorrelation = NULL,
-                         samplingRate = 44100,
-                         zpCep = 2 ^ 13,
-                         pitch_methods = c('autocor', 'cep', 'spec', 'dom'),
-                         cutoff_freq = 6000,
-                         dom_threshold = 0.1,
-                         dom_smoothing_width = NULL,
-                         voiced_threshold_autocor = 0.75,
-                         autocor_smoothing_width = NULL,
-                         voiced_threshold_cep = 0.45,
-                         voiced_threshold_spec = 0.45,
-                         specPitchThreshold_nullNA = 0.8,
-                         pitchSpec_only_peak_weight = 0.6,
-                         width_spec = 100,
-                         slope_spec = .1,
-                         merge_semitones = 1,
-                         pitch_floor = 75,
-                         pitch_ceiling = 3500,
-                         nCands = 1) {
+analyzeFrame = function(frame,
+                        autoCorrelation = NULL,
+                        samplingRate = 44100,
+                        trackPitch = TRUE,
+                        pitch_methods = c('autocor', 'cep', 'spec', 'dom'),
+                        cutoff_freq = 6000,
+                        dom_threshold = 0.1,
+                        dom_smoothing_width = NULL,
+                        voiced_threshold_autocor = 0.75,
+                        autocor_smoothing_width = NULL,
+                        voiced_threshold_cep = 0.45,
+                        zpCep = 2 ^ 13,
+                        voiced_threshold_spec = 0.45,
+                        specPitchThreshold_nullNA = 0.8,
+                        pitchSpec_only_peak_weight = 0.6,
+                        width_spec = 100,
+                        slope_spec = .1,
+                        merge_semitones = 1,
+                        pitch_floor = 75,
+                        pitch_ceiling = 3500,
+                        nCands = 1) {
   ### DESCRIPTIVES
   meanSpec = data.frame ('freq' = 1000 * as.numeric(names(frame)),
                          'amp' = frame)
@@ -158,7 +161,7 @@ analyzeFrame = function (frame,
   # in Hz (~20 Hz for 44100 Hz with 50 ms window and zp = 0)
 
   # lowest dominant frequency band
-  if ('dom' %in% pitch_methods) {
+  if (trackPitch && 'dom' %in% pitch_methods) {
     d = getDom(frame = frame,
                samplingRate = samplingRate,
                bin = bin,
@@ -180,7 +183,7 @@ analyzeFrame = function (frame,
   }
 
   # autocorrelation (PRAAT)
-  if ('autocor' %in% pitch_methods) {
+  if (trackPitch && 'autocor' %in% pitch_methods) {
     pa = getPitchAutocor(autoCorrelation = autoCorrelation,
                          voiced_threshold_autocor = voiced_threshold_autocor,
                          autocor_smoothing_width = autocor_smoothing_width,
@@ -197,7 +200,7 @@ analyzeFrame = function (frame,
   }
 
   # cepstrum
-  if ('cep' %in% pitch_methods) {
+  if (trackPitch && 'cep' %in% pitch_methods) {
     pitchCep_array = getPitchCep(frame = frame,
                                  zpCep = zpCep,
                                  samplingRate = samplingRate,
@@ -208,7 +211,7 @@ analyzeFrame = function (frame,
   }
 
   # spectral: ratios of harmonics (BaNa)
-  if ('spec' %in% pitch_methods) {
+  if (trackPitch && 'spec' %in% pitch_methods) {
     pitchSpec_array = getPitchSpec(frame = frame,
                                    width_spec = width_spec,
                                    slope_spec = slope_spec,
@@ -257,6 +260,17 @@ analyzeFrame = function (frame,
 }
 
 
+#' Get lowest dominant frequency band
+#'
+#' Internal soundgen function.
+#'
+#' Calculate the lowest frequency band in the spectrum above pitch_floor whose
+#' power exceeds a certain threshold.
+#' @inheritParams analyzeFrame
+#' @inheritParams analyze
+#' @param bin the width of one bin in spectrogram, Hz
+#' @return Returns a list of $dom (NA or numeric) and $dom_array
+#'   (either NULL or a dataframe of pitch candidates).
 getDom = function(frame,
                   samplingRate,
                   bin,
@@ -264,7 +278,6 @@ getDom = function(frame,
                   dom_threshold,
                   pitch_floor
                   ) {
-  # get lowest dominant frequency bands
   dom_array = data.frame(
     'pitchCand' = numeric(),
     'pitchAmpl' = numeric(),

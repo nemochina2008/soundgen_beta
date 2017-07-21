@@ -287,11 +287,6 @@ analyze = function(x,
     ),
     plot_spec_pars
   ))
-  autocorBank = apply(frameBank, 2, function(x) {
-    acf(x, windowLength_points, plot = FALSE)$acf / autoCorrelation_filter
-  })
-  # plot(autocorBank[, 13], type = 'l')
-  rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
 
   # calculate amplitude of each frame
   myseq = seq(1, (length(sound) - windowLength_points), length.out = ncol(s))
@@ -307,10 +302,22 @@ analyze = function(x,
   rowLow = which(as.numeric(rownames(s)) > 0.05)[1] # 50 Hz
   rowHigh = which(as.numeric(rownames(s)) > 6)[1] # 6000 Hz
   entropy = apply (as.matrix(1:ncol(s)), 1, function(x) {
-    getEntropy(s[rowLow:rowHigh, x])
+    getEntropy(s[rowLow:rowHigh, x], type = 'weiner')
   })
   # if the frame is too quiet or too noisy, we will not analyze it
-  cond = which((ampl > silence) & (entropy < entropy_threshold))
+  cond_silence = ampl > silence
+  cond_entropy = ampl > silence & entropy < entropy_threshold
+
+  # autocorrelation for each frame
+  autocorBank = matrix(NA, nrow = length(autoCorrelation_filter),
+                       ncol = ncol(frameBank))
+  for (i in which(cond_entropy)) {
+    autocorBank[, i] = acf(frameBank[, i],
+                           windowLength_points,
+                           plot = FALSE)$acf / autoCorrelation_filter
+  }
+  # plot(autocorBank[, 13], type = 'l')
+  rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
 
   ## spectral analysis of each frame from fft
   # set up an empty nested list to save values in - this enables us to analyze
@@ -324,7 +331,7 @@ analyze = function(x,
       stringsAsFactors = FALSE,
       row.names = NULL
     ),
-    'summaries' = data.frame (
+    'summaries' = data.frame(
       'HNR' = NA,
       'dom' = NA,
       'peakFreq' = NA,
@@ -336,20 +343,22 @@ analyze = function(x,
       'specSlope' = NA
     )
   )), ncol(s))
-  for (i in cond) {
+
+  for (i in which(cond_silence)) {
     # for each frame that satisfies our condition, do spectral analysis (NB: we
-    # do NOT analyze frames that are too quiet or have very high entropy, so we
-    # only get NA's for those frames, no meanFreq, dom etc!)
+    # do NOT analyze frames that are too quiet, so we only get NA's for those
+    # frames, no meanFreq, dom etc!)
     frameInfo[[i]] = analyzeFrame(
       frame = s[, i],
       autoCorrelation = autocorBank[, i],
       samplingRate = samplingRate,
-      zpCep = zpCep,
+      trackPitch = cond_entropy[i],
       pitch_methods = pitch_methods,
       cutoff_freq = cutoff_freq,
       voiced_threshold_autocor = voiced_threshold_autocor,
       autocor_smoothing_width = autocor_smoothing_width,
       voiced_threshold_cep = voiced_threshold_cep,
+      zpCep = zpCep,
       voiced_threshold_spec = voiced_threshold_spec,
       specPitchThreshold_nullNA = specPitchThreshold_nullNA,
       slope_spec = slope_spec,

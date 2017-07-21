@@ -16,7 +16,7 @@ analyzeFolder(myfolder, samplingRate = NULL, silence = 0.04,
   merge_semitones = 1, prior_mean = HzToSemitones(300), prior_sd = 6,
   plot_prior = FALSE, cutoff_freq = 6000, shortest_syl = 20,
   shortest_pause = 60, interpolWindow = 3, interpolTolerance = 0.3,
-  interpolCert = 0.3, postprocess = c("none", "fast", "slow")[2],
+  interpolCert = 0.3, pathfinding = c("none", "fast", "slow")[2],
   control_anneal = list(maxit = 5000, temp = 1000), certWeight = 0.5,
   snake_step = 0.05, snake_plot = FALSE, smooth_idx = 1,
   smooth_vars = c("pitch", "dom"), plot = TRUE, savePath = NA,
@@ -149,24 +149,27 @@ unvoiced)}
 means they shouldn't be merged into one voiced syllable}
 
 \item{interpolWindow}{control the behavior of
-interpolation algorithm when post-processing pitch candidates. See
+interpolation algorithm when postprocessing pitch candidates. To turn off
+interpolation, set \code{interpolWindow} to NULL. See
 \code{\link{pathfinder}} for details.}
 
 \item{interpolTolerance}{control the behavior of
-interpolation algorithm when post-processing pitch candidates. See
+interpolation algorithm when postprocessing pitch candidates. To turn off
+interpolation, set \code{interpolWindow} to NULL. See
 \code{\link{pathfinder}} for details.}
 
 \item{interpolCert}{control the behavior of
-interpolation algorithm when post-processing pitch candidates. See
+interpolation algorithm when postprocessing pitch candidates. To turn off
+interpolation, set \code{interpolWindow} to NULL. See
 \code{\link{pathfinder}} for details.}
 
-\item{postprocess}{method of postprocessing pitch candidates to find the
-optimal pitch contour: 'slow' for annealing, 'fast' for a simple heuristic,
-'none' for none. See \code{\link{pathfinder}} for details.}
+\item{pathfinding}{method of finding the optimal path through pitch
+candidates: 'slow' for annealing, 'fast' for a simple heuristic, 'none' for
+none. See \code{\link{pathfinder}} for details.}
 
-\item{control_anneal}{a list of control parameters for post-processing of
+\item{control_anneal}{a list of control parameters for postprocessing of
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
-only relevant if \code{postprocess} is 'slow'}
+only relevant if \code{pathfinding} is 'slow'}
 
 \item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
@@ -179,7 +182,8 @@ contour.}
 path through pitch candidates is further processed to minimize the elastic
 force acting on pitch contour. Note that this imposes some smoothing and
 thus creates pitch values that were not among candidates. The exact value
-of \code{snake_step} controls the speed of snake adaptation.}
+of \code{snake_step} controls the speed of snake adaptation. To turn off
+the snake module, set \code{snake_step} to NULL}
 
 \item{snake_plot}{if TRUE, plots the snake (pitch postprocessing)}
 
@@ -190,7 +194,9 @@ deviate considerably from the moving median and preserves all other values
 (so this is a bit different from applying a moving median or kernel
 smoothing). \code{smooth_idx} controls both the tolerated deviance and the
 size of the window for calculating a moving median. \code{smooth_idx} of 1
-corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.}
+corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.
+To turn off the median smoothing, set \code{smooth_idx} or
+\code{smooth_vars} to NULL.}
 
 \item{smooth_vars}{if \code{smooth_idx} is a positive number,
 contours of the variables in \code{smooth_vars} are smoothed using a
@@ -199,7 +205,9 @@ deviate considerably from the moving median and preserves all other values
 (so this is a bit different from applying a moving median or kernel
 smoothing). \code{smooth_idx} controls both the tolerated deviance and the
 size of the window for calculating a moving median. \code{smooth_idx} of 1
-corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.}
+corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.
+To turn off the median smoothing, set \code{smooth_idx} or
+\code{smooth_vars} to NULL.}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 
@@ -234,7 +242,7 @@ Acoustic analysis of all .wav files in a folder.
 # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp'  # 260 .wav files live here
-s = analyzeFolder(myfolder, postprocess = 'slow', verbose = TRUE)
+s = analyzeFolder(myfolder, pathfinding = 'slow', verbose = TRUE)
 
 # Check accuracy: import manually verified pitch values (our "key")
 key = pitch_manual  # a vector of 260 floats

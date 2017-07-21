@@ -5,10 +5,10 @@
 \title{Analyze fft frame}
 \usage{
 analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
-  zpCep = 2^13, pitch_methods = c("autocor", "cep", "spec", "dom"),
+  trackPitch = TRUE, pitch_methods = c("autocor", "cep", "spec", "dom"),
   cutoff_freq = 6000, dom_threshold = 0.1, dom_smoothing_width = NULL,
   voiced_threshold_autocor = 0.75, autocor_smoothing_width = NULL,
-  voiced_threshold_cep = 0.45, voiced_threshold_spec = 0.45,
+  voiced_threshold_cep = 0.45, zpCep = 2^13, voiced_threshold_spec = 0.45,
   specPitchThreshold_nullNA = 0.8, pitchSpec_only_peak_weight = 0.6,
   width_spec = 100, slope_spec = 0.1, merge_semitones = 1,
   pitch_floor = 75, pitch_ceiling = 3500, nCands = 1)
@@ -22,9 +22,8 @@ analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
 
 \item{samplingRate}{sampling rate (Hz)}
 
-\item{zpCep}{zero-padding of the spectrum used for cepstral pitch detection
-(points). Improves the precision of cepstral pitch detection quite
-noticeably.}
+\item{trackPitch}{if TRUE, attempt to find F0 in this frame (FALSE if entropy
+is above some threshold - specified in \code{\link{analyze}})}
 
 \item{pitch_methods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
@@ -57,6 +56,10 @@ to 1) separate thresholds for detecting pitch candidates with three
 different methods: autocorrelation, cepstrum, and BaNa algorithm (see
 Details). Note that HNR is still calculated for frames considered to be
 unvoiced.}
+
+\item{zpCep}{zero-padding of the spectrum used for cepstral pitch detection
+(points). Improves the precision of cepstral pitch detection quite
+noticeably.}
 
 \item{voiced_threshold_spec}{(0
 to 1) separate thresholds for detecting pitch candidates with three

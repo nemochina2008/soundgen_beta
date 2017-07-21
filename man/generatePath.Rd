@@ -18,8 +18,8 @@ column is one fft frame, each row is one candidate.}
 Internal soundgen function.
 }
 \details{
-Internal helper function for post-processing of pitch contours called by
-\code{\link{postprocess_slow}}. Generates proposals for new paths through
+Internal helper function for postprocessing of pitch contours called by
+\code{\link{pathfinding_slow}}. Generates proposals for new paths through
 pitch candidates. It gives up and returns NA after 100 attempts, which stops
 annealing - so the adaptation of pitch contour doesn't happen if
 }

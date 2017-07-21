@@ -16,7 +16,7 @@ analyze(x, samplingRate = NULL, silence = 0.04, entropy_threshold = 0.6,
   prior_mean = HzToSemitones(300), prior_sd = 6, plot_prior = FALSE,
   cutoff_freq = 6000, shortest_syl = 20, shortest_pause = 60,
   interpolWindow = 3, interpolTolerance = 0.3, interpolCert = 0.3,
-  postprocess = c("none", "fast", "slow")[2], control_anneal = list(maxit =
+  pathfinding = c("none", "fast", "slow")[2], control_anneal = list(maxit =
   5000, temp = 1000), certWeight = 0.5, snake_step = 0.05,
   snake_plot = FALSE, smooth_idx = 1, smooth_vars = c("pitch", "dom"),
   plot = TRUE, savePath = NA, plot_spec_pars = list(contrast = 0.2,
@@ -122,16 +122,17 @@ unvoiced)}
 means they shouldn't be merged into one voiced syllable}
 
 \item{interpolWindow, interpolTolerance, interpolCert}{control the behavior of
-interpolation algorithm when post-processing pitch candidates. See
+interpolation algorithm when postprocessing pitch candidates. To turn off
+interpolation, set \code{interpolWindow} to NULL. See
 \code{\link{pathfinder}} for details.}
 
-\item{postprocess}{method of postprocessing pitch candidates to find the
-optimal pitch contour: 'slow' for annealing, 'fast' for a simple heuristic,
-'none' for none. See \code{\link{pathfinder}} for details.}
+\item{pathfinding}{method of finding the optimal path through pitch
+candidates: 'slow' for annealing, 'fast' for a simple heuristic, 'none' for
+none. See \code{\link{pathfinder}} for details.}
 
-\item{control_anneal}{a list of control parameters for post-processing of
+\item{control_anneal}{a list of control parameters for postprocessing of
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
-only relevant if \code{postprocess} is 'slow'}
+only relevant if \code{pathfinding} is 'slow'}
 
 \item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
@@ -144,7 +145,8 @@ contour.}
 path through pitch candidates is further processed to minimize the elastic
 force acting on pitch contour. Note that this imposes some smoothing and
 thus creates pitch values that were not among candidates. The exact value
-of \code{snake_step} controls the speed of snake adaptation.}
+of \code{snake_step} controls the speed of snake adaptation. To turn off
+the snake module, set \code{snake_step} to NULL}
 
 \item{snake_plot}{if TRUE, plots the snake (pitch postprocessing)}
 
@@ -155,7 +157,9 @@ deviate considerably from the moving median and preserves all other values
 (so this is a bit different from applying a moving median or kernel
 smoothing). \code{smooth_idx} controls both the tolerated deviance and the
 size of the window for calculating a moving median. \code{smooth_idx} of 1
-corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.}
+corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.
+To turn off the median smoothing, set \code{smooth_idx} or
+\code{smooth_vars} to NULL.}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 
@@ -186,30 +190,30 @@ characteristics. The default values of arguments are optimized for human
 non-linguistic vocalizations. See the vignette for details.
 }
 \examples{
-sound1 = soundgen(sylDur_mean = 900, pitchAnchors = list(
+sound1 = soundgen(sylLen = 900, pitchAnchors = list(
   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
-  breathingAnchors = list(time = c(0, 900), value = c(-40, 00)),
+  noiseAnchors = list(time = c(0, 900), value = c(-40, 00)),
   temperature = 0)
 playme(sound1, 16000)
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
-# or, to improve the quality of post-processing:
-a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
+# or, to improve the quality of postprocessing:
+a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
 median(a1$pitch, na.rm = TRUE)  # 614 Hz
 # (can vary, since postprocessing is stochastic)
 # compare to the true value:
 median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
-  value = c(300, 900, 400, 2300)), len = 1000))  # 611 Hz
+  value = c(300, 900, 400, 2300)), len = 1000))
 
 # the same pitch contour, but harder to analyze b/c of subharmonics and jitter
-sound2 = soundgen(sylDur_mean = 900, pitchAnchors = list(
+sound2 = soundgen(sylLen = 900, pitchAnchors = list(
   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
-  breathingAnchors = list(time = c(0, 900), value = c(-40, 20)),
-  sidebands_width = 200, jitterDep = 0.5, noiseAmount = 100, temperature = 0)
+  noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
+  subDep = 100, jitterDep = 0.5, pitchEffects_amount = 100, temperature = 0)
 playme(sound2, 16000)
-a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, postprocess = 'slow')
+a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
 # many pitch candidates are off, but the overall contour and estimate of
-# median pitch are pretty similar:
-median(a2$pitch, na.rm = TRUE)  # 622 Hz (can vary, since post-processing is stochastic)
+# median pitch should be pretty accurate:
+median(a2$pitch, na.rm = TRUE)  # 622 Hz (can vary, since postprocessing is stochastic)
 median(a2$HNR, na.rm = TRUE)  # HNR of 3-4 dB
 
 # Fancy plotting options:

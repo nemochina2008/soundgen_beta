@@ -32,7 +32,8 @@ candidates}
 path through pitch candidates is further processed to minimize the elastic
 force acting on pitch contour. Note that this imposes some smoothing and
 thus creates pitch values that were not among candidates. The exact value
-of \code{snake_step} controls the speed of snake adaptation.}
+of \code{snake_step} controls the speed of snake adaptation. To turn off
+the snake module, set \code{snake_step} to NULL}
 
 \item{snake_plot}{if TRUE, plots the snake (pitch postprocessing)}
 }
