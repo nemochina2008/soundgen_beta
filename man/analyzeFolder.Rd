@@ -5,23 +5,22 @@
 \title{Analyze sound}
 \usage{
 analyzeFolder(myfolder, samplingRate = NULL, silence = 0.04,
-  entropy_threshold = 0.6, windowLength = 50, wn = "gaussian",
-  step = 25, zp = 0, pitch_methods = c("autocor", "cep", "spec", "dom"),
-  min_voiced_cands = "autom", pitch_floor = 75, pitch_ceiling = 3500,
-  nCands = 1, dom_threshold = 0.1, dom_smoothing = 220,
-  autocor_threshold = 0.7, autocor_smoothing_width = NULL,
-  cep_threshold = 0.45, cep_smoothing = 3, zpCep = 2^13,
-  spec_threshold = 0.3, specPitchThreshold_nullNA = 0.35,
-  pitchSpec_only_peak_weight = 0.4, slope_spec = 0.8, width_spec = 150,
-  merge_semitones = 1, prior_mean = HzToSemitones(300), prior_sd = 6,
-  plot_prior = FALSE, cutoff_freq = 6000, shortest_syl = 20,
-  shortest_pause = 60, interpolWindow = 3, interpolTolerance = 0.3,
-  interpolCert = 0.3, pathfinding = c("none", "fast", "slow")[2],
-  control_anneal = list(maxit = 5000, temp = 1000), certWeight = 0.5,
-  snake_step = 0.05, snake_plot = FALSE, smooth_idx = 1,
-  smooth_vars = c("pitch", "dom"), plot = TRUE, savePath = NA,
-  plot_spec_pars = list(contrast = 0.2, brightness = 0, ylim = c(0, 5)),
-  plot_pitch_pars = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
+  windowLength = 50, wn = "gaussian", step = 25, zp = 0,
+  cutoff_freq = 6000, pitch_methods = c("autocor", "spec", "dom"),
+  entropy_threshold = 0.6, pitch_floor = 75, pitch_ceiling = 3500,
+  prior_mean = HzToSemitones(300), prior_sd = 6, prior_plot = FALSE,
+  nCands = 1, min_voiced_cands = "autom", dom_threshold = 0.1,
+  dom_smoothing = 220, autocor_threshold = 0.7, autocor_smoothing = NULL,
+  cep_threshold = 0.45, cep_smoothing = NULL, cep_zp = 2^13,
+  spec_threshold = 0.3, spec_peak = 0.35, spec_singlePeakCert = 0.4,
+  spec_peak_HNRslope = 0.8, spec_smoothing = 150, spec_merge = 1,
+  shortest_syl = 20, shortest_pause = 60, interpol_window = 3,
+  interpol_tolerance = 0.3, interpol_cert = 0.3, pathfinding = c("none",
+  "fast", "slow")[2], control_anneal = list(maxit = 5000, temp = 1000),
+  cert_weight = 0.5, snake_step = 0.05, snake_plot = FALSE,
+  smooth_idx = 1, smooth_vars = c("pitch", "dom"), plot = TRUE,
+  savePath = NA, plot_spec_pars = list(contrast = 0.2, brightness = 0, ylim
+  = c(0, 5)), plot_pitch_pars = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
   plot_pitchCands_pars = list(levels = c("autocor", "cep", "spec", "dom"), col
   = c("green", "violet", "red", "orange"), pch = c(16, 7, 2, 3), cex = 2),
   summary = TRUE, verbose = TRUE)
@@ -37,10 +36,6 @@ threshold are not analyzed at all. NB: this number is dynamically updated:
 the actual silence threshold may be higher depending on the quietest frame,
 but it will never be lower than this specified number.}
 
-\item{entropy_threshold}{pitch tracking is not applied to frames with entropy
-above \code{entropy_threshold} (assumed to be just noise), but other
-spectral descriptives are still calculated}
-
 \item{windowLength}{length of fft window, ms}
 
 \item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
@@ -50,77 +45,21 @@ blackman, flattop}
 
 \item{zp}{zero padding, points}
 
+\item{cutoff_freq}{repeat the calculation of spectral descriptives after
+discarding all info above \code{cutoff_freq} (Hz). Recommended if the
+original sampling rate varies across different analyzed audio files}
+
 \item{pitch_methods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band}
 
-\item{min_voiced_cands}{minimum number of pitch candidates that have to be
-defined to consider a frame voiced (defaults to 2 if \code{dom} is among
-the candidates and 1 otherwise)}
+\item{entropy_threshold}{pitch tracking is not applied to frames with entropy
+above \code{entropy_threshold} (assumed to be just noise), but other
+spectral descriptives are still calculated}
 
-\item{pitch_floor}{bounds for pitch candidates (Hz)}
+\item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
 
-\item{pitch_ceiling}{bounds for pitch candidates (Hz)}
-
-\item{nCands}{maximum number of pitch candidates to use per method (except
-for \code{dom}, which returns at most one candidate per frame)}
-
-\item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
-do short-term FFT and take the lowest frequency with amplitude at least
-dom_threshold}
-
-\item{dom_smoothing}{the width of smoothing interval (Hz) for finding
-the lowest spectral peak (lowest dominant frequency band)}
-
-\item{autocor_threshold}{(0 to 1) separate
-voicing thresholds for detecting pitch candidates with three different
-methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is still calculated for frames considered to be unvoiced.}
-
-\item{autocor_smoothing_width}{the width of smoothing interval (in bins) for
-finding peaks in the autocorrelation function. Defaults to 7 for sampling
-rate 44100 and smaller odd numbers for lower values of sampling rate}
-
-\item{cep_threshold}{(0 to 1) separate
-voicing thresholds for detecting pitch candidates with three different
-methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is still calculated for frames considered to be unvoiced.}
-
-\item{cep_smoothing}{the width of smoothing interval (in bins) for finding
-peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller
-odd numbers for lower values of sampling rate}
-
-\item{zpCep}{zero-padding of the spectrum used for cepstral pitch detection
-(points). Improves the precision of cepstral pitch detection quite
-noticeably.}
-
-\item{spec_threshold}{(0 to 1) separate
-voicing thresholds for detecting pitch candidates with three different
-methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is still calculated for frames considered to be unvoiced.}
-
-\item{specPitchThreshold_nullNA}{when looking for putative
-harmonics in the spectrum, the threshold for peak detection is calculated as
-\code{specPitchThreshold_nullNA * (1 - HNR * slope_spec)}. For noisy sounds the
-threshold is high to avoid false sumharmonics, while for tonal sounds it is low
-to catch weak harmonics (BaNa - spectral pitch tracking)}
-
-\item{pitchSpec_only_peak_weight}{(0 to 1) if only one pitchSpec candidate is
-found, its weight (certainty) is taken to be
-\code{pitchSpec_only_peak_weight}. This mainly has implications for how
-much we trust the BaNa estimate vs. the autocorrelation estimate of f0.}
-
-\item{slope_spec}{when looking for putative
-harmonics in the spectrum, the threshold for peak detection is calculated as
-\code{specPitchThreshold_nullNA * (1 - HNR * slope_spec)}. For noisy sounds the
-threshold is high to avoid false sumharmonics, while for tonal sounds it is low
-to catch weak harmonics (BaNa - spectral pitch tracking)}
-
-\item{width_spec}{the width of window for detecting peaks in the spectrum
-(BaNa - spectral pitch tracking)}
-
-\item{merge_semitones}{pitch candidates within \code{merge_semitones} are
-merged with boosted certainty (BaNa - spectral pitch tracking)}
+\item{pitch_ceiling}{absolute bounds for pitch candidates (Hz)}
 
 \item{prior_mean}{specifies the mean and sd of gamma distribution
 describing our prior knowledge about the most likely pitch values for this
@@ -136,11 +75,69 @@ densities are calculated on the musical scale, not in Hz! Ex.:
 \code{prior_mean = HzToSemitones(300), prior_sd = 6} gives a prior with
 mean = 300 Hz and SD of 6 semitones (half an octave)}
 
-\item{plot_prior}{if TRUE, produces a separate plot of the prior}
+\item{prior_plot}{if TRUE, produces a separate plot of the prior}
 
-\item{cutoff_freq}{repeat the calculation of spectral descriptives after
-discarding all info above \code{cutoff_freq} (Hz). Recommended if the
-original sampling rate varies across different analyzed audio files}
+\item{nCands}{maximum number of pitch candidates to use per method (except
+for \code{dom}, which returns at most one candidate per frame)}
+
+\item{min_voiced_cands}{minimum number of pitch candidates that have to be
+defined to consider a frame voiced (defaults to 2 if \code{dom} is among
+the candidates and 1 otherwise)}
+
+\item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
+do short-term FFT and take the lowest frequency with amplitude at least
+dom_threshold}
+
+\item{dom_smoothing}{the width of smoothing interval (Hz) for finding
+the lowest spectral peak (lowest dominant frequency band)}
+
+\item{autocor_threshold}{(0 to 1) separate
+voicing thresholds for detecting pitch candidates with three different
+methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+that HNR is still calculated for frames considered to be unvoiced.}
+
+\item{autocor_smoothing}{the width of smoothing interval (in bins) for
+finding peaks in the autocorrelation function. Defaults to 7 for sampling
+rate 44100 and smaller odd numbers for lower values of sampling rate}
+
+\item{cep_threshold}{(0 to 1) separate
+voicing thresholds for detecting pitch candidates with three different
+methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+that HNR is still calculated for frames considered to be unvoiced.}
+
+\item{cep_smoothing}{the width of smoothing interval (in bins) for finding
+peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller
+odd numbers for lower values of sampling rate}
+
+\item{cep_zp}{zero-padding of the spectrum used for cepstral pitch detection
+(points). Improves the precision of cepstral pitch detection quite
+noticeably.}
+
+\item{spec_threshold}{(0 to 1) separate
+voicing thresholds for detecting pitch candidates with three different
+methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+that HNR is still calculated for frames considered to be unvoiced.}
+
+\item{spec_peak}{when looking for putative
+harmonics in the spectrum, the threshold for peak detection is calculated as
+\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}. For noisy sounds the
+threshold is high to avoid false sumharmonics, while for tonal sounds it is low
+to catch weak harmonics}
+
+\item{spec_singlePeakCert}{(0 to 1) if only one pitchSpec candidate is
+found, its weight (certainty) is taken to be
+\code{spec_singlePeakCert}}
+
+\item{spec_peak_HNRslope}{when looking for putative
+harmonics in the spectrum, the threshold for peak detection is calculated as
+\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}. For noisy sounds the
+threshold is high to avoid false sumharmonics, while for tonal sounds it is low
+to catch weak harmonics}
+
+\item{spec_smoothing}{the width of window for detecting peaks in the spectrum, Hz}
+
+\item{spec_merge}{pitch candidates within \code{spec_merge} are
+merged with boosted certainty}
 
 \item{shortest_syl}{the smallest length of a voiced segment (ms) that
 constitutes a syllable (shorter segments will be replaced by NA as if
@@ -149,19 +146,19 @@ unvoiced)}
 \item{shortest_pause}{the smallest gap between voiced syllables (ms) that
 means they shouldn't be merged into one voiced syllable}
 
-\item{interpolWindow}{control the behavior of
+\item{interpol_window}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpolWindow} to NULL. See
+interpolation, set \code{interpol_window} to NULL. See
 \code{\link{pathfinder}} for details.}
 
-\item{interpolTolerance}{control the behavior of
+\item{interpol_tolerance}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpolWindow} to NULL. See
+interpolation, set \code{interpol_window} to NULL. See
 \code{\link{pathfinder}} for details.}
 
-\item{interpolCert}{control the behavior of
+\item{interpol_cert}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpolWindow} to NULL. See
+interpolation, set \code{interpol_window} to NULL. See
 \code{\link{pathfinder}} for details.}
 
 \item{pathfinding}{method of finding the optimal path through pitch
@@ -172,10 +169,10 @@ none. See \code{\link{pathfinder}} for details.}
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
 only relevant if \code{pathfinding} is 'slow'}
 
-\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
+\item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
-tension of the resulting pitch curve. High certWeight: we mostly pay
-attention to our certainty in particular pitch candidates; low certWeight:
+tension of the resulting pitch curve. High cert_weight: we mostly pay
+attention to our certainty in particular pitch candidates; low cert_weight:
 we are more concerned with avoiding rapid pitch fluctuations in our
 contour.}
 

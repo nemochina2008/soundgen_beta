@@ -114,16 +114,16 @@ analyzeFrame = function(frame,
                         dom_threshold = 0.1,
                         dom_smoothing = 220,
                         autocor_threshold = 0.75,
-                        autocor_smoothing_width = NULL,
+                        autocor_smoothing = NULL,
                         cep_threshold = 0.45,
                         cep_smoothing = 3,
-                        zpCep = 2 ^ 13,
+                        cep_zp = 2 ^ 13,
                         spec_threshold = 0.45,
-                        specPitchThreshold_nullNA = 0.8,
-                        pitchSpec_only_peak_weight = 0.6,
-                        width_spec = 100,
-                        slope_spec = .1,
-                        merge_semitones = 1,
+                        spec_peak = 0.8,
+                        spec_singlePeakCert = 0.6,
+                        spec_smoothing = 100,
+                        spec_peak_HNRslope = .1,
+                        spec_merge = 1,
                         pitch_floor = 75,
                         pitch_ceiling = 3500,
                         nCands = 1) {
@@ -187,7 +187,7 @@ analyzeFrame = function(frame,
   if (trackPitch && 'autocor' %in% pitch_methods) {
     pa = getPitchAutocor(autoCorrelation = autoCorrelation,
                          autocor_threshold = autocor_threshold,
-                         autocor_smoothing_width = autocor_smoothing_width,
+                         autocor_smoothing = autocor_smoothing,
                          pitch_floor = pitch_floor,
                          pitch_ceiling = pitch_ceiling,
                          samplingRate = samplingRate,
@@ -203,7 +203,7 @@ analyzeFrame = function(frame,
   # cepstrum
   if (trackPitch && 'cep' %in% pitch_methods) {
     pitchCep_array = getPitchCep(frame = frame,
-                                 zpCep = zpCep,
+                                 cep_zp = cep_zp,
                                  samplingRate = samplingRate,
                                  pitch_floor = pitch_floor,
                                  pitch_ceiling = pitch_ceiling,
@@ -216,16 +216,16 @@ analyzeFrame = function(frame,
   # spectral: ratios of harmonics (BaNa)
   if (trackPitch && 'spec' %in% pitch_methods) {
     pitchSpec_array = getPitchSpec(frame = frame,
-                                   width_spec = width_spec,
-                                   slope_spec = slope_spec,
+                                   spec_smoothing = spec_smoothing,
+                                   spec_peak_HNRslope = spec_peak_HNRslope,
                                    bin = bin,
                                    HNR = NULL,
                                    spec_threshold = spec_threshold,
-                                   specPitchThreshold_nullNA = specPitchThreshold_nullNA,
-                                   pitchSpec_only_peak_weight = pitchSpec_only_peak_weight,
+                                   spec_peak = spec_peak,
+                                   spec_singlePeakCert = spec_singlePeakCert,
                                    pitch_floor = pitch_floor,
                                    pitch_ceiling = pitch_ceiling,
-                                   merge_semitones = merge_semitones,
+                                   spec_merge = spec_merge,
                                    nCands = nCands
     )
     if(!is.null(pitchSpec_array)) pitch_array = rbind(pitch_array, pitchSpec_array)
@@ -334,7 +334,7 @@ getDom = function(frame,
 #' @return Returns a list of $HNR (NA or numeric) and $pitchAutocor_array
 #'   (either NULL or a dataframe of pitch candidates).
 getPitchAutocor = function(autoCorrelation,
-                           autocor_smoothing_width = NULL,
+                           autocor_smoothing = NULL,
                            autocor_threshold,
                            pitch_floor,
                            pitch_ceiling,
@@ -350,8 +350,8 @@ getPitchAutocor = function(autoCorrelation,
   HNR = max(a$amp) # HNR is here defined as the maximum autocorrelation
   # within the specified pitch range. It is also measured for the frames which
   # are later classified as unvoiced (i.e. HNR can be <voiced_threshold)
-  if (!is.numeric(autocor_smoothing_width)) {
-    autocor_smoothing_width = 2 * ceiling(7 * samplingRate / 44100 / 2) - 1
+  if (!is.numeric(autocor_smoothing)) {
+    autocor_smoothing = 2 * ceiling(7 * samplingRate / 44100 / 2) - 1
     # width of smoothing interval, chosen to be proportionate to samplingRate (7
     # for samplingRate 44100), but always an odd number.
     # for(i in seq(16000, 60000, length.out = 10)) {
@@ -362,7 +362,7 @@ getPitchAutocor = function(autoCorrelation,
   # find peaks in the corrected autocorrelation function
   a_zoo = zoo::as.zoo(a$amp)
   temp = zoo::rollapply(a_zoo,
-                        width = autocor_smoothing_width,
+                        width = autocor_smoothing,
                         align = 'center',
                         function(x) {
     isCentral.localMax(x, threshold = autocor_threshold)
@@ -420,7 +420,7 @@ getPitchAutocor = function(autoCorrelation,
 #' @inheritParams analyze
 #' @return Returns either NULL or a dataframe of pitch candidates.
 getPitchCep = function(frame,
-                       zpCep,
+                       cep_zp,
                        samplingRate,
                        pitch_floor,
                        pitch_ceiling,
@@ -429,14 +429,15 @@ getPitchCep = function(frame,
                        nCands) {
   pitchCep_array = NULL
   if (!is.numeric(cep_smoothing)) {
-    cep_smoothing = 2 * ceiling(7 * samplingRate / 44100 / 2) - 1
+    cep_smoothing = 2 * ceiling(31 * samplingRate / 44100 / 2) - 1
   }
 
-  if (zpCep < length(frame)) {
+  if (cep_zp < length(frame)) {
     frameZP = frame
   } else {
-    frameZP = c(frame, rep(0, (zpCep - length(frame))))
-    cep_smoothing = cep_smoothing * round((zpCep + length(frame)) / length(frame))
+    zp = rep(0, (cep_zp - length(frame)) / 2)
+    frameZP = c(zp, frame, zp)
+    cep_smoothing = cep_smoothing * round(cep_zp / length(frame))
   }
 
   # fft of fft, whatever you call it - cepstrum or smth else
@@ -505,28 +506,28 @@ getPitchCep = function(frame,
 #' @param HNR harmonics-to-noise ratio returned by \code{\link{getPitchAutocor}}
 #' @return Returns either NULL or a dataframe of pitch candidates.
 getPitchSpec = function(frame,
-                        width_spec,
-                        slope_spec,
+                        spec_smoothing,
+                        spec_peak_HNRslope,
                         bin,
                         HNR = NULL,
                         spec_threshold,
-                        specPitchThreshold_nullNA,
-                        pitchSpec_only_peak_weight,
+                        spec_peak,
+                        spec_singlePeakCert,
                         pitch_floor,
                         pitch_ceiling,
-                        merge_semitones,
+                        spec_merge,
                         nCands
                         ) {
   pitchSpec_array = NULL
-  width = 2 * ceiling((width_spec / bin + 1) * 20 / bin / 2) - 1 # to be always ~100 Hz,
+  width = 2 * ceiling((spec_smoothing / bin + 1) * 20 / bin / 2) - 1 # to be always ~100 Hz,
   # regardless of bin, but an odd number
   if (!is.numeric(HNR)) {
-    specPitchThreshold = specPitchThreshold_nullNA # if HNR is NA, the sound is
+    specPitchThreshold = spec_peak # if HNR is NA, the sound is
     # probably a mess, so we play safe by only looking at very strong harmonics
   } else {
     # for noisy sounds the threshold is high to avoid false sumharmonics etc,
     # for tonal sounds it is low to catch weak harmonics
-    specPitchThreshold = specPitchThreshold_nullNA * (1 - HNR * slope_spec)
+    specPitchThreshold = spec_peak * (1 - HNR * spec_peak_HNRslope)
   }
 
   # find peaks in the spectrum (hopefully harmonics)
@@ -544,10 +545,10 @@ getPitchSpec = function(frame,
   if (nrow(specPeaks) == 1) {
     if (specPeaks[1, 1] < pitch_ceiling & specPeaks[1, 1] > pitch_floor) {
       pitchSpec = specPeaks[1, 1]
-      pitchAmpl = pitchSpec_only_peak_weight
+      pitchAmpl = spec_singlePeakCert
       pitchSpec_array = data.frame(
         'pitchCand' = pitchSpec,
-        'pitchAmpl' = pitchSpec_only_peak_weight,
+        'pitchAmpl' = spec_singlePeakCert,
         'source' = 'spec',
         stringsAsFactors = FALSE,
         row.names = NULL
@@ -604,8 +605,8 @@ getPitchSpec = function(frame,
       c = 1
       while (c + 1 <= nrow(pitchSpec_array)) {
         if (abs(log2(pitchSpec_array$pitchCand[c] /
-                     pitchSpec_array$pitchCand[c + 1])) < merge_semitones / 12) {
-          # merge cands within merge_semitones into one "super-candidate"
+                     pitchSpec_array$pitchCand[c + 1])) < spec_merge / 12) {
+          # merge cands within spec_merge into one "super-candidate"
           # and give this new super-candidate a certainty boost
           pitchSpec_array$specAmplIdx[c] = pitchSpec_array$specAmplIdx[c] + 1
           pitchSpec_array$pitchCand[c] = mean(c(
@@ -617,15 +618,15 @@ getPitchSpec = function(frame,
           c = c + 1
         }
       }
-      pitchSpec_array$pitchAmpl = pitchSpec_only_peak_weight +
+      pitchSpec_array$pitchAmpl = spec_singlePeakCert +
         (1 / (1 + exp(-(pitchSpec_array$specAmplIdx - 1))) - 0.5) * 2 *
-        (1 - pitchSpec_only_peak_weight) # normalization. Visualization:
+        (1 - spec_singlePeakCert) # normalization. Visualization:
       # a = 1:15
-      # b = pitchSpec_only_peak_weight + (1 / (1 + exp(-(a - 1))) - 0.5) * 2 *
-      # (1 - pitchSpec_only_peak_weight)
+      # b = spec_singlePeakCert + (1 / (1 + exp(-(a - 1))) - 0.5) * 2 *
+      # (1 - spec_singlePeakCert)
       # plot(a, b, type = 'l')
       pitchSpec_array = pitchSpec_array[
-        order(pitchSpec_array$pitchAmpl,  decreasing = TRUE),
+        order(pitchSpec_array$pitchAmpl, decreasing = TRUE),
         c('pitchCand', 'pitchAmpl', 'source')
         ]
     }

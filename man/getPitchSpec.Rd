@@ -4,22 +4,21 @@
 \alias{getPitchSpec}
 \title{BaNa pitch tracker}
 \usage{
-getPitchSpec(frame, width_spec, slope_spec, bin, HNR = NULL, spec_threshold,
-  specPitchThreshold_nullNA, pitchSpec_only_peak_weight, pitch_floor,
-  pitch_ceiling, merge_semitones, nCands)
+getPitchSpec(frame, spec_smoothing, spec_peak_HNRslope, bin, HNR = NULL,
+  spec_threshold, spec_peak, spec_singlePeakCert, pitch_floor, pitch_ceiling,
+  spec_merge, nCands)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
 \code{\link[stats]{fft}}}
 
-\item{width_spec}{the width of window for detecting peaks in the spectrum
-(BaNa - spectral pitch tracking)}
+\item{spec_smoothing}{the width of window for detecting peaks in the spectrum, Hz}
 
-\item{slope_spec}{when looking for putative
+\item{spec_peak_HNRslope}{when looking for putative
 harmonics in the spectrum, the threshold for peak detection is calculated as
-\code{specPitchThreshold_nullNA * (1 - HNR * slope_spec)}. For noisy sounds the
+\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}. For noisy sounds the
 threshold is high to avoid false sumharmonics, while for tonal sounds it is low
-to catch weak harmonics (BaNa - spectral pitch tracking)}
+to catch weak harmonics}
 
 \item{bin}{the width of spectral bin in \code{frame}, Hz}
 
@@ -30,23 +29,22 @@ voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is still calculated for frames considered to be unvoiced.}
 
-\item{specPitchThreshold_nullNA}{when looking for putative
+\item{spec_peak}{when looking for putative
 harmonics in the spectrum, the threshold for peak detection is calculated as
-\code{specPitchThreshold_nullNA * (1 - HNR * slope_spec)}. For noisy sounds the
+\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}. For noisy sounds the
 threshold is high to avoid false sumharmonics, while for tonal sounds it is low
-to catch weak harmonics (BaNa - spectral pitch tracking)}
+to catch weak harmonics}
 
-\item{pitchSpec_only_peak_weight}{(0 to 1) if only one pitchSpec candidate is
+\item{spec_singlePeakCert}{(0 to 1) if only one pitchSpec candidate is
 found, its weight (certainty) is taken to be
-\code{pitchSpec_only_peak_weight}. This mainly has implications for how
-much we trust the BaNa estimate vs. the autocorrelation estimate of f0.}
+\code{spec_singlePeakCert}}
 
-\item{pitch_floor}{bounds for pitch candidates (Hz)}
+\item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
 
-\item{pitch_ceiling}{bounds for pitch candidates (Hz)}
+\item{pitch_ceiling}{absolute bounds for pitch candidates (Hz)}
 
-\item{merge_semitones}{pitch candidates within \code{merge_semitones} are
-merged with boosted certainty (BaNa - spectral pitch tracking)}
+\item{spec_merge}{pitch candidates within \code{spec_merge} are
+merged with boosted certainty}
 
 \item{nCands}{maximum number of pitch candidates to use per method (except
 for \code{dom}, which returns at most one candidate per frame)}

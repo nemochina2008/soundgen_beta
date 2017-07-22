@@ -12,26 +12,26 @@
 #' @param pitchCert a matrix of the same dimensionality as pitchCands specifying
 #'   our certainty in pitch candidates
 #' @inheritParams analyze
-#' @param interpolWindow when interpolating pitch candidates, the median is
-#'   calculated over \code{± interpolWindow}
-#' @param interpolTolerance when interpolating pitch candidates, the criterion
+#' @param interpol_window when interpolating pitch candidates, the median is
+#'   calculated over \code{± interpol_window}
+#' @param interpol_tolerance when interpolating pitch candidates, the criterion
 #'   for needing to interpolate is the absense of pitch candidates with values
-#'   within \code{1 ± interpolTolerance} of the median of pitch center of
-#'   gravity over the interpolation window. For ex., if \code{interpolTolerance}
+#'   within \code{1 ± interpol_tolerance} of the median of pitch center of
+#'   gravity over the interpolation window. For ex., if \code{interpol_tolerance}
 #'   is .05, we look for values from 0.95 to 1.05 time the median value over
 #'   interpolation window.
-#' @param interpolCert when interpolating pitch candidates, all generated pitch
-#'   candidates are assigned a certainty equal to \code{interpolCert}
+#' @param interpol_cert when interpolating pitch candidates, all generated pitch
+#'   candidates are assigned a certainty equal to \code{interpol_cert}
 #' @return Returns a numeric vector of pitch values representing the best found
 #'   path through pitch candidates.
 pathfinder = function(pitchCands,
                       pitchCert,
-                      certWeight = 0.5,
+                      cert_weight = 0.5,
                       pathfinding = c('none', 'fast', 'slow')[2],
                       control_anneal = list(maxit = 5000, temp = 1000),
-                      interpolWindow = 3,
-                      interpolTolerance = 0.05,
-                      interpolCert = 0.3,
+                      interpol_window = 3,
+                      interpol_tolerance = 0.05,
+                      interpol_cert = 0.3,
                       snake_step = 0.05,
                       snake_plot = FALSE) {
   # take log to approximate human perception of pitch differences
@@ -51,13 +51,13 @@ pathfinder = function(pitchCands,
   # if a frame has no pitch candidate at all (NA) or no candidate
   # between the most likely candidates for the adjacent frames, add such a
   # candidate with ~low certainty
-  if (is.numeric(interpolWindow) && interpolWindow > 0) {
+  if (is.numeric(interpol_window) && interpol_window > 0) {
     intplt = interpolate(pitchCands = pitchCands,
                          pitchCert = pitchCert,
                          pitchCenterGravity = pitchCenterGravity,
-                         interpolWindow = interpolWindow,
-                         interpolTolerance = interpolTolerance,
-                         interpolCert = interpolCert)
+                         interpol_window = interpol_window,
+                         interpol_tolerance = interpol_tolerance,
+                         interpol_cert = interpol_cert)
     pitchCands = intplt$pitchCands
     pitchCert = intplt$pitchCert
     pitchCenterGravity = intplt$pitchCenterGravity
@@ -94,13 +94,13 @@ pathfinder = function(pitchCands,
       pitchCands = pitchCands,
       pitchCert = pitchCert,
       pitchCenterGravity = pitchCenterGravity,
-      certWeight = certWeight
+      cert_weight = cert_weight
     )
   } else if (pathfinding == 'slow') {
     bestPath = pathfinding_slow(
       pitchCands = pitchCands,
       pitchCert = pitchCert,
-      certWeight = certWeight,
+      cert_weight = cert_weight,
       pitchCenterGravity = pitchCenterGravity,
       control_anneal = control_anneal
     )
@@ -116,7 +116,7 @@ pathfinder = function(pitchCands,
       pitch = bestPath,
       pitchCands = pitchCands,
       pitchCert = pitchCert,
-      certWeight = certWeight,
+      cert_weight = cert_weight,
       pitchCenterGravity = pitchCenterGravity,
       snake_step = snake_step,
       snake_plot = snake_plot
@@ -143,17 +143,17 @@ pathfinder = function(pitchCands,
 interpolate = function(pitchCands,
                        pitchCert,
                        pitchCenterGravity,
-                       interpolWindow = 3,
-                       interpolTolerance = 0.3,
-                       interpolCert = 0.3) {
+                       interpol_window = 3,
+                       interpol_tolerance = 0.3,
+                       interpol_cert = 0.3) {
   for (f in 1:ncol(pitchCands)) {
-    left = max(1, f - interpolWindow)
-    right = min(ncol(pitchCands), f + interpolWindow)
+    left = max(1, f - interpol_window)
+    right = min(ncol(pitchCands), f + interpol_window)
     # median over interpolation window (by default ±2 points)
     med = median(pitchCenterGravity[left:right], na.rm = TRUE)
     sum_pitchCands = sum(
-      pitchCands[, f] > (1 - interpolTolerance) * med &
-        pitchCands[, f] < (1 + interpolTolerance) * med,
+      pitchCands[, f] > (1 - interpol_tolerance) * med &
+        pitchCands[, f] < (1 + interpol_tolerance) * med,
       na.rm = TRUE
     )
     if (sum_pitchCands == 0 & !is.na(med)) {
@@ -165,7 +165,7 @@ interpolate = function(pitchCands,
       # use median of adjacent frames for the new pitch cand
       pitchCands[nrow(pitchCands), f] = med
       # certainty assigned to interpolated frames
-      pitchCert[nrow(pitchCert), f] = interpolCert
+      pitchCert[nrow(pitchCert), f] = interpol_cert
       # update pitchCenterGravity for the interpolated frame
       pitchCenterGravity[f] = mean(pitchCands[, f],
                                    weights = pitchCert[, f] / sum(pitchCert[, f]),
@@ -196,7 +196,7 @@ interpolate = function(pitchCands,
 pathfinding_fast = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             pitchCenterGravity = pitchCenterGravity,
-                            certWeight = certWeight) {
+                            cert_weight = cert_weight) {
   # start at the beginning of the snake: find the most plausible starting pitch
   # by taking median over the first few frames, weighted by certainty
   p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))],
@@ -217,7 +217,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
     })
     # get a weighted average of transition costs associated with the certainty
     # of each estimate vs. the magnitude of pitch jumps
-    costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
+    costs = cert_weight * cost_cert + (1 - cert_weight) * cost_pitchJump
     path = c(path, pitchCands[which.min(costs), i])
     costPathForward = costPathForward + min(costs)
   }
@@ -240,7 +240,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
     cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
       costJumps(point_current, cands[x])
     })
-    costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
+    costs = cert_weight * cost_cert + (1 - cert_weight) * cost_pitchJump
     path_rev = c(path_rev, pitchCands_rev[which.min(costs), i])
     costPathBackward = costPathBackward + min(costs)
   }
@@ -285,7 +285,7 @@ costJumps = function(cand1, cand2) {
 #'   candidates
 pathfinding_slow = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
-                            certWeight = certWeight,
+                            cert_weight = cert_weight,
                             pitchCenterGravity = pitchCenterGravity,
                             control_anneal = list(maxit = 5000, temp = 1000)) {
   # start with the pitch contour most faithful to center of gravity of pitch
@@ -301,7 +301,7 @@ pathfinding_slow = function(pitchCands = pitchCands,
     gr = generatePath,
     pitchCands = pitchCands,
     pitchCert = pitchCert,
-    certWeight = certWeight,
+    cert_weight = cert_weight,
     pitchCenterGravity = pitchCenterGravity,
     method = 'SANN',
     control = control_anneal
@@ -331,7 +331,7 @@ pathfinding_slow = function(pitchCands = pitchCands,
 costPerPath = function(path,
                        pitchCands,
                        pitchCert,
-                       certWeight,
+                       cert_weight,
                        pitchCenterGravity) {
   # if there is nothing to wiggle, generatePath() returns NA and we want
   # annealing to terminate quickly, so we return very high cost
@@ -351,7 +351,7 @@ costPerPath = function(path,
 
   # get a weighted average of transition costs associated with the certainty
   # of each estimate vs. the magnitude of pitch jumps
-  costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
+  costs = cert_weight * cost_cert + (1 - cert_weight) * cost_pitchJump
   return(costs)
 }
 
@@ -401,7 +401,7 @@ generatePath = function(path, pitchCands, ...) {
 snake = function (pitch,
                   pitchCands,
                   pitchCert,
-                  certWeight,
+                  cert_weight,
                   pitchCenterGravity,
                   snake_step = 0.05,
                   snake_plot = FALSE) {
@@ -436,7 +436,7 @@ snake = function (pitch,
                          pitchCands = pitchCands,
                          pitchCert = pitchCert,
                          pitchCenterGravity = pitchCenterGravity,
-                         certWeight = certWeight)
+                         cert_weight = cert_weight)
     force_new = mean(abs(force))
     force_delta = (force_old - force_new) / force_old
     force_old = force_new
@@ -479,7 +479,7 @@ forcePerPath = function (pitch,
                          pitchCands,
                          pitchCert,
                          pitchCenterGravity,
-                         certWeight) {
+                         cert_weight) {
   ran = diff(range(pitchCands, na.rm = TRUE))
   # external_force = -(pitch_path - pitchCenterGravity) / ran
   external_force = pitch # just a quick way to initialize a vector of the right length
@@ -496,7 +496,7 @@ forcePerPath = function (pitch,
   internal_force = -findGrad(pitch)
   # internal_force is the elastic force trying to make the curve smooth
 
-  total_force = certWeight * external_force + (1 - certWeight) * internal_force
+  total_force = cert_weight * external_force + (1 - cert_weight) * internal_force
   # weighted average of internal and external forces
 
   return(total_force)

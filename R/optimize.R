@@ -30,9 +30,16 @@
 #'   values of optimized parameters. For ex., if we optimize \code{smooth_ms}
 #'   and \code{smooth_overlap}, reasonable pars_bounds might be list(low = c(5,
 #'   0), high = c(500, 95))
-#' @param fitness_par the name of output variable that we are comparing with the key, e.g. 'nBursts' or 'pitch_median'
-#' @param fitness_crit the function used to evaluate how well the output of \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a good fitness criterion is \code{function(x) 1 - cor(log(x), key, use = 'pairwise.complete.obs')}, where \code{key} is already log-transformed.
+#' @param fitness_par the name of output variable that we are comparing with the
+#'   key, e.g. 'nBursts' or 'pitch_median'
+#' @param fitness_crit the function used to evaluate how well the output of
+#'   \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is
+#'   perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a
+#'   good fitness criterion is \code{function(x) 1 - cor(log(x), key, use =
+#'   'pairwise.complete.obs')}, where \code{key} is already log-transformed.
 #' @param nIter repeat the optimization several times to check convergence
+#' @param init initial values of optimized parameters (if NULL, the default
+#'   values are taken from the definition of \code{myfun})
 #' @param wiggle_init each optimization begins with a random seed, and
 #'   \code{wiggle_init} specifies the SD of normal distribution used to generate
 #'   random deviation of initial values from the defaults
@@ -85,7 +92,7 @@
 #'                        shortest_pause = c(30, 40, 50)))
 #' 1 - res$fit  # correlations with key
 #'
-#' # Optimization of pitch tracking pars (takes several hours!)
+#' # Optimization of PITCH TRACKING (takes several hours!)
 #' res = optimizePars(myfolder = myfolder,
 #'                    myfun = 'analyzeFolder',
 #'                    key = log(pitch_manual),  # log-scale better for pitch
@@ -156,6 +163,7 @@ optimizePars = function(myfolder,
                         fitness_par,
                         fitness_crit = function(x) 1 - cor(x, key, use = 'pairwise.complete.obs'),
                         nIter = 10,
+                        init = NULL,
                         wiggle_init = .2,
                         control = list(maxit = 50, reltol = .01, trace = 0),
                         otherPars = list(plot = FALSE, verbose = FALSE),
@@ -188,7 +196,11 @@ optimizePars = function(myfolder,
   }
 
   ## Option 2: use optim() to find the best values of pars
-  pars_to_optimize_defaults = defaults[names(defaults) %in% pars_to_optimize]
+  if (is.null(init)) {
+    pars_to_optimize_defaults = defaults[names(defaults) %in% pars_to_optimize]
+  } else {
+    pars_to_optimize_defaults = init
+  }
   optimal_pars = list()
   time_start = proc.time()
 

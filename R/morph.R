@@ -51,6 +51,12 @@ morph = function(formula1,
   }
 
   # which pars are different from the defaults of soundgen()?
+  defaults = as.character(call('print', args(soundgen)))[2]
+  defaults = substr(defaults, 11, (nchar(defaults) - 12))
+  defaults = paste0('list(', defaults, ')')
+  defaults = eval(parse(text = defaults))
+  # NB: defaults = as.list(args(soundgen)) produces list elements of type "call" :((
+
   notDefaultIdx_formula1 = notDefaultIdx_formula2 = NA
   if (length(formula1) > 0) {
     notDefaultIdx_formula1 = which(apply(matrix(1:length(formula1)), 1, function(x) {

@@ -7,12 +7,11 @@
 analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
   trackPitch = TRUE, pitch_methods = c("autocor", "cep", "spec", "dom"),
   cutoff_freq = 6000, dom_threshold = 0.1, dom_smoothing = 220,
-  autocor_threshold = 0.75, autocor_smoothing_width = NULL,
-  cep_threshold = 0.45, cep_smoothing = 3, zpCep = 2^13,
-  spec_threshold = 0.45, specPitchThreshold_nullNA = 0.8,
-  pitchSpec_only_peak_weight = 0.6, width_spec = 100, slope_spec = 0.1,
-  merge_semitones = 1, pitch_floor = 75, pitch_ceiling = 3500,
-  nCands = 1)
+  autocor_threshold = 0.75, autocor_smoothing = NULL,
+  cep_threshold = 0.45, cep_smoothing = 3, cep_zp = 2^13,
+  spec_threshold = 0.45, spec_peak = 0.8, spec_singlePeakCert = 0.6,
+  spec_smoothing = 100, spec_peak_HNRslope = 0.1, spec_merge = 1,
+  pitch_floor = 75, pitch_ceiling = 3500, nCands = 1)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
@@ -46,7 +45,7 @@ voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is still calculated for frames considered to be unvoiced.}
 
-\item{autocor_smoothing_width}{the width of smoothing interval (in bins) for
+\item{autocor_smoothing}{the width of smoothing interval (in bins) for
 finding peaks in the autocorrelation function. Defaults to 7 for sampling
 rate 44100 and smaller odd numbers for lower values of sampling rate}
 
@@ -59,7 +58,7 @@ that HNR is still calculated for frames considered to be unvoiced.}
 peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller
 odd numbers for lower values of sampling rate}
 
-\item{zpCep}{zero-padding of the spectrum used for cepstral pitch detection
+\item{cep_zp}{zero-padding of the spectrum used for cepstral pitch detection
 (points). Improves the precision of cepstral pitch detection quite
 noticeably.}
 
@@ -68,32 +67,30 @@ voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is still calculated for frames considered to be unvoiced.}
 
-\item{specPitchThreshold_nullNA}{when looking for putative
+\item{spec_peak}{when looking for putative
 harmonics in the spectrum, the threshold for peak detection is calculated as
-\code{specPitchThreshold_nullNA * (1 - HNR * slope_spec)}. For noisy sounds the
+\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}. For noisy sounds the
 threshold is high to avoid false sumharmonics, while for tonal sounds it is low
-to catch weak harmonics (BaNa - spectral pitch tracking)}
+to catch weak harmonics}
 
-\item{pitchSpec_only_peak_weight}{(0 to 1) if only one pitchSpec candidate is
+\item{spec_singlePeakCert}{(0 to 1) if only one pitchSpec candidate is
 found, its weight (certainty) is taken to be
-\code{pitchSpec_only_peak_weight}. This mainly has implications for how
-much we trust the BaNa estimate vs. the autocorrelation estimate of f0.}
+\code{spec_singlePeakCert}}
 
-\item{width_spec}{the width of window for detecting peaks in the spectrum
-(BaNa - spectral pitch tracking)}
+\item{spec_smoothing}{the width of window for detecting peaks in the spectrum, Hz}
 
-\item{slope_spec}{when looking for putative
+\item{spec_peak_HNRslope}{when looking for putative
 harmonics in the spectrum, the threshold for peak detection is calculated as
-\code{specPitchThreshold_nullNA * (1 - HNR * slope_spec)}. For noisy sounds the
+\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}. For noisy sounds the
 threshold is high to avoid false sumharmonics, while for tonal sounds it is low
-to catch weak harmonics (BaNa - spectral pitch tracking)}
+to catch weak harmonics}
 
-\item{merge_semitones}{pitch candidates within \code{merge_semitones} are
-merged with boosted certainty (BaNa - spectral pitch tracking)}
+\item{spec_merge}{pitch candidates within \code{spec_merge} are
+merged with boosted certainty}
 
-\item{pitch_floor}{bounds for pitch candidates (Hz)}
+\item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
 
-\item{pitch_ceiling}{bounds for pitch candidates (Hz)}
+\item{pitch_ceiling}{absolute bounds for pitch candidates (Hz)}
 
 \item{nCands}{maximum number of pitch candidates to use per method (except
 for \code{dom}, which returns at most one candidate per frame)}

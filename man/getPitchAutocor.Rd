@@ -4,14 +4,14 @@
 \alias{getPitchAutocor}
 \title{Autocorrelation pitch tracker}
 \usage{
-getPitchAutocor(autoCorrelation, autocor_smoothing_width = NULL,
-  autocor_threshold, pitch_floor, pitch_ceiling, samplingRate, nCands)
+getPitchAutocor(autoCorrelation, autocor_smoothing = NULL, autocor_threshold,
+  pitch_floor, pitch_ceiling, samplingRate, nCands)
 }
 \arguments{
 \item{autoCorrelation}{pre-calculated autocorrelation of the input frame
 (computationally more efficient than to do it here)}
 
-\item{autocor_smoothing_width}{the width of smoothing interval (in bins) for
+\item{autocor_smoothing}{the width of smoothing interval (in bins) for
 finding peaks in the autocorrelation function. Defaults to 7 for sampling
 rate 44100 and smaller odd numbers for lower values of sampling rate}
 
@@ -20,9 +20,9 @@ voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is still calculated for frames considered to be unvoiced.}
 
-\item{pitch_floor}{bounds for pitch candidates (Hz)}
+\item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
 
-\item{pitch_ceiling}{bounds for pitch candidates (Hz)}
+\item{pitch_ceiling}{absolute bounds for pitch candidates (Hz)}
 
 \item{samplingRate}{sampling rate (Hz)}
 

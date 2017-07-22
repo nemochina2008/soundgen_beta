@@ -5,7 +5,7 @@
 \title{Path through pitch candidates: fast}
 \usage{
 pathfinding_fast(pitchCands = pitchCands, pitchCert = pitchCert,
-  pitchCenterGravity = pitchCenterGravity, certWeight = certWeight)
+  pitchCenterGravity = pitchCenterGravity, cert_weight = cert_weight)
 }
 \arguments{
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
@@ -18,10 +18,10 @@ our certainty in pitch candidates}
 candidates per fft frame weighted by our certainty in each of these
 candidates}
 
-\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
+\item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
-tension of the resulting pitch curve. High certWeight: we mostly pay
-attention to our certainty in particular pitch candidates; low certWeight:
+tension of the resulting pitch curve. High cert_weight: we mostly pay
+attention to our certainty in particular pitch candidates; low cert_weight:
 we are more concerned with avoiding rapid pitch fluctuations in our
 contour.}
 }

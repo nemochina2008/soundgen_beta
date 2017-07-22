@@ -21,7 +21,7 @@ the lowest spectral peak (lowest dominant frequency band)}
 do short-term FFT and take the lowest frequency with amplitude at least
 dom_threshold}
 
-\item{pitch_floor}{bounds for pitch candidates (Hz)}
+\item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
 }
 \value{
 Returns a list of $dom (NA or numeric) and $dom_array

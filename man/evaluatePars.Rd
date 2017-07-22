@@ -23,9 +23,14 @@ values of optimized parameters. For ex., if we optimize \code{smooth_ms}
 and \code{smooth_overlap}, reasonable pars_bounds might be list(low = c(5,
 0), high = c(500, 95))}
 
-\item{fitness_par}{the name of output variable that we are comparing with the key, e.g. 'nBursts' or 'pitch_median'}
+\item{fitness_par}{the name of output variable that we are comparing with the
+key, e.g. 'nBursts' or 'pitch_median'}
 
-\item{fitness_crit}{the function used to evaluate how well the output of \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a good fitness criterion is \code{function(x) 1 - cor(log(x), key, use = 'pairwise.complete.obs')}, where \code{key} is already log-transformed.}
+\item{fitness_crit}{the function used to evaluate how well the output of
+\code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is
+perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a
+good fitness criterion is \code{function(x) 1 - cor(log(x), key, use =
+'pairwise.complete.obs')}, where \code{key} is already log-transformed.}
 
 \item{myfolder}{path to where the .wav files live}
 

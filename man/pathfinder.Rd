@@ -4,9 +4,9 @@
 \alias{pathfinder}
 \title{Pathfinder}
 \usage{
-pathfinder(pitchCands, pitchCert, certWeight = 0.5, pathfinding = c("none",
+pathfinder(pitchCands, pitchCert, cert_weight = 0.5, pathfinding = c("none",
   "fast", "slow")[2], control_anneal = list(maxit = 5000, temp = 1000),
-  interpolWindow = 3, interpolTolerance = 0.05, interpolCert = 0.3,
+  interpol_window = 3, interpol_tolerance = 0.05, interpol_cert = 0.3,
   snake_step = 0.05, snake_plot = FALSE)
 }
 \arguments{
@@ -16,10 +16,10 @@ column is one fft frame, each row is one candidate.}
 \item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
 our certainty in pitch candidates}
 
-\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
+\item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
-tension of the resulting pitch curve. High certWeight: we mostly pay
-attention to our certainty in particular pitch candidates; low certWeight:
+tension of the resulting pitch curve. High cert_weight: we mostly pay
+attention to our certainty in particular pitch candidates; low cert_weight:
 we are more concerned with avoiding rapid pitch fluctuations in our
 contour.}
 
@@ -31,18 +31,18 @@ none. See \code{\link{pathfinder}} for details.}
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
 only relevant if \code{pathfinding} is 'slow'}
 
-\item{interpolWindow}{when interpolating pitch candidates, the median is
-calculated over \code{± interpolWindow}}
+\item{interpol_window}{when interpolating pitch candidates, the median is
+calculated over \code{± interpol_window}}
 
-\item{interpolTolerance}{when interpolating pitch candidates, the criterion
+\item{interpol_tolerance}{when interpolating pitch candidates, the criterion
 for needing to interpolate is the absense of pitch candidates with values
-within \code{1 ± interpolTolerance} of the median of pitch center of
-gravity over the interpolation window. For ex., if \code{interpolTolerance}
+within \code{1 ± interpol_tolerance} of the median of pitch center of
+gravity over the interpolation window. For ex., if \code{interpol_tolerance}
 is .05, we look for values from 0.95 to 1.05 time the median value over
 interpolation window.}
 
-\item{interpolCert}{when interpolating pitch candidates, all generated pitch
-candidates are assigned a certainty equal to \code{interpolCert}}
+\item{interpol_cert}{when interpolating pitch candidates, all generated pitch
+candidates are assigned a certainty equal to \code{interpol_cert}}
 
 \item{snake_step}{if \code{snake_step} is a positive number, the optimized
 path through pitch candidates is further processed to minimize the elastic

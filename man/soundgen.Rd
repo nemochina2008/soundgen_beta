@@ -20,13 +20,13 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   120), f3 = list(time = 0, freq = 2900, amp = 25, width = 200)),
   formantDep = 1, formantDep_stochastic = 30, vocalTract = 15.5,
   subFreq = 100, subDep = 100, shortestEpoch = 300, trillDep = 0,
-  trillFreq = 30, noiseAnchors = NA, exactFormants_noise = NA,
-  rolloff_noise = -14, mouthAnchors = data.frame(time = c(0, 1), value =
-  c(0.5, 0.5)), amplAnchors = NA, amplAnchors_global = NA,
-  samplingRate = 16000, windowLength = 50, overlap = 75,
-  addSilence = 100, pitch_floor = 50, pitch_ceiling = 3500,
-  pitch_samplingRate = 3500, throwaway_dB = -120, plot = FALSE,
-  play = FALSE, savePath = NA, ...)
+  trillFreq = 30, noiseAnchors = data.frame(time = c(0, 1), value = c(-120,
+  -120)), exactFormants_noise = NA, rolloff_noise = -14,
+  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
+  amplAnchors = NA, amplAnchors_global = NA, samplingRate = 16000,
+  windowLength = 50, overlap = 75, addSilence = 100, pitch_floor = 50,
+  pitch_ceiling = 3500, pitch_samplingRate = 3500, throwaway_dB = -120,
+  plot = FALSE, play = FALSE, savePath = NA, ...)
 }
 \arguments{
 \item{repeatBout}{the number of times the bout should be repeated}

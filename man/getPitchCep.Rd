@@ -4,22 +4,22 @@
 \alias{getPitchCep}
 \title{Cepstral pitch tracker}
 \usage{
-getPitchCep(frame, zpCep, samplingRate, pitch_floor, pitch_ceiling,
+getPitchCep(frame, cep_zp, samplingRate, pitch_floor, pitch_ceiling,
   cep_threshold, cep_smoothing = NULL, nCands)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
 \code{\link[stats]{fft}}}
 
-\item{zpCep}{zero-padding of the spectrum used for cepstral pitch detection
+\item{cep_zp}{zero-padding of the spectrum used for cepstral pitch detection
 (points). Improves the precision of cepstral pitch detection quite
 noticeably.}
 
 \item{samplingRate}{sampling rate (Hz)}
 
-\item{pitch_floor}{bounds for pitch candidates (Hz)}
+\item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
 
-\item{pitch_ceiling}{bounds for pitch candidates (Hz)}
+\item{pitch_ceiling}{absolute bounds for pitch candidates (Hz)}
 
 \item{cep_threshold}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different

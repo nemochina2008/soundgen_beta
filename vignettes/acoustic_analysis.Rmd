@@ -93,17 +93,17 @@ a = analyze(s, samplingRate = 16000, plot = TRUE, pitch_methods = c('autocor', '
 ### General settings
 `analyze` has a few arguments that affect all methods of pitch tracking:
 
-* `pitch_floor`, `pitch_ceiling`: absolute thresholds for pitch candidates. No values outside these bounds will be considered.
 * `entropy_threshold`: all non-silent frames are analyzed to produce basic spectral descriptives. However, pitch tracking is both computationally costly and can be misleading if applied to obviously voiceless frames. To define what an "obviously voiceless" frame is, we set some cutoff value of Weiner entropy, above which we don't want to even try pitch tracking. To disable this feature and track pitch in all non-silent frames, set `entropy_threshold` to 1.
+* `pitch_floor`, `pitch_ceiling`: absolute thresholds for pitch candidates. No values outside these bounds will be considered.
 * `prior_mean` and `prior_sd` specify the mean and sd of gamma distribution describing our prior knowledge about the most likely pitch values. The prior works by scaling the certainties associated with particular pitch candidates: candidates more than a couple of `prior_sd`'s from `prior_mean` have their weight reduced to nearly zero. The final pitch contour can still pass through low-certainty candidates, however, especially if no better candidates are available. You can therefore think of the prior as a soft alternative (or addition) to `pitch_floor` and `pitch_ceiling`. Based on my limited testing, the mildly informative default prior in `analyze` does improve the accuracy of pitch tracking in human vocalizations. Prior values are specified in semitones above C0, and densities are calculated on the musical scale. For example, if we expect F0 values of about 300 Hz ± half an octave (6 semitones) up or down, a prior can be defined as `prior_mean = HzToSemitones(300), prior_sd = 6`. For convenience, the prior can be plotted directly from `analyze`:
 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
 par(mfrow = c(1, 2))
 # default prior in soundgen
-a1 = analyze(s, samplingRate = 16000, plot = FALSE, plot_prior = TRUE,
+a1 = analyze(s, samplingRate = 16000, plot = FALSE, prior_plot = TRUE,
              prior_mean = HzToSemitones(300), prior_sd = 6)  
 # narrow peak at 2 kHz
-a2 = analyze(s, samplingRate = 16000, plot = FALSE, plot_prior = TRUE,
+a2 = analyze(s, samplingRate = 16000, plot = FALSE, prior_plot = TRUE,
              prior_mean = HzToSemitones(2000), prior_sd = 1)
 par(mfrow = c(1, 1))
 ``` 
@@ -123,9 +123,7 @@ a = analyze(s, samplingRate = 16000, plot = TRUE,
              # expect higher F0 than default
             prior_mean = HzToSemitones(1000), prior_sd = 6,
             # multiple candidates per method allowed
-            nCands = 2,
-            # some method-specific settings
-            pitch_methods = c('autocor', 'cep', 'dom'), zpCep = 1024)
+            nCands = 2)
 ```
 
 ### Pitch tracking methods
@@ -136,8 +134,8 @@ Time domain: pitch by autocorrelation, PRAAT, `pitchAutocor`.
   
 This is an R implementation of the algorithm used in the popular open-source program PRAAT (Boersma, 1993). The basic idea is that a harmonic signal correlates with itself most strongly at a delay equal to the period of the lowest harmonic (F0). Peaks in the autocorrelation function are thus treated as potential pitch candidates. The main trick is to choose an appropriate windowing function and adjust for its own autocorrelation. Compared to other methods implemented in soundgen, pitch estimates based on autocorrelation appear to be particularly accurate for relatively high values of F0. The settings that control `pitchAutocor` are:
   
-  * `autocor_threshold`: voicing threshold, defaults to 0.7. This means that peaks in the autocorrelation function have to be at least 0.7 in height (1 = perfect autocorrelation). 
-  * `autocor_smoothing_width`: 
+  * `autocor_threshold`: voicing threshold, defaults to 0.7. This means that peaks in the autocorrelation function have to be at least 0.7 in height (1 = perfect autocorrelation). Lower threshold values produces more false positives (F0 is detected in voiceless, noisy frames), whereas higher threshold produces more accurate values F0 at the expense of failing to detect F0 in noisier frames.
+  * `autocor_smoothing`: the width of smoothing interval (in bins) for finding peaks in the autocorrelation function. If left NULL, it defaults to 7 for sampling rate 44100 and smaller odd numbers for lower sampling rate.
                    
 To use only autocorrelation pitch tracking, but with lower voicing threshold and more candidates than the defaults, we can do something like this (prior is disabled so as not to influence the certainties of different pitch candidates):
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
@@ -175,24 +173,39 @@ The settings that control `pitchCep` are:
 
 * `cep_threshold`: voicing threshold (defaults to 0.45).
 * `cep_smoothing`: the width of smoothing interval (in bins) for finding peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller odd numbers for lower values of sampling rate.
-* `zpCep` (defaults to 2 ^ 13): zero-padding of the spectrum used for cepstral pitch detection (points). Zero-padding improves the precision of cepstral pitch detection quite noticeably, but it also slows down the algorithm.
+* `cep_zp` (defaults to 0): zero-padding of the spectrum used for cepstral pitch detection (points). Zero-padding may improve the precision of cepstral pitch detection, but it also slows down the algorithm.
 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
 a = analyze(s, samplingRate = 16000, plot = TRUE, prior_mean = NA,
             pitch_methods = 'cep',
             cep_threshold = .2,
-            nCands = 2,
-            zpCep = 2 ^ 8)
+            nCands = 2)
 ```
   
 #### Spectrum
 Frequency domain: ratios of harmonics, BaNa, `pitchSpec`. 
-  All harmonics are multiples of the fundamental frequency. The ratio of two neighboring harmonics is thus predictably related to their rank relative to F0. For example, `(3 * F0) / (2 * F0) = 1.5`, so if we find two harmonics in the spectrum that have a ratio of exactly 1.5, it is likely that these are the first two harmonics, making it possible to calculate F0 (Ba et al. 2012). This is the principle behind the spectral pitch estimate in soundgen, which seems to be particularly useful for noisy, relatively low-pitched sounds.
+  
+All harmonics are multiples of the fundamental frequency. The ratio of two neighboring harmonics is thus predictably related to their rank relative to F0. For example, `(3 * F0) / (2 * F0) = 1.5`, so if we find two harmonics in the spectrum that have a ratio of exactly 1.5, it is likely that these are the first two harmonics, making it possible to calculate F0 (Ba et al. 2012). This is the principle behind the spectral pitch estimate in soundgen, which seems to be particularly useful for noisy, relatively low-pitched sounds.
 
+The settings that control `pitchSpec` are:
 
+* `spec_threshold`: voicing threshold for pitch candidates suggested by the spectral (BaNa) method. The scale is 0 to 1, as usual, but it is the result of a rather arbitrary normalization. The "strength" of spectral pitch candidates is basically calculated as a sigmoid function of the number of harmonic ratios that together converge on the same F0 value. This key parameter controls how many pitch candidates the spectral method suggests: setting `spec_threshold` too low generates garbage (usually with F0 lower than it should be), while setting it too high makes the spectral method excessively conservative.
+* `spec_singlePeakCert`: (0 to 1) if a`pitchSpec` candidate is calculated based on a single harmonic ratio (as opposed to several ratios converging on the same candidate), its weight (certainty) is taken to be `spec_singlePeakCert`. This mainly has implications for how much we trust spectral vs. other pitch estimates.
+* `spec_peak`, `spec_peak_HNRslope` when looking for putative harmonics in the spectrum, the threshold for peak detection is calculated as `spec_peak * (1 - HNR * spec_peak_HNRslope)`. For noisy sounds the threshold is high to avoid false sumharmonics, while for tonal sounds it is low to catch weak harmonics. If `HNR` (harmonics-to-noise ratio) is not known, say if we have disabled the autocorrelation pitch tracker or if it returns NA for a frame, then the threshold defaults to simply `spec_peak`.
+* `spec_smoothing`: the width of window for detecting peaks in the spectrum, Hz. You may want to adjust it if you are working with sounds with a specific F0 range, especially if it is unusually high or low compared to human sounds.
+* `spec_merge`: pitch candidates within `spec_merge` semitones are merged with boosted certainty. Since the idea behind the spectral pitch tracker is that multiple harmonic ratios should converge on the same F0, we have to decide what counts as "the same" F0. The default is 1 semitone.
 
+```{r fig.show = "hold", fig.height = 5, fig.width = 7}
+a = analyze(s, samplingRate = 16000, plot = TRUE, prior_mean = NA,
+            pitch_methods = 'spec',
+            spec_threshold = .5,
+            spec_peak = 0.35,
+            spec_smoothing = 250,
+            spec_merge = 2,
+            spec_singlePeakCert = 0.1)
+```
 
-*TIP As you can guess by now, any pitch tracking method can be tweaked to produce nearly perfect results for any one particular sound (read: to agree with human intuition). The real trick is to find settings that would be accurate on average, across a wide range of sounds and recording conditions. The default settings in `analyze` are the result of optimization again manually verified pitch measurements of a corpus of 260 human non-linguistic vocalizations. For other material, you will need to do your own manual tweaking and/or optimization.*
+*TIP As you can guess by now, any pitch tracking method can be tweaked to produce nearly perfect results for any one particular sound (read: to agree with human intuition). The real trick is to find settings that are accurate on average, across a wide range of sounds and recording conditions. The default settings in `analyze` are the result of optimization against manually verified pitch measurements of a corpus of 260 human non-linguistic vocalizations. For other types of sounds, you will need to perform your own manual tweaking and/or formal optimization.*
 
 ## Postprocessing of pitch contour
 To see what postprocessing achieves, let's first turn it off completely:
@@ -204,7 +217,7 @@ To see what postprocessing achieves, let's first turn it off completely:
 
 # Self-similarity matrices
 
-
+# Optimization
 
 ```{r}
 

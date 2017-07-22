@@ -4,7 +4,7 @@
 \alias{snake}
 \title{Snake}
 \usage{
-snake(pitch, pitchCands, pitchCert, certWeight, pitchCenterGravity,
+snake(pitch, pitchCands, pitchCert, cert_weight, pitchCenterGravity,
   snake_step = 0.05, snake_plot = FALSE)
 }
 \arguments{
@@ -17,10 +17,10 @@ column is one fft frame, each row is one candidate.}
 \item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
 our certainty in pitch candidates}
 
-\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
+\item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
-tension of the resulting pitch curve. High certWeight: we mostly pay
-attention to our certainty in particular pitch candidates; low certWeight:
+tension of the resulting pitch curve. High cert_weight: we mostly pay
+attention to our certainty in particular pitch candidates; low cert_weight:
 we are more concerned with avoiding rapid pitch fluctuations in our
 contour.}
 
