@@ -44,7 +44,8 @@
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),
 #'   or another color theme (e.g. 'heat.colors')
 #' @param xlab label for x-axis
-#' @param ... other graphical parameters
+#' @param ... other graphical parameters passed to
+#'   \code{\link{seewave::filled.contour.modif2}}
 #' @param frameBank ignore (only needed for pitch tracking)
 #' @param duration ignore (only needed for pitch tracking)
 #' @export
@@ -256,8 +257,8 @@ spec = function (x,
       par(mar = c(0, 4.1, 2.1, 2.1), xaxt = 'n', yaxt = 's')
       xlab = ''
     }
-    seewave::filled.contour.modif2 (x = X, y = Y, z = Z1, levels = seq(0, 1, length = 30),
-                                    color.palette = color.palette, ylim = ylim, xlab = xlab, ...)
+    seewave::filled.contour.modif2(x = X, y = Y, z = Z1, levels = seq(0, 1, length = 30),
+                                   color.palette = color.palette, ylim = ylim, xlab = xlab, ...)
     # restore original pars
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
   }

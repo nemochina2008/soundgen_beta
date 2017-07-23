@@ -11,60 +11,57 @@
 #'   threshold are not analyzed at all. NB: this number is dynamically updated:
 #'   the actual silence threshold may be higher depending on the quietest frame,
 #'   but it will never be lower than this specified number.
-#' @param cutoff_freq repeat the calculation of spectral descriptives after
-#'   discarding all info above \code{cutoff_freq} (Hz). Recommended if the
-#'   original sampling rate varies across different analyzed audio files
+#' @param cutoff_freq (>0 to Nyquist Hz) repeat the calculation of spectral
+#'   descriptives after discarding all info above \code{cutoff_freq}.
+#'   Recommended if the original sampling rate varies across different analyzed
+#'   audio files
 #' @param pitch_methods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 #'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band
-#' @param entropy_threshold pitch tracking is not applied to frames with entropy
-#'   above \code{entropy_threshold} (assumed to be just noise), but other
-#'   spectral descriptives are still calculated
+#' @param entropy_threshold pitch tracking is not performed for frames with Weiner
+#'   entropy above \code{entropy_threshold}, but other spectral descriptives are
+#'   still calculated
 #' @param pitch_floor,pitch_ceiling absolute bounds for pitch candidates (Hz)
 #' @param prior_mean,prior_sd specifies the mean and sd of gamma distribution
 #'   describing our prior knowledge about the most likely pitch values for this
-#'   file. NB: prior values are specified in semitones above C0, and prior
-#'   densities are calculated on the musical scale, not in Hz! Ex.:
-#'   \code{prior_mean = HzToSemitones(300), prior_sd = 6} gives a prior with
-#'   mean = 300 Hz and SD of 6 semitones (half an octave)
+#'   file. Specified in semitones: \code{prior_mean = HzToSemitones(300),
+#'   prior_sd = 6} gives a prior with mean = 300 Hz and SD of 6 semitones (half
+#'   an octave)
 #' @param prior_plot if TRUE, produces a separate plot of the prior
-#' @param nCands maximum number of pitch candidates to use per method (except
-#'   for \code{dom}, which returns at most one candidate per frame)
-#' @param min_voiced_cands minimum number of pitch candidates that have to be
-#'   defined to consider a frame voiced (defaults to 2 if \code{dom} is among
-#'   the candidates and 1 otherwise)
-#' @param autocor_threshold,cep_threshold,spec_threshold (0 to 1) separate
-#'   voicing thresholds for detecting pitch candidates with three different
-#'   methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-#'   that HNR is still calculated for frames considered to be unvoiced.
-#' @param autocor_smoothing the width of smoothing interval (in bins) for
-#'   finding peaks in the autocorrelation function. Defaults to 7 for sampling
-#'   rate 44100 and smaller odd numbers for lower values of sampling rate
-#' @param cep_smoothing the width of smoothing interval (in bins) for finding
-#'   peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller
-#'   odd numbers for lower values of sampling rate
-#' @param cep_zp zero-padding of the spectrum used for cepstral pitch detection
-#'   (points). Improves the precision of cepstral pitch detection quite
-#'   noticeably.
-#' @param spec_peak,spec_peak_HNRslope when looking for putative
-#' harmonics in the spectrum, the threshold for peak detection is calculated as
-#' \code{spec_peak * (1 - HNR * spec_peak_HNRslope)}. For noisy sounds the
-#' threshold is high to avoid false sumharmonics, while for tonal sounds it is low
-#' to catch weak harmonics
-#' @param spec_smoothing the width of window for detecting peaks in the spectrum, Hz
-#' @param spec_merge pitch candidates within \code{spec_merge} are
-#'   merged with boosted certainty
-#' @param spec_singlePeakCert (0 to 1) if only one pitchSpec candidate is
-#'   found, its weight (certainty) is taken to be
-#'   \code{spec_singlePeakCert}
+#' @param nCands maximum number of pitch candidates per method (except for
+#'   \code{dom}, which returns at most one candidate per frame)
+#' @param min_voiced_cands minimum number of pitch candidates that
+#'   have to be defined to consider a frame voiced (defaults to 2 if \code{dom}
+#'   is among other candidates and 1 otherwise)
 #' @param dom_threshold (0 to 1) to find the lowest dominant frequency band, we
 #'   do short-term FFT and take the lowest frequency with amplitude at least
 #'   dom_threshold
 #' @param dom_smoothing the width of smoothing interval (Hz) for finding
-#'   the lowest spectral peak (lowest dominant frequency band)
+#'   \code{dom}
+#' @param autocor_threshold,cep_threshold,spec_threshold (0 to 1) separate
+#'   voicing thresholds for detecting pitch candidates with three different
+#'   methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
+#'   that HNR is calculated even for unvoiced frames.
+#' @param autocor_smoothing the width of smoothing interval (in bins) for
+#'   finding peaks in the autocorrelation function. Defaults to 7 for sampling
+#'   rate 44100 and smaller odd numbers for lower values of sampling rate
+#' @param cep_smoothing the width of smoothing interval (in bins) for finding
+#'   peaks in the cepstrum. Defaults to 31 for sampling rate 44100 and smaller
+#'   odd numbers for lower values of sampling rate
+#' @param cep_zp zero-padding of the spectrum used for cepstral pitch detection
+#'   (final length of spectrum after zero-padding, in points)
+#' @param spec_peak,spec_peak_HNRslope when looking for putative harmonics in
+#'   the spectrum, the threshold for peak detection is calculated as
+#'   \code{spec_peak * (1 - HNR * spec_peak_HNRslope)}
+#' @param spec_smoothing the width of window for detecting peaks in the spectrum, Hz
+#' @param spec_merge pitch candidates within \code{spec_merge} semitones are
+#'   merged with boosted certainty
+#' @param spec_singlePeakCert (0 to 1) if F0 is calculated based on a single
+#'   harmonic ratio (as opposed to several ratios converging on the same
+#'   candidate), its certainty is taken to be \code{spec_singlePeakCert}
 #' @param shortest_syl the smallest length of a voiced segment (ms) that
-#'   constitutes a syllable (shorter segments will be replaced by NA as if
-#'   unvoiced)
+#'   constitutes a voiced syllable (shorter segments will be replaced by NA, as
+#'   if unvoiced)
 #' @param shortest_pause the smallest gap between voiced syllables (ms) that
 #'   means they shouldn't be merged into one voiced syllable
 #' @param interpol_window,interpol_tolerance,interpol_cert control the behavior of
@@ -73,35 +70,24 @@
 #'   \code{\link{pathfinder}} for details.
 #' @param pathfinding method of finding the optimal path through pitch
 #'   candidates: 'slow' for annealing, 'fast' for a simple heuristic, 'none' for
-#'   none. See \code{\link{pathfinder}} for details.
+#'   none. See \code{\link{soundgen:::pathfinder}} for details.
 #' @param control_anneal a list of control parameters for postprocessing of
 #'   pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
 #'   only relevant if \code{pathfinding} is 'slow'
 #' @param cert_weight (0 to 1) in pitch postprocessing, specifies how much we
 #'   prioritize the certainty of pitch candidates vs. pitch jumps / the internal
-#'   tension of the resulting pitch curve. High cert_weight: we mostly pay
-#'   attention to our certainty in particular pitch candidates; low cert_weight:
-#'   we are more concerned with avoiding rapid pitch fluctuations in our
-#'   contour.
-#' @param snake_step if \code{snake_step} is a positive number, the optimized
-#'   path through pitch candidates is further processed to minimize the elastic
-#'   force acting on pitch contour. Note that this imposes some smoothing and
-#'   thus creates pitch values that were not among candidates. The exact value
-#'   of \code{snake_step} controls the speed of snake adaptation. To turn off
-#'   the snake module, set \code{snake_step} to NULL
-#' @param snake_plot if TRUE, plots the snake (pitch postprocessing)
+#'   tension of the resulting pitch curve
+#' @param snake_step optimized path through pitch candidates is further
+#'   processed to minimize the elastic force acting on pitch contour. To
+#'   disable, set \code{snake_step} to NULL
+#' @param snake_plot if TRUE, plots the snake
 #' @param smooth_idx,smooth_vars if \code{smooth_idx} is a positive number,
 #'   contours of the variables in \code{smooth_vars} are smoothed using a
-#'   customized version of median smoothing. Modifies only the values that
-#'   deviate considerably from the moving median and preserves all other values
-#'   (so this is a bit different from applying a moving median or kernel
-#'   smoothing). \code{smooth_idx} controls both the tolerated deviance and the
-#'   size of the window for calculating a moving median. \code{smooth_idx} of 1
-#'   corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones.
-#'   To turn off the median smoothing, set \code{smooth_idx} or
-#'   \code{smooth_vars} to NULL.
+#'   customized version of median smoothing. \code{smooth_idx} of 1 corresponds
+#'   to a window of ~100 ms and tolerated deviation of ~4 semitones. To disable,
+#'   set \code{smooth_idx} to NULL.
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
-#' @param savePath if a valid path is specified, the plot is saved in this
+#' @param savePath if a valid path is specified, a plot is saved in this
 #'   folder (defaults to NA)
 #' @param plot_spec_pars a list of graphical parameters passed on to
 #'   \code{\link{spec}}. Set to \code{NULL} or \code{NA} to suppress plotting
@@ -222,7 +208,7 @@ analyze = function(x,
                           last = (nchar(plotname) - 4))
   }  else if (class(x) == 'numeric' & length(x) > 1) {
     if (is.null(samplingRate)) {
-      stop ('Please specify samplingRate, eg 44100')
+      stop('Please specify "samplingRate", eg 44100')
     } else {
       sound = x
       plotname = ''
@@ -236,15 +222,145 @@ analyze = function(x,
   sound = sound / max(abs(max(sound)), abs(min(sound)))
 
   # some derived pars, defaults
+  if (!is.numeric(silence) || silence < 0 || silence > 1) {
+    silence = 0.04
+    warning('"silence" must be between 0 and 1; defaulting to 0.04')
+  }
+  if (!is.numeric(entropy_threshold) || entropy_threshold < 0 || entropy_threshold > 1) {
+    entropy_threshold = 0.6
+    warning('"entropy_threshold" must be between 0 and 1; defaulting to 0.6')
+  }
+  if (!is.numeric(windowLength) || windowLength <= 0) {
+    windowLength = 50
+    warning('"windowLength" must be a positive number;
+            defaulting to 50 ms')
+  }
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   # to ensure that the window length in points is a power of 2, say 2048 or 1024:
   # windowLength_points = 2^round (log(windowLength * samplingRate /1000)/log(2), 0)
   duration = length(sound) / samplingRate
-  if (!is.numeric(pitch_floor) || pitch_floor <= 0) {
+  supported_wn = c('bartlett', 'blackman', 'flattop', 'gaussian',
+                   'hamming', 'hanning', 'rectangle')
+  if (!wn %in% supported_wn) {
+    wn = 'gaussian'
+    warning(paste('implemented "wn":', supported_wn, '; defaulting to "gaussian"'))
+  }
+  if (!is.numeric(zp)) {
+    zp = 0
+  } else if (zp < 0) {
+    zp = 0
+    warning('"zp" must be non-negative; defaulting to 0')
+  }
+  if (!is.numeric(cutoff_freq)) {
+    cutoff_freq = samplingRate / 2
+  } else if (cutoff_freq <= 0) {
+    cutoff_freq = samplingRate / 2
+    warning('"cutoff_freq" must be positive;
+            defaulting to samplingRate / 2')
+  }
+  if (!is.numeric(pitch_floor) || pitch_floor <= 0 || pitch_floor > samplingRate / 2) {
     pitch_floor = 1
+    warning('"pitch_floor" must be between 0 and pitch_ceiling;
+            defaulting to 1 Hz')
     } # 1 Hz ~ 4 octraves below C0
-  if (!is.numeric(pitch_ceiling) || pitch_ceiling <= samplingRate / 2) {
+  if (!is.numeric(pitch_ceiling) || pitch_ceiling > samplingRate / 2) {
     pitch_ceiling = samplingRate / 2  # Nyquist
+    warning('"pitch_ceiling" must be between 0 and Nyquist;
+            defaulting to samplingRate / 2')
+  }
+  if (pitch_floor > pitch_ceiling) {
+    pitch_floor = 1
+    pitch_ceiling = samplingRate / 2
+    warning('"pitch_floor" cannot be above "pitch_ceiling";
+            defaulting to 1 Hz and samplingRate / 2, respectively')
+  }
+  if (is.numeric(prior_mean) && semitonesToHz(prior_mean) > samplingRate / 2) {
+    prior_mean = HzToSemitones(300)
+    warning('Your chosen "prior_mean" exceeds Nyquist frequency;
+            defaulting to HzToSemitones(300); set to NULL to disable prior')
+  }
+  if (is.numeric(prior_mean) &&
+      (!is.numeric(prior_sd)) || prior_sd <= 0) {
+    prior_sd = 6
+    warning('"prior_sd" must be positive; defaulting to 6 semitones')
+  }
+  if (!is.numeric(step) || !(step > 0)) {
+    step = windowLength / 2
+    warning('step must be positive; defaulting to windowLength / 2')
+  }
+  if (is.numeric(step) && step > windowLength) {
+    warning('"step" should normally not be larger than "windowLength":
+            you are skipping parts of the sound!')
+  }
+  if (!is.numeric(nCands) || nCands < 1) {
+    nCands = 1
+    warning('"nCands" must be a positive integer; defaulting to 1')
+  } else if (!is.integer(nCands)) {
+    nCands = round(nCands)
+  }
+
+  if (!is.numeric(dom_threshold) || dom_threshold < 0 || dom_threshold > 1) {
+    dom_threshold = 0.1
+    warning('"dom_threshold" must be between 0 and 1; defaulting to 0.1')
+  }
+  if (!is.numeric(autocor_threshold) || autocor_threshold < 0 || autocor_threshold > 1) {
+    autocor_threshold = 0.7
+    warning('"autocor_threshold" must be between 0 and 1; defaulting to 0.7')
+  }
+  if (!is.numeric(cep_threshold) || cep_threshold < 0 || cep_threshold > 1) {
+    cep_threshold = 0.3
+    warning('"cep_threshold" must be between 0 and 1; defaulting to 0.3')
+  }
+  if (!is.numeric(spec_threshold) || spec_threshold < 0 || spec_threshold > 1) {
+    spec_threshold = 0.3
+    warning('"spec_threshold" must be between 0 and 1; defaulting to 0.3')
+  }
+  if (!is.numeric(spec_peak) || spec_peak < 0 || spec_peak > 1) {
+    spec_peak = 0.35
+    warning('"spec_peak" must be between 0 and 1; defaulting to 0.35')
+  }
+  if (!is.numeric(spec_singlePeakCert) || spec_singlePeakCert < 0 ||
+      spec_singlePeakCert > 1) {
+    spec_singlePeakCert = 0.4
+    warning('"spec_singlePeakCert" must be between 0 and 1; defaulting to 0.4')
+  }
+  if (!is.numeric(spec_merge) || spec_merge < 0) {
+    spec_merge = 1
+    warning('"spec_merge" must be non-negative; defaulting to 1 semitone')
+  }
+
+  if (!is.numeric(shortest_syl) || shortest_syl < 0) {
+    shortest_syl = 0
+    warning('shortest_syl must be a non-negative number; defaulting to 0')
+  }
+  if (!is.numeric(shortest_pause) || shortest_pause < 0) {
+    shortest_pause = 0
+    warning('shortest_pause must be a non-negative number; defaulting to 0')
+  }
+  if (shortest_pause > 0 && is.numeric(interpol_window) &&
+      interpol_window * step < shortest_pause / 2) {
+    interpol_window = ceiling(shortest_pause / 2 / step)
+    warning('"interpol_window" reset to ceiling(shortest_pause / 2 / step):
+            interpolation must be able to bridge merged voiced fragments')
+  }
+  if (is.numeric(interpol_window) &
+      (!is.numeric(interpol_tolerance) || interpol_tolerance <= 0)) {
+    interpol_tolerance = 0.3
+    warning('"interpol_tolerance" must be positive; defaulting to 0.3')
+  }
+  if (is.numeric(interpol_window) &
+      (!is.numeric(interpol_cert) || interpol_cert < 0 | interpol_cert > 1)) {
+    interpol_cert = 0.3
+    warning('"interpol_tolerance" must be between 0 and 1; defaulting to 0.3')
+  }
+  if (!pathfinding %in% c('none', 'fast', 'slow')) {
+    pathfinding = 'fast'
+    warning('implemented "pathfinding": "none", "fast", "slow";
+            defaulting to "fast"')
+  }
+  if (!is.numeric(cert_weight) || cert_weight < 0 | cert_weight > 1) {
+    cert_weight = 0.5
+    warning('"cert_weight" must be between 0 and 1; defaulting to 0.5')
   }
 
   # Set up filter for calculating pitchAutocor
@@ -261,7 +377,10 @@ analyze = function(x,
     last_char = substr(savePath, nchar(savePath), nchar(savePath))
     if(last_char != '/') savePath = paste0(savePath, '/')
     plot = TRUE
-    jpeg(filename = paste0(savePath, plotname, ".jpg"), 1200, 800)
+    f = ifelse(plotname == '',
+               'sound',
+               plotname)
+    jpeg(filename = paste0(savePath, f, ".jpg"), 1200, 800)
   }
   frameBank = getFrameBank(
     sound = sound,
@@ -439,7 +558,8 @@ analyze = function(x,
   }
 
   # divide the file into continuous voiced syllables
-  if (!is.numeric(min_voiced_cands)) {
+  if (!is.numeric(min_voiced_cands) || min_voiced_cands < 1 ||
+      min_voiced_cands > length(pitch_methods)) {
     if ('dom' %in% pitch_methods && length(pitch_methods) > 1) {
       # since dom is usually defined, we want at least one more pitch candidate
       # (unless dom is the ONLY method that the user wants for pitch tracking)
@@ -537,7 +657,7 @@ analyze = function(x,
       plot(x = result$time,
            y = rep(0, nrow(result)),
            type = 'n',
-           ylim = c(0, m), xlab = '', ylab = '')
+           ylim = c(0, m), xlab = 'Time, ms', ylab = 'Pitch, kHz')
     }
     # add pitch candidates to the plot
     if (nrow(pitchCands) > 0) {
@@ -645,9 +765,9 @@ analyzeFolder = function(myfolder,
                          dom_smoothing = 220,
                          autocor_threshold = 0.7,
                          autocor_smoothing = NULL,
-                         cep_threshold = 0.45,
+                         cep_threshold = 0.3,
                          cep_smoothing = NULL,
-                         cep_zp = 2 ^ 13,
+                         cep_zp = 0,
                          spec_threshold = 0.3,
                          spec_peak = 0.35,
                          spec_singlePeakCert = 0.4,

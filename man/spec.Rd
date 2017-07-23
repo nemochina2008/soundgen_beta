@@ -75,7 +75,8 @@ or another color theme (e.g. 'heat.colors')}
 
 \item{duration}{ignore (only needed for pitch tracking)}
 
-\item{...}{other graphical parameters}
+\item{...}{other graphical parameters passed to
+\code{\link{seewave::filled.contour.modif2}}}
 }
 \value{
 Returns nothing (if output = 'none'), raw spectrum (if output =

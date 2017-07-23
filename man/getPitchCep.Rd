@@ -12,8 +12,7 @@ getPitchCep(frame, cep_zp, samplingRate, pitch_floor, pitch_ceiling,
 \code{\link[stats]{fft}}}
 
 \item{cep_zp}{zero-padding of the spectrum used for cepstral pitch detection
-(points). Improves the precision of cepstral pitch detection quite
-noticeably.}
+(final length of spectrum after zero-padding, in points)}
 
 \item{samplingRate}{sampling rate (Hz)}
 
@@ -24,14 +23,14 @@ noticeably.}
 \item{cep_threshold}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is still calculated for frames considered to be unvoiced.}
+that HNR is calculated even for unvoiced frames.}
 
 \item{cep_smoothing}{the width of smoothing interval (in bins) for finding
-peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller
+peaks in the cepstrum. Defaults to 31 for sampling rate 44100 and smaller
 odd numbers for lower values of sampling rate}
 
-\item{nCands}{maximum number of pitch candidates to use per method (except
-for \code{dom}, which returns at most one candidate per frame)}
+\item{nCands}{maximum number of pitch candidates per method (except for
+\code{dom}, which returns at most one candidate per frame)}
 }
 \value{
 Returns either NULL or a dataframe of pitch candidates.

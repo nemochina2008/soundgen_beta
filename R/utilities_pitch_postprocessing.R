@@ -105,7 +105,10 @@ pathfinder = function(pitchCands,
       control_anneal = control_anneal
     )
   } else {
-    bestPath = pitchCenterGravity
+    bestPath = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
+      idx = which.min(abs(pitchCands[, x] - pitchCenterGravity[x]))
+      pitchCands[idx, x]
+    }) # or bestPath = pitchCenterGravity
   }
 
   ## SNAKE
@@ -398,23 +401,21 @@ generatePath = function(path, pitchCands, ...) {
 #'   candidates
 #' @return Returns optimized pitch contour (numeric vector of the same length as
 #'   \code{pitch}).
-snake = function (pitch,
-                  pitchCands,
-                  pitchCert,
-                  cert_weight,
-                  pitchCenterGravity,
-                  snake_step = 0.05,
-                  snake_plot = FALSE) {
+snake = function(pitch,
+                 pitchCands,
+                 pitchCert,
+                 cert_weight,
+                 pitchCenterGravity,
+                 snake_step = 0.05,
+                 snake_plot = FALSE) {
   ran = diff(range(pitchCands, na.rm = TRUE)) # range of pitch
   maxIter = floor(ran / snake_step * 2)  # just heuristic, no theory behind this
 
   # plot for debugging or esthetic appreciation
   if (snake_plot) {
     # plot all pitch candidates and the initial path
-    plot(
-      seq(1, ncol(pitchCands)),
-      pitch,
-      type = 'n',
+    plot(seq(1, ncol(pitchCands)), pitch,
+      type = 'n', xlab = 'FFT frame', ylab = 'log(pitch)',
       ylim = c(
         range(pitchCands, na.rm = TRUE)[1] - .3 * ran,
         range(pitchCands, na.rm = TRUE)[2] + .3 * ran
@@ -577,4 +578,72 @@ medianSmoother = function (df, smoothing_ww, smoothing_threshold) {
     df[i, cond] = median_over_window[cond]
   }
   return (df)
+}
+
+
+#' Find voiced segments
+#'
+#' Internal soundgen function.
+#'
+#' Internal helper function for postprocessing of pitch contours. Merges voiced
+#' segments at least \code{shortest_syl} ms long and separated by less than
+#' \code{shortest_pause} ms.
+#' @param pitchCands matrix of possible pitch values per column. One column is
+#'   one fft frame, one row is one pitch candidate
+#' @inheritParams analyze
+#' @param samplingRate sampling rate (Hz)
+#' @param min_voiced_cands a frame is considered to be voiced if at least this
+#'   many pitch candidates are not NA. Defaults to 2: since dom is usually
+#'   defined, in practice this means that we also want at least one other pitch
+#'   candidate (autocor, cep or BaNa)
+#' @return Returns a dataframe specifying where each voiced segment starts and
+#'   ends (in fft frames, not ms!)
+findVoicedSegments = function(pitchCands,
+                              shortest_syl,
+                              shortest_pause,
+                              step,
+                              samplingRate,
+                              min_voiced_cands) {
+  putativelyVoiced = apply(pitchCands, 2, function(x) {
+    ifelse(sum(!is.na(x)) >= min_voiced_cands, 1, NA)
+  })
+  # the smallest number of consecutive non-NA pitch values that constitute a
+  # voiced segment; but at least 1
+  noRequired = max(1, ceiling(shortest_syl / step))
+  # the greatest number of NA values that we tolerate before we say a new voiced
+  # syllable begins
+  nToleratedNA = floor(shortest_pause / step)
+
+  # find and save separately all voiced segments
+  segmentStart = numeric()
+  segmentEnd = numeric()
+  i = 1
+  while (i < (length(putativelyVoiced) - noRequired + 1)) {
+    # find beginning
+    while (i < (length(putativelyVoiced) - noRequired + 1)) {
+      if (sum(!is.na(putativelyVoiced[i:(i + noRequired - 1)])) == noRequired) {
+        segmentStart = c(segmentStart, i)
+        break
+      }
+      i = i + 1
+    }
+    # find end
+    if (length(segmentEnd) < length(segmentStart)) {
+      while (i < (length(putativelyVoiced) - nToleratedNA + 1)) {
+        if (sum(putativelyVoiced[i:(i + nToleratedNA)], na.rm = TRUE) == 0) {
+          segmentEnd = c(segmentEnd, i - 1)
+          i = i - 1
+          break
+        }
+        i = i + 1
+      }
+      if (length(segmentEnd) < length(segmentStart)) {
+        # if the end is not found, take the last non-NA value
+        segmentEnd = c(segmentEnd, tail(which(!is.na(putativelyVoiced)), 1))
+        break
+      }
+    }
+    i = i + 1
+  }
+  return (data.frame(segmentStart = segmentStart, segmentEnd = segmentEnd))
 }

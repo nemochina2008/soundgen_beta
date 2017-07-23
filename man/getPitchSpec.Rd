@@ -14,11 +14,9 @@ getPitchSpec(frame, spec_smoothing, spec_peak_HNRslope, bin, HNR = NULL,
 
 \item{spec_smoothing}{the width of window for detecting peaks in the spectrum, Hz}
 
-\item{spec_peak_HNRslope}{when looking for putative
-harmonics in the spectrum, the threshold for peak detection is calculated as
-\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}. For noisy sounds the
-threshold is high to avoid false sumharmonics, while for tonal sounds it is low
-to catch weak harmonics}
+\item{spec_peak_HNRslope}{when looking for putative harmonics in
+the spectrum, the threshold for peak detection is calculated as
+\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}}
 
 \item{bin}{the width of spectral bin in \code{frame}, Hz}
 
@@ -27,27 +25,25 @@ to catch weak harmonics}
 \item{spec_threshold}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is still calculated for frames considered to be unvoiced.}
+that HNR is calculated even for unvoiced frames.}
 
-\item{spec_peak}{when looking for putative
-harmonics in the spectrum, the threshold for peak detection is calculated as
-\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}. For noisy sounds the
-threshold is high to avoid false sumharmonics, while for tonal sounds it is low
-to catch weak harmonics}
+\item{spec_peak}{when looking for putative harmonics in
+the spectrum, the threshold for peak detection is calculated as
+\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}}
 
-\item{spec_singlePeakCert}{(0 to 1) if only one pitchSpec candidate is
-found, its weight (certainty) is taken to be
-\code{spec_singlePeakCert}}
+\item{spec_singlePeakCert}{(0 to 1) if F0 is calculated based on a single
+harmonic ratio (as opposed to several ratios converging on the same
+candidate), its certainty is taken to be \code{spec_singlePeakCert}}
 
 \item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
 
 \item{pitch_ceiling}{absolute bounds for pitch candidates (Hz)}
 
-\item{spec_merge}{pitch candidates within \code{spec_merge} are
+\item{spec_merge}{pitch candidates within \code{spec_merge} semitones are
 merged with boosted certainty}
 
-\item{nCands}{maximum number of pitch candidates to use per method (except
-for \code{dom}, which returns at most one candidate per frame)}
+\item{nCands}{maximum number of pitch candidates per method (except for
+\code{dom}, which returns at most one candidate per frame)}
 }
 \value{
 Returns either NULL or a dataframe of pitch candidates.

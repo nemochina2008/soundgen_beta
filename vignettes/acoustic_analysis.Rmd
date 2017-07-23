@@ -171,14 +171,15 @@ Cepstrum is the FFT of log-spectrum. It may be a bit challenging to wrap one's h
 
 The settings that control `pitchCep` are:
 
-* `cep_threshold`: voicing threshold (defaults to 0.45).
-* `cep_smoothing`: the width of smoothing interval (in bins) for finding peaks in the cepstrum. Defaults to 7 for sampling rate 44100 and smaller odd numbers for lower values of sampling rate.
+* `cep_threshold`: voicing threshold (defaults to 0.3).
+* `cep_smoothing`: the width of smoothing interval (in bins) for finding peaks in the cepstrum. If left NULL, it defaults to 31 for sampling rate 44100 and smaller odd numbers for lower values of sampling rate.
 * `cep_zp` (defaults to 0): zero-padding of the spectrum used for cepstral pitch detection (points). Zero-padding may improve the precision of cepstral pitch detection, but it also slows down the algorithm.
 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
 a = analyze(s, samplingRate = 16000, plot = TRUE, prior_mean = NA,
             pitch_methods = 'cep',
             cep_threshold = .2,
+            cep_smoothing = 3,
             nCands = 2)
 ```
   
@@ -189,29 +190,169 @@ All harmonics are multiples of the fundamental frequency. The ratio of two neigh
 
 The settings that control `pitchSpec` are:
 
-* `spec_threshold`: voicing threshold for pitch candidates suggested by the spectral (BaNa) method. The scale is 0 to 1, as usual, but it is the result of a rather arbitrary normalization. The "strength" of spectral pitch candidates is basically calculated as a sigmoid function of the number of harmonic ratios that together converge on the same F0 value. This key parameter controls how many pitch candidates the spectral method suggests: setting `spec_threshold` too low generates garbage (usually with F0 lower than it should be), while setting it too high makes the spectral method excessively conservative.
-* `spec_singlePeakCert`: (0 to 1) if a`pitchSpec` candidate is calculated based on a single harmonic ratio (as opposed to several ratios converging on the same candidate), its weight (certainty) is taken to be `spec_singlePeakCert`. This mainly has implications for how much we trust spectral vs. other pitch estimates.
-* `spec_peak`, `spec_peak_HNRslope` when looking for putative harmonics in the spectrum, the threshold for peak detection is calculated as `spec_peak * (1 - HNR * spec_peak_HNRslope)`. For noisy sounds the threshold is high to avoid false sumharmonics, while for tonal sounds it is low to catch weak harmonics. If `HNR` (harmonics-to-noise ratio) is not known, say if we have disabled the autocorrelation pitch tracker or if it returns NA for a frame, then the threshold defaults to simply `spec_peak`.
-* `spec_smoothing`: the width of window for detecting peaks in the spectrum, Hz. You may want to adjust it if you are working with sounds with a specific F0 range, especially if it is unusually high or low compared to human sounds.
-* `spec_merge`: pitch candidates within `spec_merge` semitones are merged with boosted certainty. Since the idea behind the spectral pitch tracker is that multiple harmonic ratios should converge on the same F0, we have to decide what counts as "the same" F0. The default is 1 semitone.
+* `spec_threshold` (0 to 1, defaults to 0.3): voicing threshold for pitch candidates suggested by the spectral (BaNa) method. The scale is 0 to 1, as usual, but it is the result of a rather arbitrary normalization. The "strength" of spectral pitch candidates is basically calculated as a sigmoid function of the number of harmonic ratios that together converge on the same F0 value. Setting `spec_threshold` too low may produce garbage, while setting it too high makes the spectral method excessively conservative.
+* `spec_peak` (0 to 1, defaults to 0.35), `spec_peak_HNRslope` (0 to Inf, defaults to 0.8): when looking for putative harmonics in the spectrum, the threshold for peak detection is calculated as `spec_peak * (1 - HNR * spec_peak_HNRslope)`. For noisy sounds the threshold is high to avoid false sumharmonics, while for tonal sounds it is low to catch weak harmonics. If `HNR` (harmonics-to-noise ratio) is not known, say if we have disabled the autocorrelation pitch tracker or if it returns NA for a frame, then the threshold defaults to simply `spec_peak`. This key parameter strongly affects how many pitch candidates the spectral method suggests.
+* `spec_smoothing` (0 to Inf, defaults to 150 Hz): the width of window for detecting peaks in the spectrum, in Hz. You may want to adjust it if you are working with sounds with a specific F0 range, especially if it is unusually high or low compared to human sounds.
+* `spec_merge` (0 to Inf semitones, defaults to 1): pitch candidates within `spec_merge` semitones are merged with boosted certainty. Since the idea behind the spectral pitch tracker is that multiple harmonic ratios should converge on the same F0, we have to decide what counts as "the same" F0.
+* `spec_singlePeakCert`: (0 to 1, defaults to 0.4) if a`pitchSpec` candidate is calculated based on a single harmonic ratio (as opposed to several ratios converging on the same candidate), its weight (certainty) is taken to be `spec_singlePeakCert`. This mainly has implications for how much we trust spectral vs. other pitch estimates.
 
 ```{r fig.show = "hold", fig.height = 5, fig.width = 7}
 a = analyze(s, samplingRate = 16000, plot = TRUE, prior_mean = NA,
             pitch_methods = 'spec',
-            spec_threshold = .5,
-            spec_peak = 0.35,
-            spec_smoothing = 250,
-            spec_merge = 2,
-            spec_singlePeakCert = 0.1)
+            spec_peak = .6,
+            nCands = 3)
 ```
 
 *TIP As you can guess by now, any pitch tracking method can be tweaked to produce nearly perfect results for any one particular sound (read: to agree with human intuition). The real trick is to find settings that are accurate on average, across a wide range of sounds and recording conditions. The default settings in `analyze` are the result of optimization against manually verified pitch measurements of a corpus of 260 human non-linguistic vocalizations. For other types of sounds, you will need to perform your own manual tweaking and/or formal optimization.*
 
 ## Postprocessing of pitch contour
-To see what postprocessing achieves, let's first turn it off completely:
-```{r}
-# a = 
+Pitch postprocessing in soundgen includes a whole battery of distinct operations through which the pitch candidates generated by one or more tracking methods are integrated into the final pitch contour. We will look at them one by one, in the order in which they are performed in `analyze`. But first of all, here is how to disable them all:
+```{r fig.height = 5, fig.width = 7}
+a = analyze(s, samplingRate = 16000, plot = TRUE, prior_mean = NA,
+            shortest_syl = 0, shortest_pause = 0,  # any length of voiced fragments
+            interpol_window = NULL,  # don't interpolate missing F0 values
+            pathfinding = 'none',    # don't look for optimal path through candidates
+            snake_step = NULL,       # don't run the snake
+            smooth_idx = NULL)       # don't run median smoothing
 ```
+
+As in this example, when enough pitch candidates are available and the sound is not too tricky, postprocessing actually makes little difference. In terms of the accuracy of median estimate of F0, you are likely to get a good result even with postprocessing completely disabled. However, if you are interested in the actual intonation contours, postprocessing can help a lot.
+
+### Continuous voiced fragments
+It often makes sense to make assumptions about the possible temporal structure of voiced fragments, such as their minimal expected length (`shortest_syl`) and spacing (`shortest_pause`). If these two parameters are positive numbers, the first stage of postprocessing is to divide the sound into continuous voiced fragments that satisfy these assumptions. The default minimal length of a voiced fragment is a single FFT frame. If `shortest_syl` is longer than a single frame, then we need at least two adjacent voiced frames to start a voiced fragment. A single voiced frame surrounded by unvoiced frames then gets discarded (assumed to be unvoiced). If two voiced fragments are separated by less than `shortest_pause`, they are merged. What this means is simply that they are processed as a single syllable by `pathfinder` (see below). No interpolation takes place at this stage.
+
+The next few blocks of postprocessing are performed by an internal function, `soundgen:::pathfinder`. Its input is a matrix of pitch candidates for each frame of a single voiced syllable, usually with multiple candidates per frame. Each candidate is also associated with a different certainty. We want to find a good path through these candidates - that is, a pitch contour that both passes close to the strongest candidates and minimizes pitch jumps, producing a relatively smooth contour. The simplest first approximation is to take a mean of all pitch candidates per frame weighted by their certainty - the "center of gravity" of pitch candidates - and for each frame to select the candidate that lies closest to this center of gravity. This initial guess at a reasonable path may or may not be processed further, depending on the settings described below.
+
+### Interpolation
+To make sure we have at least one pitch candidate for every frame in the supposedly continuous voiced fragment, we interpolate to fill in any missing values. The same algorithm also adds new pitch candidates with certainty `interpol_cert` if a frame has no pitch candidates within `interpol_tolerance` of the median of the "center of gravity" estimate over ± `interpol_window` frames. The frequency of new candidates is equal to this median. `interpol_tolerance` defaults to 0.05, which means that new candidates are calculated if there are none within 0.95 to 1.05 times the median over the interpolation window. You can also enable interpolation to fill in unvoiced frames, but without adding new pitch candidates in voiced frames. To do so, set `interpol_tolerance = Inf`.
+
+As an illustration, compare the output of the following two commands:
+```{r fig.height = 3, fig.width = 7}
+par(mfrow = c(1, 2))
+a1 = analyze(s, samplingRate = 16000, plot_spec_pars = NULL, prior_mean = NA,
+             pitch_methods = 'cep', cep_threshold = .4)  
+a2 = analyze(s, samplingRate = 16000, plot_spec_pars = NULL, prior_mean = NA,
+             pitch_methods = 'cep', cep_threshold = .4,
+             interpol_window = NULL)  # disable interpolation
+par(mfrow = c(1, 1))
+```
+
+*TIP: if you turn off interpolation by setting `interpol_window = NULL`, pathfinder may crash if there are unvoiced gaps in the syllable. In practice, you should either disable interpolation and pathfinding together or set `shortest_pause = 0` to ensure each syllable is continuously voiced*
+
+### Pathfinding
+The next step after interpolation is pathfinding proper - searching for the optimal path through pitch candidates. If `pathfinding = "none"`, this step is skipped, so we just continue working with the (possibly interpolated) center of gravity of pitch candidates. If `pathfinding = "fast"` (the default option), a simple heuristic is employed, in which we walk down the path twice, first left to right and then right to left, trying to minimize the cost measured as a function of the distance from the center of gravity and the deviation from a smooth contour. The key setting is `cert_weight`, which specifies how much we prioritize the certainty of pitch candidates vs. pitch jumps / the internal tension of the resulting pitch curve. Low `cert_weight` (close to 0): we are mostly concerned with avoiding rapid pitch fluctuations in our contour. High `cert_weight` (close to 1): we mostly pay attention to our certainty in particular pitch candidates.  An example is below. Since this is an illustration of how pathfinding works, all other types of smoothing are disabled, so as to force the final pitch contour to pass strictly through existing candidates.
+
+```{r fig.height = 3, fig.width = 7}
+par(mfrow = c(1, 2))
+a1 = analyze(s, samplingRate = 16000, plot_spec_pars = NULL, prior_mean = NA,
+             pitch_methods = 'cep', cep_threshold = .2, nCands = 2,
+             snake_step = NULL, smooth_idx = 0, interpol_tolerance = Inf,
+             cert_weight = 0)  # minimize pitch jumps
+a2 = analyze(s, samplingRate = 16000, plot_spec_pars = NULL, prior_mean = NA,
+             pitch_methods = 'cep', cep_threshold = .2, nCands = 2,
+             snake_step = NULL, smooth_idx = 0, interpol_tolerance = Inf,
+             cert_weight = 1)  # minimize the absolute distance from center of gravity
+par(mfrow = c(1, 1))
+```
+
+In addition to the default option `pathfinding = 'fast'`, there are two other options. `pathfinding = 'none'` just takes the simplest guess at a reasonable path, namely takes the candidate from each frame that lies closest to the center of gravity for that frame, with no regard for pitch jumps. The final option is `pathfinding = 'slow'`, which calls `stats::optim(method = 'SANN')` to perform pseudo-annealing. This is a more powerful algorithm than the simple heuristic in `pathfinding = 'fast'`, but it is called "slow" for a good reason. If you do have plenty of time, though, it does improve the results, but note that this algorithm is stochastic, so each run may produce different results. Use an additional argument, `control_anneal`, to control the algorithm. See `?stats::optim` for more details.
+Examples (in this simple case annealing produces essentially the same contour as the "fast" heuristic above):
+
+```{r fig.height = 3, fig.width = 7}
+par(mfrow = c(1, 2))
+a1 = analyze(s, samplingRate = 16000, plot_spec_pars = NULL, prior_mean = NA,
+             pitch_methods = 'cep', cep_threshold = .2, nCands = 2,
+             snake_step = NULL, smooth_idx = 0, interpol_tolerance = Inf,
+             pathfinding = 'slow', cert_weight = .25)
+a2 = analyze(s, samplingRate = 16000, plot_spec_pars = NULL, prior_mean = NA,
+             pitch_methods = 'cep', cep_threshold = .2, nCands = 2,
+             snake_step = NULL, smooth_idx = 0, interpol_tolerance = Inf,
+             pathfinding = 'none')
+par(mfrow = c(1, 1))
+```
+
+### Snake
+What is here referred to as the "snake" can be seen as an alternative to the pathfinding algorithms above, although both can also be performed sequentially. If pathfinding attempts to find the best path through existing pitch candidates, the snake wiggles the contour under a weighted combination of (a) elastic forces trying to snap the pitch contour to a straight line and (b) the pull of high-certainty pitch candidates. In a sense the snake is thus a combination of interpolation and pathfinding: like interpolation, it can add new values different from existing candidates, and like pathfinding, it balances the certainty in candidates against the smoothness of the resulting contour. 
+
+The only control parameter in the snake module is `snake_step`, which controls the speed of adaptation (the default is 0.05). The higher it is, the faster the snake "wiggles". This reduces processing time, but the snake risks "overshooting", preventing convergence. If `snake_step` is too low (close to 0), the snake moves too slowly and may fail to reach its optimal configuration. To disable the snake module, set `snake_step = NULL`. You can also produce a separate plot of the snake by setting `snake_plot = TRUE`, as in the example below (again, all other postprocessing is disabled to show what the snake alone will do). The zigzagging line is the initial contour (the path through pitch candidates that lie as close as possible to the center of gravity of each frame), the smooth blue line is the pitch contour after running the snake, and the green traces show the progress of iterative snake adaptation. Note that at `cert_weight = 0.1` the snake is heavily biased towards producing a smooth contour, regardless of its distance from high-certainty pitch candidates.
+
+```{r fig.height = 5, fig.width = 7}
+a1 = analyze(s, samplingRate = 16000, plot = FALSE, prior_mean = NA,
+             pitch_methods = 'cep', cep_threshold = .2, nCands = 2,
+             pathfinding = 'none', smooth_idx = 0, interpol_tolerance = Inf,
+             cert_weight = .1,  # like pathfinding, the snake is affected by cert_weight
+             snake_step = 0.05, snake_plot = TRUE)
+```
+
+*TIP Should you use pathfinding, the snake, or both? Pathfinding makes more sense if you want the final contour to pass exactly through existing candidates, say if there are relatively few candidates and most of them are on target. In these conditions the snake will not do much (but not much harm, either). The snake becomes attractive if you have a lot of candidates from different pitch tracking methods, many of which are way off. So the more garbage you expect the pitch tracker to produce, the more you might want to extrapolate, use the snake vs. pathfinding, and perhaps also apply median smoothing*
+
+### Median smoothing
+The final postprocessing stage is median smoothing. By now we have only a single F0 value per frame, so we can forget about the multiple candidates and their certainties. It wouldn't make much sense to apply kernel smoothing to this curve: the snake can usually do this in a smarter way, since it does know about the multiple candidates and their certainties. What we want from the smoothing algorithm is to detect and correct only outliers: the values that stick out from the surrounding frames. The parameters that control this module are `smooth_idx` and `smooth_vars`.
+
+If `smooth_idx` is a positive number, contours of the variables in `smooth_vars` are smoothed using a customized version of median smoothing. This modifies only the values that deviate considerably from the moving median and preserves all other values (so this is a bit different from applying a moving median or kernel smoothing). `smooth_idx` controls both the tolerated deviance and the size of the window for calculating a moving median. `smooth_idx = 1` (the default) corresponds to a window of ~100 ms and tolerated deviation of ~4 semitones. 
+
+This smoothing can be applied to any measured value, not only the final pitch contour. The default is `smooth_vars = c('pitch', 'dom')`. To turn off the median smoothing, set `smooth_idx = NULL` or `smooth_vars = NULL`.
+
+```{r fig.height = 3, fig.width = 7}
+par(mfrow = c(1, 2))
+a1 = analyze(s, samplingRate = 16000, plot_spec_pars = NULL, prior_mean = NA,
+             pitch_methods = 'cep', cep_threshold = .2, nCands = 2,
+             pathfinding = 'none', snake_step = NULL, interpol_tolerance = Inf,
+             smooth_idx = 0)
+a2 = analyze(s, samplingRate = 16000, plot_spec_pars = NULL, prior_mean = NA,
+             pitch_methods = 'cep', cep_threshold = .2, nCands = 2,
+             pathfinding = 'none', snake_step = NULL, interpol_tolerance = Inf,
+             smooth_idx = 1)
+par(mfrow = c(1, 1))
+```
+
+## Customization of pitch plotting
+When analyzing a sound, and even when batch-processing an entire folder, it is often helpful to plot both the final pitch contour - perhaps overlaid on a stpectrogram - and individual pitch candidates. You can easily do so from `analyze`, as in all the examples above. The default plotting parameters can also be customized, for example:
+
+```{r fig.height = 5, fig.width = 7}
+a = analyze(s, samplingRate = 16000, plot = TRUE, prior_mean = NA,
+            plot_spec_pars = list(        # spectrogram: see ?spec
+              contrast = .75,
+              brightness = -0.5,
+              colorTheme = 'seewave',
+              ylim = c(0, 4)
+              # + other pars passed to seewave::filled.contour.modif2
+            ),
+            plot_pitch_pars = list(       # final pitch contour (line)
+              col = rgb(0, .4, .9, .25),
+              lwd = 5,
+              lty = 3
+              # + other pars passed to base::lines
+            ),
+            plot_pitchCands_pars = list(  # pitch candidates (points)
+              levels = c('autocor', 'cep', 'spec', 'dom'),
+              col = c('green', 'violet', 'red', 'orange'),
+              pch = c(16, 7, 2, 3),
+              cex = 3
+            ))
+```
+
+You can also suppress plotting any of these three components: the spectrogram, the final pitch contour, or individual pitch candidates. To do so, set the corresponding list of plotting parameters to NULL or NA. In the examples above `plot_spec_pars = NULL` plotted pitch candidates and contour over a blank plot rather than spectrogram. Likewise, we can plot a spectrogram with the final contour only, without individual candidates by setting `plot_pitchCands_par = NULL`.
+
+To save the plot, specify a valid path, for example:
+```{r eval = FALSE}
+a = analyze(s, samplingRate = 16000, plot = TRUE, savePath = '~/Downloads')
+```
+
+This creates a file called 'sound.jpg' 1200 x 800 px large in the indicated folder. For customization, just wrap the call to `analyze` in something like:
+```{r eval = FALSE}
+jpeg(my.custom.settings.go.here)  # or png(...), or whatever
+a = analyze(s, samplingRate = 16000, plot = TRUE)
+ dev.off()
+```
+
+This is simply more efficient than squeezing all these graphical parameters into `analyze`. In practice, the only time you might want to save the output from within `analyze` is when you do batch processing of multiple files with `analyzeFolder` (see below).
+
+## Batch processing with `analyzeFolder`
+You may not feel too excited to learn that soundgen contains a wrapper for `analyze` that is meant for analyzing all .wav files in a folder. Indeed, calling `analyze` in a loop will achieve the same result. However, `analyzedFolder` can save you some manual coding, mostly because it can summarize the results. `analyze` takes one file at a time and returns a matrix, in which each column corresponds to one acoustic descriptor and each row corresponds to one FFT frame. If you want to preserve all this information for each file in a folder, you can either loop through the files manually or call `analyzeFolder(myfolder, summary = FALSE)`, which returns a list of matrices. In contrast, `analyzeFolder(myfolder, summary = TRUE)` returns a single matrix, in which each acoustic predictor is summarized as the mean, median, and SD of frame-by-frame measurements. Since this is the kind of data you would normally use as input for things like classification of sounds or cluster analysis, this is a convenient shortcut for generating an acoustic dataset for further statistical modeling. In addition, `analyzeFolder` allows you to simultaneously save the plots and prints out estimated time to completion. 
+
+Speaking of which, processing time varies a lot depending on the exact settings and input, but expect on the order of a few seconds of machine time per second of audio. The surest way to speed things up is to reduce `step` and to avoid `pathfinding = 'slow'` (other types of postprocessing have very little effect on the speed).
+
 
 # Syllable segmentation with `segment`
 

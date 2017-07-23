@@ -18,7 +18,7 @@ rate 44100 and smaller odd numbers for lower values of sampling rate}
 \item{autocor_threshold}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
-that HNR is still calculated for frames considered to be unvoiced.}
+that HNR is calculated even for unvoiced frames.}
 
 \item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
 
@@ -26,8 +26,8 @@ that HNR is still calculated for frames considered to be unvoiced.}
 
 \item{samplingRate}{sampling rate (Hz)}
 
-\item{nCands}{maximum number of pitch candidates to use per method (except
-for \code{dom}, which returns at most one candidate per frame)}
+\item{nCands}{maximum number of pitch candidates per method (except for
+\code{dom}, which returns at most one candidate per frame)}
 }
 \value{
 Returns a list of $HNR (NA or numeric) and $pitchAutocor_array

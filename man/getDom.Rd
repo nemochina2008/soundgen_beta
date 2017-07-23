@@ -15,7 +15,7 @@ getDom(frame, samplingRate, bin, dom_smoothing, dom_threshold, pitch_floor)
 \item{bin}{the width of one bin in spectrogram, Hz}
 
 \item{dom_smoothing}{the width of smoothing interval (Hz) for finding
-the lowest spectral peak (lowest dominant frequency band)}
+\code{dom}}
 
 \item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least

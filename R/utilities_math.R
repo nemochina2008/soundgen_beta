@@ -476,3 +476,19 @@ clumper = function(s, minLength) {
   } # plot (s)
   return(s)
 }
+
+
+#' Simple peak detection
+#'
+#' Internal soundgen function.
+#'
+#' Peak detection with \code{\link[zoo]{rollapply}}. Less versatile but x 10
+#' faster than \code{\link[seewave]{fpeaks}}.
+#' @param x input vector
+#' @param threshold threshold for peak detection
+#' @examples
+#' soundgen:::isCentral.localMax(c(1,1,3,2,1), 2.5)
+isCentral.localMax = function(x, threshold) {
+  middle = ceiling(length(x) / 2)
+  return(which.max(x) == middle & x[middle] > threshold)
+}

@@ -22,10 +22,7 @@ candidates}
 
 \item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
-tension of the resulting pitch curve. High cert_weight: we mostly pay
-attention to our certainty in particular pitch candidates; low cert_weight:
-we are more concerned with avoiding rapid pitch fluctuations in our
-contour.}
+tension of the resulting pitch curve}
 }
 \value{
 Returns a numeric vector of the same length as \code{pitch} that

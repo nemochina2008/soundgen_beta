@@ -18,10 +18,7 @@ our certainty in pitch candidates}
 
 \item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
-tension of the resulting pitch curve. High cert_weight: we mostly pay
-attention to our certainty in particular pitch candidates; low cert_weight:
-we are more concerned with avoiding rapid pitch fluctuations in our
-contour.}
+tension of the resulting pitch curve}
 
 \item{pitchCenterGravity}{numeric vector giving the mean of all pitch
 candidates per fft frame weighted by our certainty in each of these
