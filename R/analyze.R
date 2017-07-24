@@ -230,20 +230,32 @@ analyze = function(x,
     entropy_threshold = 0.6
     warning('"entropy_threshold" must be between 0 and 1; defaulting to 0.6')
   }
-  if (!is.numeric(windowLength) || windowLength <= 0) {
+  duration = length(sound) / samplingRate
+  if (!is.numeric(windowLength) || windowLength <= 0 ||
+      windowLength > (duration * 1000)) {
     windowLength = 50
-    warning('"windowLength" must be a positive number;
+    warning('"windowLength" must be between 0 and sound_duration ms;
             defaulting to 50 ms')
   }
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   # to ensure that the window length in points is a power of 2, say 2048 or 1024:
   # windowLength_points = 2^round (log(windowLength * samplingRate /1000)/log(2), 0)
-  duration = length(sound) / samplingRate
+  if (!is.numeric(step) || step <= 0 || step > (duration * 1000)) {
+    step = windowLength / 2
+    warning('"step" must be between 0 and sound_duration ms;
+            defaulting to windowLength / 2')
+  }
+  if (is.numeric(step) && step > windowLength) {
+    warning(paste('"step" should normally not be larger than "windowLength" ms:',
+            'you are skipping parts of the sound!'))
+  }
   supported_wn = c('bartlett', 'blackman', 'flattop', 'gaussian',
                    'hamming', 'hanning', 'rectangle')
   if (!wn %in% supported_wn) {
     wn = 'gaussian'
-    warning(paste('implemented "wn":', supported_wn, '; defaulting to "gaussian"'))
+    warning(paste('Implemented "wn":',
+                  paste(supported_wn, collapse = ', '),
+                  '. Defaulting to "gaussian"'))
   }
   if (!is.numeric(zp)) {
     zp = 0
@@ -251,46 +263,39 @@ analyze = function(x,
     zp = 0
     warning('"zp" must be non-negative; defaulting to 0')
   }
-  if (!is.numeric(cutoff_freq)) {
+  if (!is.numeric(cutoff_freq) || cutoff_freq <= 0) {
     cutoff_freq = samplingRate / 2
-  } else if (cutoff_freq <= 0) {
-    cutoff_freq = samplingRate / 2
-    warning('"cutoff_freq" must be positive;
-            defaulting to samplingRate / 2')
+    warning(paste('"cutoff_freq" must be positive;',
+            'defaulting to samplingRate / 2'))
   }
-  if (!is.numeric(pitch_floor) || pitch_floor <= 0 || pitch_floor > samplingRate / 2) {
+  if (!is.numeric(pitch_floor) || pitch_floor <= 0 ||
+      pitch_floor > samplingRate / 2) {
     pitch_floor = 1
-    warning('"pitch_floor" must be between 0 and pitch_ceiling;
-            defaulting to 1 Hz')
+    warning(paste('"pitch_floor" must be between 0 and pitch_ceiling;',
+            'defaulting to 1 Hz'))
     } # 1 Hz ~ 4 octraves below C0
   if (!is.numeric(pitch_ceiling) || pitch_ceiling > samplingRate / 2) {
     pitch_ceiling = samplingRate / 2  # Nyquist
-    warning('"pitch_ceiling" must be between 0 and Nyquist;
-            defaulting to samplingRate / 2')
+    warning(paste('"pitch_ceiling" must be between 0 and Nyquist;',
+            'defaulting to samplingRate / 2'))
   }
   if (pitch_floor > pitch_ceiling) {
     pitch_floor = 1
     pitch_ceiling = samplingRate / 2
-    warning('"pitch_floor" cannot be above "pitch_ceiling";
-            defaulting to 1 Hz and samplingRate / 2, respectively')
+    warning(paste('"pitch_floor" cannot be above "pitch_ceiling";',
+            'defaulting to 1 Hz and samplingRate / 2, respectively'))
   }
-  if (is.numeric(prior_mean) && semitonesToHz(prior_mean) > samplingRate / 2) {
+  if (is.numeric(prior_mean) &&
+      (semitonesToHz(prior_mean) > samplingRate / 2 ||
+       semitonesToHz(prior_mean) <= 0)) {
     prior_mean = HzToSemitones(300)
-    warning('Your chosen "prior_mean" exceeds Nyquist frequency;
-            defaulting to HzToSemitones(300); set to NULL to disable prior')
+    warning(paste('"prior_mean" must be between 0 and Nyquist;',
+                  'defaulting to HzToSemitones(300); set to NULL to disable prior'))
   }
   if (is.numeric(prior_mean) &&
       (!is.numeric(prior_sd)) || prior_sd <= 0) {
     prior_sd = 6
     warning('"prior_sd" must be positive; defaulting to 6 semitones')
-  }
-  if (!is.numeric(step) || !(step > 0)) {
-    step = windowLength / 2
-    warning('step must be positive; defaulting to windowLength / 2')
-  }
-  if (is.numeric(step) && step > windowLength) {
-    warning('"step" should normally not be larger than "windowLength":
-            you are skipping parts of the sound!')
   }
   if (!is.numeric(nCands) || nCands < 1) {
     nCands = 1
@@ -331,7 +336,10 @@ analyze = function(x,
 
   if (!is.numeric(shortest_syl) || shortest_syl < 0) {
     shortest_syl = 0
-    warning('shortest_syl must be a non-negative number; defaulting to 0')
+    warning('shortest_syl must be non-negative; defaulting to 0')
+  }
+  if (shortest_syl > duration * 1000) {
+    warning('"shortest_syl" is longer than the sound')
   }
   if (!is.numeric(shortest_pause) || shortest_pause < 0) {
     shortest_pause = 0
@@ -340,8 +348,8 @@ analyze = function(x,
   if (shortest_pause > 0 && is.numeric(interpol_window) &&
       interpol_window * step < shortest_pause / 2) {
     interpol_window = ceiling(shortest_pause / 2 / step)
-    warning('"interpol_window" reset to ceiling(shortest_pause / 2 / step):
-            interpolation must be able to bridge merged voiced fragments')
+    warning(paste('"interpol_window" reset to', interpol_window,
+            ': interpolation must be able to bridge merged voiced fragments'))
   }
   if (is.numeric(interpol_window) &
       (!is.numeric(interpol_tolerance) || interpol_tolerance <= 0)) {
@@ -355,8 +363,8 @@ analyze = function(x,
   }
   if (!pathfinding %in% c('none', 'fast', 'slow')) {
     pathfinding = 'fast'
-    warning('implemented "pathfinding": "none", "fast", "slow";
-            defaulting to "fast"')
+    warning(paste('Implemented "pathfinding": "none", "fast", "slow";',
+            'defaulting to "fast"'))
   }
   if (!is.numeric(cert_weight) || cert_weight < 0 | cert_weight > 1) {
     cert_weight = 0.5
@@ -507,15 +515,15 @@ analyze = function(x,
   result = data.frame(matrix(unlist(result), nrow=length(frameInfo), byrow=TRUE))
   colnames(result) = names(frameInfo[[1]]$summaries)
   # NB: sapply allows to do this in 1 line, but then result$HNR returns a list
-  # instead of a vector! Annoying
+  # instead of a vector! Annoying...
   # result = matrix(t(sapply(frameInfo, function(y) y[['summaries']])))
   result$ampl = ampl
   result$entropy = entropy
   result$time = round(seq(
-    windowLength_points / 2 / samplingRate,
-    duration,
+    step / 2,  # windowLength_points / 2 / samplingRate,
+    duration * 1000 - step / 2,
     length.out = nrow(result)
-  ) * 1000,
+  ),
   0)
   result$duration = duration
 

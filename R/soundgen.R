@@ -241,6 +241,15 @@ soundgen = function(repeatBout = 1,
                     play = FALSE,
                     savePath = NA,
                     ...) {
+  # check arguments
+  if (!is.numeric(samplingRate) || samplingRate <= 0) {
+    samplingRate = 16000
+    warning('"samplingRate must be positive; defaulting to 16000"')
+  }
+  if (!is.numeric(windowLength) || windowLength <= 0) {
+    windowLength = 50
+    warning('"windowLength" must be positive; defaulting to 50 ms')
+  }
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
 
   if (!is.numeric(tempEffects$formDrift)) tempEffects$formDrift = .3

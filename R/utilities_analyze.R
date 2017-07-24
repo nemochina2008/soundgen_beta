@@ -41,10 +41,10 @@ analyzeFrame = function(frame,
                         pitch_ceiling = 3500,
                         nCands = 1) {
   ### DESCRIPTIVES
-  meanSpec = data.frame ('freq' = 1000 * as.numeric(names(frame)),
-                         'amp' = frame)
+  meanSpec = data.frame('freq' = 1000 * as.numeric(names(frame)),
+                        'amp' = frame)
   amplitude = sum(frame)
-  peakFreq = meanSpec$freq [which.max(frame)] # absolute peak
+  peakFreq = meanSpec$freq[which.max(frame)] # absolute peak
   meanFreq = meanSpec$freq[min(which(cumsum(frame) > amplitude / 2))] # center of mass
 
   # Cut spectral band from pitch_floor to cutoff_freq Hz
@@ -54,19 +54,17 @@ analyzeFrame = function(frame,
   # Besides, those frequencies are not super relevant to human vocalizations in
   # any case. So we cut away all info above 5 kHz before we calculate quartiles
   # of spectral energy
-  peakFreq_cut = meanSpec_cut$freq[which.max(frame)] # peak frequency under cutoff_freq
+  peakFreq_cut = meanSpec_cut$freq[which.max(frame)] # peakFreq under cutoff_freq
   amplitude_cut = sum(meanSpec_cut$amp)
   # first quartile of spectral energy distribution in the band from pitch_floor
   # to cutoff_freq kHz
-  quartile25 = meanSpec_cut$freq [min(which(cumsum(meanSpec_cut$amp) >=
-                                              0.25 * amplitude_cut))]
+  cum_cut = cumsum(meanSpec_cut$amp)
+  quartile25 = meanSpec_cut$freq[min(which(cum_cut >= 0.25 * amplitude_cut))]
   # second quartile (same as mean freq within this spectral band)
-  quartile50 = meanSpec_cut$freq [min(which(cumsum(meanSpec_cut$amp) >=
-                                              0.5 * amplitude_cut))]
+  quartile50 = meanSpec_cut$freq[min(which(cum_cut >= 0.5 * amplitude_cut))]
   # third quartile. Note: half the energy in the band from pitch_floor to
   # cutoff_freq kHz lies between quartile25 and quartile75
-  quartile75 = meanSpec_cut$freq [min(which(cumsum(meanSpec_cut$amp) >=
-                                              0.75 * amplitude_cut))]
+  quartile75 = meanSpec_cut$freq[min(which(cum_cut >= 0.75 * amplitude_cut))]
   specSlope = summary(lm(amp ~ freq, data = meanSpec_cut))$coef[2, 1]
 
   ## PITCH TRACKING
