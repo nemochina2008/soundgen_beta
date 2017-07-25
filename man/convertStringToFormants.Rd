@@ -25,6 +25,6 @@ the human preset dictionary: vowels "a" "o" "i" "e" "u" "0" (schwa);
 consonants "s" "x" "j".
 }
 \examples{
-exactFormants = soundgen:::convertStringToFormants(
+formants = soundgen:::convertStringToFormants(
   phonemeString = 'aaeuiiiii', speaker = 'M1')
 }

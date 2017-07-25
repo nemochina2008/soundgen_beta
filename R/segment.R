@@ -20,40 +20,43 @@
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
 #'   numeric vector, rather than a .wav file)
-#' @param shortest_syl minimum acceptable length of syllables (ms)
-#' @param shortest_pause minimum acceptable break between syllables (ms).
+#' @param shortestSyl minimum acceptable length of syllables (ms)
+#' @param shortestPause minimum acceptable break between syllables (ms).
 #'   Syllables separated by less time are merged. To avoid merging, specify
-#'   \code{shortest_pause = NA}
-#' @param syl_to_global_mean amplitude threshold for syllable detection (as a
+#'   \code{shortestPause = NA}
+#' @param sylThres amplitude threshold for syllable detection (as a
 #'   proportion of global mean amplitude of smoothed envelope)
-#' @param interburst_min_ms minimum time between two consecutive bursts (ms). If
+#' @param interburst minimum time between two consecutive bursts (ms). If
 #'   specified, it overrides \code{interburst_min_idx}
-#' @param interburst_min_scale multiplier of the default minimum interburst
+#' @param interburstMult multiplier of the default minimum interburst
 #'   interval (median syllable length or, if no syllables are detected, the same
-#'   number as \code{shortest_syl}). Only used if \code{interburst_min_ms} is
+#'   number as \code{shortestSyl}). Only used if \code{interburst} is
 #'   not specified. Larger values improve detection of unusually broad shallow
 #'   peaks, while smaller values improve the detection of sharp narrow peaks
-#' @param peak_to_global_max to qualify as a burst, a local maximum has to be at
-#'   least \code{peak_to_global_max} time the height of the global maximum of
+#' @param burstThres to qualify as a burst, a local maximum has to be at
+#'   least \code{burstThres} time the height of the global maximum of
 #'   the entire amplitude envelope
-#' @param peak_to_trough to qualify as a burst, a local maximum has to be at
-#'   least \code{peak_to_trough}  times the local minimum on the LEFT over
-#'   analysis window (which is controlled by \code{interburst_min_ms} or
-#'   \code{interburst_min_scale})
-#' @param trough_left,trough_right should local maxima be compared to the trough
-#'   on the left and/or right of it? TRUE / FALSE
-#' @param smooth_ms length of smoothing window (ms). Capped at half the length
+#' @param peakToTrough to qualify as a burst, a local maximum has to be at
+#'   least \code{peakToTrough} times the local minimum on the LEFT over
+#'   analysis window (which is controlled by \code{interburst} or
+#'   \code{interburstMult})
+#' @param troughLeft,troughRight should local maxima be compared to the trough
+#'   on the left and/or right of it? Default to TRUE and FALSE, respectively
+#' @param smoothLen length of smoothing window, ms. Capped at half the length
 #'   of sound. Low values dramatically increase processing time
-#' @param smooth_overlap overlap between smoothing windows (%): the higher, the
+#' @param smoothOverlap overlap between smoothing windows (%): the higher, the
 #'   more accurate, but also slower
 #' @param summary if TRUE, returns only a summary of the number and spacing of
 #'   syllables and vocal bursts. If FALSE, returns a list containing full stats
 #'   on each syllable and bursts (location, duration, amplitude, ...)
-#' @param plot should a segmentation plot be plotted? TRUE / FALSE
-#' @param savePath full path to the folder in which to save the plots. If you
-#'   don't want to save the plots, set \code{savePath} to NA (default)
-#' @param ... other graphical parameters
-#' @return Returns a dataframe with one row and 8 columns summarizing
+#' @param plot if TRUE, produces a segmentation plot
+#' @param savePath full path to the folder in which to save the plots. Defaults
+#'   to NA
+#' @param ... other graphical parameters passed to \code{\link[graphics]{plot}}
+#' @return If \code{summary = TRUE}, returns only a summary of the number and
+#'   spacing of syllables and vocal bursts. If \code{summary = FALSE}, returns a
+#'   list containing full stats on each syllable and bursts (location, duration,
+#'   amplitude, ...).
 #' @export
 #' @examples
 #' sound = soundgen(nSyl = 8, sylDur_mean = 50, pauseDur_mean = 70,
@@ -64,40 +67,40 @@
 #'   f4 = list(time = 0, freq = 3900, amp = 30, width = 100)),
 #'   breathingAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
 #'   rolloff_breathing = -8, amplAnchors_global = list(time = c(0, 1), value = c(120, 20)))
-#' spec (sound, samplingRate = 16000, osc = TRUE)
+#' spectrogram(sound, samplingRate = 16000, osc = TRUE)
 #'  # playme(sound, samplingRate = 16000)
 #'
 #' s = segment(sound, samplingRate = 16000, plot = TRUE)
 #' # accept quicker and quieter syllables
 #' s = segment(sound, samplingRate = 16000, plot = TRUE,
-#'   shortest_syl = 25, shortest_pause = 25, syl_to_global_mean = .6)
+#'   shortestSyl = 25, shortestPause = 25, sylThres = .6)
 #' # look for narrower, sharper bursts
 #' s = segment(sound, samplingRate = 16000, plot = TRUE,
-#'   shortest_syl = 25, shortest_pause = 25, syl_to_global_mean = .6,
-#'   interburst_min_scale = 1)
+#'   shortestSyl = 25, shortestPause = 25, sylThres = .6,
+#'   interburstMult = 1)
 segment = function(x,
                    samplingRate = NULL,
-                   shortest_syl = 40,
-                   shortest_pause = 40,
-                   syl_to_global_mean = 0.9,
-                   interburst_min_ms = NULL,
-                   interburst_min_scale = 1,
-                   peak_to_global_max = 0.075,
-                   peak_to_trough = 3,
-                   trough_left = TRUE,
-                   trough_right = FALSE,
-                   smooth_ms = 40,
-                   smooth_overlap = 80,
+                   shortestSyl = 40,
+                   shortestPause = 40,
+                   sylThres = 0.9,
+                   interburst = NULL,
+                   interburstMult = 1,
+                   burstThres = 0.075,
+                   peakToTrough = 3,
+                   troughLeft = TRUE,
+                   troughRight = FALSE,
+                   smoothLen = 40,
+                   smoothOverlap = 80,
                    summary = FALSE,
                    plot = FALSE,
                    savePath = NA,
                    ...) {
-  merge_close_syl = ifelse(is.null(shortest_pause) || is.na(shortest_pause), F, T)
-  if (smooth_ms < 10) {
-    warning('smooth_ms < 10 ms is slow and usually not very useful')
+  merge_close_syl = ifelse(is.null(shortestPause) || is.na(shortestPause), F, T)
+  if (smoothLen < 10) {
+    warning('smoothLen < 10 ms is slow and usually not very useful')
   }
-  if (smooth_overlap < 0) smooth_overlap = 0
-  if (smooth_overlap > 99) smooth_overlap = 99
+  if (smoothOverlap < 0) smoothOverlap = 0
+  if (smoothOverlap > 99) smoothOverlap = 99
 
   ## import a sound
   if (class(x) == 'character') {
@@ -123,7 +126,7 @@ segment = function(x,
   # plot(sound, type='l')
 
   ## extract amplitude envelope
-  smooth_points = ceiling(smooth_ms * samplingRate / 1000)
+  smooth_points = ceiling(smoothLen * samplingRate / 1000)
   if (smooth_points > length(sound) / 2) {
     smooth_points = length(sound) / 2
   }
@@ -131,42 +134,42 @@ segment = function(x,
   sound_downsampled = seewave::env(
     sound,
     f = samplingRate,
-    msmooth = c(smooth_points, smooth_overlap),
+    msmooth = c(smooth_points, smoothOverlap),
     fftw = TRUE,
     plot = FALSE
   )
   timestep = 1000 / samplingRate *
     (length(sound) / length(sound_downsampled)) # time step in the envelope, ms
-  envelope = data.frame (time = ( (1:length(sound_downsampled) - 1) * timestep),
-                         value = sound_downsampled)
+  envelope = data.frame(time = ( (1:length(sound_downsampled) - 1) * timestep),
+                        value = sound_downsampled)
   # plot (envelope, type='l')
 
   ## find syllables and get descriptives
-  threshold = mean(envelope$value) * syl_to_global_mean
+  threshold = mean(envelope$value) * sylThres
   syllables = findSyllables(envelope = envelope,
                             timestep = timestep,
                             threshold = threshold,
-                            shortest_syl = shortest_syl,
-                            shortest_pause = shortest_pause,
+                            shortestSyl = shortestSyl,
+                            shortestPause = shortestPause,
                             merge_close_syl = merge_close_syl)
 
   ## find bursts and get descriptives
   # calculate the window for analyzing bursts based on the median duration of
   # syllables (if no syllables are detected, just use the specified shortest
   # acceptable syllable length)
-  if (is.null(interburst_min_ms)) {
-    median_scaled = median(syllables$dur) * interburst_min_scale
-    interburst_min_ms = ifelse(!is.na(median_scaled),
+  if (is.null(interburst)) {
+    median_scaled = median(syllables$dur) * interburstMult
+    interburst = ifelse(!is.na(median_scaled),
                                median_scaled,
-                               shortest_syl)
+                               shortestSyl)
   }
   bursts = findBursts(envelope = envelope,
                       timestep = timestep,
-                      interburst_min_ms = interburst_min_ms,
-                      peak_to_global_max = peak_to_global_max,
-                      peak_to_trough = peak_to_trough,
-                      trough_left = trough_left,
-                      trough_right = trough_right
+                      interburst = interburst,
+                      burstThres = burstThres,
+                      peakToTrough = peakToTrough,
+                      troughLeft = troughLeft,
+                      troughRight = troughRight
   )
 
   ## prepare a dataframe containing descriptives for syllables and bursts
@@ -191,8 +194,8 @@ segment = function(x,
     if (is.character(savePath)) {
       jpeg(filename = paste0 (savePath, plotname, ".jpg"), 900, 500)
     }
-    plot (envelope$time, envelope$value, type = 'l', col = 'green',
-          xlab = 'Time, ms', ylab = 'Amplitude', main = plotname, ...)
+    plot(envelope$time, envelope$value, type = 'l', col = 'green',
+         xlab = 'Time, ms', ylab = 'Amplitude', main = plotname, ...)
     points (bursts, col = 'red', cex = 3, pch = 8)
     for (s in 1:nrow(syllables)) {
       segments( x0 = syllables$time_start[s], y0 = threshold,
@@ -244,17 +247,17 @@ segment = function(x,
 #' abline(a=0, b=1, col='red')
 #' }
 segmentFolder = function (myfolder,
-                          shortest_syl = 40,
-                          shortest_pause = 40,
-                          syl_to_global_mean = 0.9,
-                          interburst_min_ms = NULL,
-                          interburst_min_scale = 1,
-                          peak_to_global_max = 0.075,
-                          peak_to_trough = 3,
-                          trough_left = TRUE,
-                          trough_right = FALSE,
-                          smooth_ms = 40,
-                          smooth_overlap = 80,
+                          shortestSyl = 40,
+                          shortestPause = 40,
+                          sylThres = 0.9,
+                          interburst = NULL,
+                          interburstMult = 1,
+                          burstThres = 0.075,
+                          peakToTrough = 3,
+                          troughLeft = TRUE,
+                          troughRight = FALSE,
+                          smoothLen = 40,
+                          smoothOverlap = 80,
                           summary = TRUE,
                           plot = FALSE,
                           savePath = NA,
@@ -269,17 +272,17 @@ segmentFolder = function (myfolder,
   for (i in 1:length(filenames)) {
     result[[i]] = segment(
         filenames[i],
-        shortest_syl = shortest_syl,
-        shortest_pause = shortest_pause,
-        syl_to_global_mean = syl_to_global_mean,
-        interburst_min_ms = interburst_min_ms,
-        interburst_min_scale = interburst_min_scale,
-        peak_to_global_max = peak_to_global_max,
-        peak_to_trough = peak_to_trough,
-        trough_left = trough_left,
-        trough_right = trough_right,
-        smooth_ms = smooth_ms,
-        smooth_overlap = smooth_overlap,
+        shortestSyl = shortestSyl,
+        shortestPause = shortestPause,
+        sylThres = sylThres,
+        interburst = interburst,
+        interburstMult = interburstMult,
+        burstThres = burstThres,
+        peakToTrough = peakToTrough,
+        troughLeft = troughLeft,
+        troughRight = troughRight,
+        smoothLen = smoothLen,
+        smoothOverlap = smoothOverlap,
         plot = plot,
         savePath = savePath,
         summary = summary

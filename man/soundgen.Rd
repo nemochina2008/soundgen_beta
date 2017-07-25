@@ -6,30 +6,30 @@
 \usage{
 soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1), value = c(100, 150, 135,
-  100)), pitchAnchors_global = NA, temperature = 0.025,
+  100)), pitchAnchorsGlobal = NA, temperature = 0.025,
   tempEffects = list(sylLenDep = 0.02, formDrift = 0.3, formDisp = 0.2,
   pitchDriftDep = 0.5, pitchDriftFreq = 0.125, pitchAnchorsDep = 0.05,
   noiseAnchorsDep = 0.1, amplAnchorsDep = 0.1), maleFemale = 0,
-  creakyBreathy = 0, pitchEffects_amount = 0, pitchEffects_intensity = 50,
+  creakyBreathy = 0, pitchEffectsAmount = 0, pitchEffectsIntensity = 50,
   jitterLen = 1, jitterDep = 3, vibratoFreq = 5, vibratoDep = 0,
-  shimmerDep = 0, attackLen = 50, rolloff = -12,
-  rolloffAdjust_per_octave = -12, rolloffAdjust_per_kHz = -6,
-  rolloffAdjust_quadratic = 0, rolloffAdjust_quadratic_nHarm = 3,
-  rolloff_lipRad = 6, exactFormants = list(f1 = list(time = 0, freq = 860,
-  amp = 30, width = 120), f2 = list(time = 0, freq = 1280, amp = 40, width =
-  120), f3 = list(time = 0, freq = 2900, amp = 25, width = 200)),
-  formantDep = 1, formantDep_stochastic = 30, vocalTract = 15.5,
-  subFreq = 100, subDep = 100, shortestEpoch = 300, trillDep = 0,
-  trillFreq = 30, noiseAnchors = data.frame(time = c(0, 1), value = c(-120,
-  -120)), exactFormants_noise = NA, rolloff_noise = -14,
-  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
-  amplAnchors = NA, amplAnchors_global = NA, samplingRate = 16000,
-  windowLength = 50, overlap = 75, addSilence = 100, pitch_floor = 50,
-  pitch_ceiling = 3500, pitch_samplingRate = 3500, throwaway_dB = -120,
-  plot = FALSE, play = FALSE, savePath = NA, ...)
+  shimmerDep = 0, attackLen = 50, rolloff = -12, rolloffOct = -12,
+  rolloffKHz = -6, rolloffParab = 0, rolloffParabHarm = 3,
+  rolloffLip = 6, formants = list(f1 = list(time = 0, freq = 860, amp = 30,
+  width = 120), f2 = list(time = 0, freq = 1280, amp = 40, width = 120), f3 =
+  list(time = 0, freq = 2900, amp = 25, width = 200)), formantDep = 1,
+  formantDepStoch = 30, vocalTract = 15.5, subFreq = 100, subDep = 100,
+  shortestEpoch = 300, trillDep = 0, trillFreq = 30,
+  noiseAnchors = data.frame(time = c(0, 1), value = c(-120, -120)),
+  formantsNoise = NA, rolloffNoise = -14, mouthAnchors = data.frame(time =
+  c(0, 1), value = c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
+  samplingRate = 16000, windowLength = 50, overlap = 75,
+  addSilence = 100, pitchFloor = 50, pitchCeiling = 3500,
+  pitchSamplingRate = 3500, throwaway = -120,
+  invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
+  play = FALSE, savePath = NA, ...)
 }
 \arguments{
-\item{repeatBout}{the number of times the bout should be repeated}
+\item{repeatBout}{the number of times the whole bout should be repeated}
 
 \item{nSyl}{the number of syllables in the bout. Intonation, amplitude, and
 formants contours span multiple syllables, but not multiple bouts (see
@@ -43,7 +43,7 @@ Details)}
 pitch anchors. These anchors are used to create a smooth contour of
 fundamental frequency f0 (pitch) within one syllable (see Examples)}
 
-\item{pitchAnchors_global}{unlike \code{pitchAnchors}, this dataframe is used
+\item{pitchAnchorsGlobal}{unlike \code{pitchAnchors}, this dataframe is used
 to create a smooth contour of average f0 across multiple syllables}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
@@ -67,12 +67,12 @@ vocalTract to make the speaker appear more male (-1...0) or more female
 \item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality
 from creaky (-1) to breathy (+1)}
 
-\item{pitchEffects_amount}{hyperparameter for regulating the (approximate)
-proportion of sound with different noise regimes (none / subharmonics only
-/ subharmonics and jitter), 0 to 100\%. 0\% = no noise; 100\% = the entire
-sound has jitter + subharmonics. Ignored if temperature = 0}
+\item{pitchEffectsAmount}{hyperparameter for regulating the (approximate)
+proportion of sound with different regimes of pitch effects (none /
+subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
+entire sound has jitter + subharmonics. Ignored if temperature = 0}
 
-\item{pitchEffects_intensity}{hyperparameter for regulating the intensity of
+\item{pitchEffectsIntensity}{hyperparameter for regulating the intensity of
 subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as
 specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
 
@@ -95,38 +95,38 @@ noise (ms)}
 \item{rolloff}{basic rolloff at a constant rate of \code{rolloff} db/octave
 (exponential decay). See \code{\link{getRolloff}} for more details}
 
-\item{rolloffAdjust_per_octave}{basic rolloff changes from lower to upper
-harmonics (regardless of f0) by \code{rolloffAdjust_per_octave} dB/oct. For
+\item{rolloffOct}{basic rolloff changes from lower to upper
+harmonics (regardless of f0) by \code{rolloffOct} dB/oct. For
 example, we can get steeper rolloff in the upper part of the spectrum}
 
-\item{rolloffAdjust_per_kHz}{rolloff changes linearly with f0 by
-\code{rolloffAdjust_per_kHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
+\item{rolloffKHz}{rolloff changes linearly with f0 by
+\code{rolloffKHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
 steeper basic rolloff as f0 goes up by 1000 Hz}
 
-\item{rolloffAdjust_quadratic}{an optional quadratic term affecting only the
-first \code{rolloffAdjust_quadratic_nHarm} harmonics. The middle harmonic
-of the first \code{rolloffAdjust_quadratic_nHarm} harmonics is amplified or
-dampened by \code{rolloffAdjust_quadratic} dB relative to the basic
+\item{rolloffParab}{an optional quadratic term affecting only the
+first \code{rolloffParabHarm} harmonics. The middle harmonic
+of the first \code{rolloffParabHarm} harmonics is amplified or
+dampened by \code{rolloffParab} dB relative to the basic
 exponential decay.}
 
-\item{rolloffAdjust_quadratic_nHarm}{the number of harmonics affected by
-\code{rolloffAdjust_quadratic}}
+\item{rolloffParabHarm}{the number of harmonics affected by
+\code{rolloffParab}}
 
-\item{rolloff_lipRad}{the effect of lip radiation on source spectrum, dB/oct
+\item{rolloffLip}{the effect of lip radiation on source spectrum, dB/oct
 (the default of +6 dB/oct produces a high-frequency boost when the mouth is
 open)}
 
-\item{exactFormants}{either a character string like "aaui" referring to
-default presets for speaker "M1" or a list of formant times, frequencies,
-amplitudes, and bandwidths (see ex. below). exactFormants = NA defaults to
-schwa. Time stamps for exactFormants and mouthOpening can be specified in
-ms or an any other arbitarary scale, since duration is determined by
+\item{formants}{either a character string like "aaui" referring to default
+presets for speaker "M1" or a list of formant times, frequencies,
+amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
+to schwa. Time stamps for formants and mouthOpening can be specified in ms
+or an any other arbitarary scale, since duration is determined by
 length(ampl). See \code{\link{getSpectralEnvelope}} for more details}
 
 \item{formantDep}{scale factor of formant amplitude (1 = no change relative
-to amplitudes in \code{exactFormants})}
+to amplitudes in \code{formants})}
 
-\item{formantDep_stochastic}{the amplitude of additional formants added above
+\item{formantDepStoch}{the amplitude of additional stochastic formants added above
 the highest specified formant, dB (only if temperature > 0)}
 
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
@@ -152,14 +152,14 @@ modulation with amplitude range equal to the dynamic range of the sound}
 \item{noiseAnchors}{dataframe specifying the time (ms) and amplitude (dB) of
 anchors for generating the noise component such as aspiration, hissing, etc}
 
-\item{exactFormants_noise}{the same as \code{exactFormants}, but for the
+\item{formantsNoise}{the same as \code{formants}, but for the
 noise component instead of the harmonic component. If NA (default), the
 noise component will be filtered through the same formants as the harmonic
 component, approximating aspiration noise [h]}
 
-\item{rolloff_noise}{rolloff of noise, dB/octave. It is analogous to
+\item{rolloffNoise}{rolloff of noise, dB/octave. It is analogous to
 \code{rolloff}, but while \code{rolloff} applies to the harmonic component,
-\code{rolloff_noise} applies to the noise component}
+\code{rolloffNoise} applies to the noise component}
 
 \item{mouthAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
 mouth-opening anchors}
@@ -167,25 +167,29 @@ mouth-opening anchors}
 \item{amplAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
 amplitude anchors}
 
-\item{amplAnchors_global}{dataframe specifying the time (ms) and value (0 to
+\item{amplAnchorsGlobal}{dataframe specifying the time (ms) and value (0 to
 1) of global amplitude anchors, i.e. spanning multiple syllables}
 
 \item{samplingRate}{sampling frequency, Hz}
 
 \item{windowLength}{length of fft window, ms}
 
-\item{overlap}{Fourier window overlap, \%}
+\item{overlap}{FFT window overlap, \%}
 
 \item{addSilence}{silence before and after the bout, ms}
 
-\item{pitch_floor, pitch_ceiling}{lower & upper bounds of f0}
+\item{pitchFloor, pitchCeiling}{lower & upper bounds of f0}
 
-\item{pitch_samplingRate}{sampling frequency of the pitch contour only, Hz. Low
+\item{pitchSamplingRate}{sampling frequency of the pitch contour only, Hz. Low
 values can decrease processing time. A rule of thumb is to set this to
-the same value as \code{pitch_ceiling}}
+the same value as \code{pitchCeiling}}
 
-\item{throwaway_dB}{discard harmonics and noise that are quieter than this
+\item{throwaway}{discard harmonics and noise that are quieter than this
 number (in dB) to save computational resources}
+
+\item{invalidArgAction}{what to do if an argument is invalid or outside the
+range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
+= stop execution, 'ignore' = throw a warning and continue (may crash)}
 
 \item{plot}{if TRUE, plots a spectrogram}
 
@@ -194,7 +198,7 @@ number (in dB) to save computational resources}
 \item{savePath}{full path for saving the output, e.g. '~/Downloads/temp.wav'.
 If NA (default), doesn't save anything}
 
-\item{...}{other plotting parameters passed on to \code{\link{spec}}}
+\item{...}{other plotting parameters passed to \code{\link{spec}}}
 }
 \value{
 Returns the synthesized waveform as a numeric vector.
@@ -214,22 +218,22 @@ Details: put some parts of the manual here.
 }
 \examples{
 sound = soundgen(play = TRUE)
-spec(sound, 16000, osc = TRUE)
+spectrogram(sound, 16000, osc = TRUE)
 # unless temperature is 0, the sound is different every time
 for (i in 1:3) sound = soundgen(play = TRUE, temperature = .2)
 
 # Bouts versus syllables. Compare:
-sound = soundgen(exactFormants = 'uai', repeatBout = 3, play = TRUE)
-sound = soundgen(exactFormants = 'uai', nSyl = 3, play = TRUE)
+sound = soundgen(formants = 'uai', repeatBout = 3, play = TRUE)
+sound = soundgen(formants = 'uai', nSyl = 3, play = TRUE)
 
 # Intonation contours per syllable and globally:
 sound = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140,
   play = TRUE, pitchAnchors = data.frame(
     time = c(0, 0.65, 1), value = c(977, 1540, 826)),
-  pitchAnchors_global = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
+  pitchAnchorsGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 
 # Subharmonics in sidebands (noisy scream, chimpanzee-like)
-sound = soundgen (pitchEffects_amount = 100, subFreq = 75, subDep = 130,
+sound = soundgen (pitchEffectsAmount = 100, subFreq = 75, subDep = 130,
   pitchAnchors = data.frame(
     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
   sylLen = 800,
@@ -237,7 +241,7 @@ sound = soundgen (pitchEffects_amount = 100, subFreq = 75, subDep = 130,
 
 # Jitter and mouth opening (bark, dog-like)
 sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
-  pitchEffects_amount = 100, subFreq = 100, subDep = 60, jitterDep = 1,
+  pitchEffectsAmount = 100, subFreq = 100, subDep = 60, jitterDep = 1,
   pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
   mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
   vocalTract = 5, play = TRUE)

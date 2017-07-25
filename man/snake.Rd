@@ -4,8 +4,8 @@
 \alias{snake}
 \title{Snake}
 \usage{
-snake(pitch, pitchCands, pitchCert, cert_weight, pitchCenterGravity,
-  snake_step = 0.05, snake_plot = FALSE)
+snake(pitch, pitchCands, pitchCert, certWeight, pitchCenterGravity,
+  snakeStep = 0.05, snakePlot = FALSE)
 }
 \arguments{
 \item{pitch}{numeric vector representing our best guess at pitch contour,
@@ -17,7 +17,7 @@ column is one fft frame, each row is one candidate.}
 \item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
 our certainty in pitch candidates}
 
-\item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
+\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
 tension of the resulting pitch curve}
 
@@ -25,11 +25,11 @@ tension of the resulting pitch curve}
 candidates per fft frame weighted by our certainty in each of these
 candidates}
 
-\item{snake_step}{optimized path through pitch candidates is further
+\item{snakeStep}{optimized path through pitch candidates is further
 processed to minimize the elastic force acting on pitch contour. To
-disable, set \code{snake_step} to NULL}
+disable, set \code{snakeStep} to NULL}
 
-\item{snake_plot}{if TRUE, plots the snake}
+\item{snakePlot}{if TRUE, plots the snake}
 }
 \value{
 Returns optimized pitch contour (numeric vector of the same length as

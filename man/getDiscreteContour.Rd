@@ -5,8 +5,8 @@
 \title{Discrete smooth contour from anchors}
 \usage{
 getDiscreteContour(len, anchors = data.frame(time = c(0, 1), value = c(1, 1)),
-  method = c("spline", "loess")[2], value_floor = NULL,
-  value_ceiling = NULL, ylim = NULL, plot = FALSE, ...)
+  method = c("spline", "loess")[2], valueFloor = NULL,
+  valueCeiling = NULL, ylim = NULL, plot = FALSE, ...)
 }
 \arguments{
 \item{len}{the number of syllables (equivalently, the length of generated contour)}
@@ -22,9 +22,9 @@ specified. \code{anchors$value} can be on any scale.}
 much faster than 'loess', but it may produce weird results when there are
 only a few anchors}
 
-\item{value_floor}{lower/upper bounds for the contour}
+\item{valueFloor}{lower/upper bounds for the contour}
 
-\item{value_ceiling}{lower/upper bounds for the contour}
+\item{valueCeiling}{lower/upper bounds for the contour}
 
 \item{ylim}{ylim for plotting}
 

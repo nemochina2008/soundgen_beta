@@ -4,31 +4,31 @@
 \alias{findBursts}
 \title{Find bursts}
 \usage{
-findBursts(envelope, timestep, interburst_min_ms, peak_to_global_max,
-  peak_to_trough, trough_left = TRUE, trough_right = FALSE)
+findBursts(envelope, timestep, interburst, burstThres, peakToTrough,
+  troughLeft = TRUE, troughRight = FALSE)
 }
 \arguments{
 \item{envelope}{downsampled amplitude envelope}
 
 \item{timestep}{time difference between two points in the envelope (ms)}
 
-\item{interburst_min_ms}{minimum time between two consecutive bursts (ms). If
+\item{interburst}{minimum time between two consecutive bursts (ms). If
 specified, it overrides \code{interburst_min_idx}}
 
-\item{peak_to_global_max}{to qualify as a burst, a local maximum has to be at
-least \code{peak_to_global_max} time the height of the global maximum of
+\item{burstThres}{to qualify as a burst, a local maximum has to be at
+least \code{burstThres} time the height of the global maximum of
 the entire amplitude envelope}
 
-\item{peak_to_trough}{to qualify as a burst, a local maximum has to be at
-least \code{peak_to_trough}  times the local minimum on the LEFT over
-analysis window (which is controlled by \code{interburst_min_ms} or
-\code{interburst_min_scale})}
+\item{peakToTrough}{to qualify as a burst, a local maximum has to be at
+least \code{peakToTrough} times the local minimum on the LEFT over
+analysis window (which is controlled by \code{interburst} or
+\code{interburstMult})}
 
-\item{trough_left}{should local maxima be compared to the trough
-on the left and/or right of it? TRUE / FALSE}
+\item{troughLeft}{should local maxima be compared to the trough
+on the left and/or right of it? Default to TRUE and FALSE, respectively}
 
-\item{trough_right}{should local maxima be compared to the trough
-on the left and/or right of it? TRUE / FALSE}
+\item{troughRight}{should local maxima be compared to the trough
+on the left and/or right of it? Default to TRUE and FALSE, respectively}
 }
 \value{
 Returns a dataframe with timing of bursts

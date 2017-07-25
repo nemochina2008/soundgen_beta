@@ -4,8 +4,8 @@
 \alias{interpolate}
 \title{Interpolate}
 \usage{
-interpolate(pitchCands, pitchCert, pitchCenterGravity, interpol_window = 3,
-  interpol_tolerance = 0.3, interpol_cert = 0.3)
+interpolate(pitchCands, pitchCert, pitchCenterGravity, interpolWin = 3,
+  interpolTol = 0.3, interpolCert = 0.3)
 }
 \arguments{
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
@@ -18,18 +18,18 @@ our certainty in pitch candidates}
 candidates per fft frame weighted by our certainty in each of these
 candidates}
 
-\item{interpol_window}{when interpolating pitch candidates, the median is
-calculated over \code{± interpol_window}}
+\item{interpolWin}{when interpolating pitch candidates, the median is
+calculated over \code{± interpolWin}}
 
-\item{interpol_tolerance}{when interpolating pitch candidates, the criterion
+\item{interpolTol}{when interpolating pitch candidates, the criterion
 for needing to interpolate is the absense of pitch candidates with values
-within \code{1 ± interpol_tolerance} of the median of pitch center of
-gravity over the interpolation window. For ex., if \code{interpol_tolerance}
+within \code{1 ± interpolTol} of the median of pitch center of
+gravity over the interpolation window. For ex., if \code{interpolTol}
 is .05, we look for values from 0.95 to 1.05 time the median value over
 interpolation window.}
 
-\item{interpol_cert}{when interpolating pitch candidates, all generated pitch
-candidates are assigned a certainty equal to \code{interpol_cert}}
+\item{interpolCert}{when interpolating pitch candidates, all generated pitch
+candidates are assigned a certainty equal to \code{interpolCert}}
 }
 \value{
 Returns a modified pitchCands matrix.

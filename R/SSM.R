@@ -15,53 +15,81 @@
 #'   }
 #' @param x path to a .wav file or a vector of amplitudes with specified
 #'   samplingRate
-#' @param samplingRate sampling rate of \code{x} (only needed if
-#'   \code{x} is a numeric vector, rather than a .wav file)
+#' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
+#'   numeric vector, rather than a .wav file)
 #' @param windowLength length of fft window (ms)
 #' @param step fft step (ms). Defaults to \code{windowLength / 4}
-#' @param maxfreq highest band edge of mel filters (Hz). Defaults to \code{samplingRate / 2}. See \code{\link[tuneR]{melfcc}}
-#' @param nbands number of warped spectral bands to use. Defaults to \code{100 * windowLength / 20} See \code{\link[tuneR]{melfcc}}
-#' @param MFCC_to_use mel-frequency cepstral coefficients to use
+#' @param maxFreq highest band edge of mel filters (Hz). Defaults to
+#'   \code{samplingRate / 2}. See \code{\link[tuneR]{melfcc}}
+#' @param nBands number of warped spectral bands to use. Defaults to \code{100 *
+#'   windowLength / 20}. See \code{\link[tuneR]{melfcc}}
 #' @param input either MFCCs ("cepstrum") or mel-filtered spectrum ("audiogram")
-#' @param normalizeInput if TRUE, each fft frame is normalized by max power. NB: do this if using cosine similarity with spectrum (audiogram)
-#' @param simil_measure method for comparing frames: either cosine similarity or Pearson's correlation
-#' @param kernel_ms size of checkerboard kernel for calculating novelty (the larger, the more global vs. local the novelty)
-#' @param kernel_sd SD of checkerboard kernel for calculating novelty
-#' @param win window for averaging SSM (reduces its size). Forced to odd: 1 3 5 etc
-#' @param plot if TRUE, produces a SSM plot
+#' @param MFCC if \code{input = 'audiogram'}, which mel-frequency cepstral
+#'   coefficients to use. Ddefaults to \code{2:13})
+#' @param simil method for comparing frames: either cosine similarity or
+#'   Pearson's correlation
+#' @param norm if TRUE, each fft frame is normalized by max power. NB:
+#'   recommended if using cosine similarity with spectrum (audiogram)
+#' @param kernelLen length of checkerboard kernel for calculating novelty, ms (the
+#'   larger, the more global vs. local the novelty)
+#' @param kernelSD SD of checkerboard kernel for calculating novelty
+#' @param win window for averaging SSM (reduces its size). Forced to de odd
 #' @param returnSSM if TRUE, returns the SSM
-#' @param novelty_col the color of novelty contour
-#' @param novelty_lwd the linewidth of novelty contour
-#' @param ... other graphical parameters
-#' @return If \code{returnSSM} is TRUE, returns a list of two components: $ssm contains the self-similarity matrix, and $novelty contains the novelty vector. If \code{returnSSM} is FALSE, only produces a plot.
+#' @param plot if TRUE, plots the SSM
+#' @param specPars graphical parameters passed to
+#'   \code{seewave::filled.contour.modif2} and affecting the spectrogram
+#' @param ssmPars graphical parameters passed to
+#'   \code{seewave::filled.contour.modif2} and affecting the plot of SSM
+#' @param noveltyPars graphical parameters passed to
+#'   \code{\link[graphics]{lines}} and affecting the novelty contour
+#' @return If \code{returnSSM} is TRUE, returns a list of two components: $ssm
+#'   contains the self-similarity matrix, and $novelty contains the novelty
+#'   vector. If \code{returnSSM} is FALSE, only produces a plot.
 #' @export
 #' @examples
-#' sound = c(soundgen(), soundgen(nSyl = 4, sylDur_mean = 200,
-#'   pauseDur_mean = 140,  pitchAnchors = list(time = c(0, 0.65, 1),
-#'   value = c(977, 1540, 826)), exactFormants = NA))
+#' sound = c(soundgen(), soundgen(nSyl = 4, sylLen = 200,
+#'   pauseLen = 140,  pitchAnchors = list(time = c(0, 0.65, 1),
+#'   value = c(977, 1540, 826)), formants = NA))
 #' s = ssm(sound, samplingRate = 16000,
-#'         input = 'cepstrum', win = 3, kernel_ms = 350)  # detailed, local features
+#'         input = 'cepstrum', win = 3, kernelLen = 350)  # detailed, local features
 #' s = ssm(sound, samplingRate = 16000,
-#'         input = 'cepstrum', win = 7, kernel_ms = 800)  # more global
+#'         input = 'cepstrum', win = 7, kernelLen = 800)  # more global
 #' plot(s$novelty, type='b')  # use for peak detection, etc
 ssm = function(x,
                samplingRate = NULL,
                windowLength = 40,
                step = NULL,
-               maxfreq = NULL,
-               nbands = NULL,
-               MFCC_to_use = 2:13,
+               maxFreq = NULL,
+               nBands = NULL,
+               MFCC = 2:13,
                input = c('cepstrum', 'audiogram')[1],
-               normalizeInput = FALSE,
-               simil_measure = c('cosine', 'correlation')[1],
-               plot = T,
-               returnSSM = T,
-               novelty_col = 'black',
-               novelty_lwd = 3,
-               kernel_ms = 200,
-               kernel_sd = .2,
+               norm = FALSE,
+               simil = c('cosine', 'correlation')[1],
+               returnSSM = TRUE,
+               kernelLen = 200,
+               kernelSD = .2,
                win = 3,
-               ...) {
+               plot = TRUE,
+               specPars = list(
+                 levels = seq(0, 1, length = 30),
+                 color.palette = seewave::spectro.colors,
+                 xlab = 'Time, ms',
+                 ylab = 'kHz',
+                 ylim = c(0, maxFreq / 1000)
+               ),
+               ssmPars = list(
+                 levels = seq(0, 1, length = 30),
+                 color.palette = seewave::spectro.colors,
+                 xlab = 'Time, ms',
+                 ylab = 'Time, ms',
+                 main = 'Self-similarity matrix'
+               ),
+               noveltyPars = list(
+                 type = 'b',
+                 pch = 16,
+                 col = 'black',
+                 lwd = 3
+               )) {
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
 
   ## import a sound
@@ -80,16 +108,16 @@ ssm = function(x,
   ## set pars
   duration = length(sound) / samplingRate
   frame_points = samplingRate * windowLength / 1000
-  kernel_size = round(kernel_ms * samplingRate / 1000 / frame_points /
+  kernelSize = round(kernelLen * samplingRate / 1000 / frame_points /
                         2) * 2  # kernel size in frames, guaranteed to be even
-  if (is.null(nbands)) {
-    nbands = 100 * windowLength / 20
+  if (is.null(nBands)) {
+    nBands = 100 * windowLength / 20
   }
   if (is.null(step)) {
     step = windowLength / 4
   }
-  if (is.null(maxfreq)) {
-    maxfreq = floor(samplingRate / 2)  # Nyquist
+  if (is.null(maxFreq)) {
+    maxFreq = floor(samplingRate / 2)  # Nyquist
   }
 
   ## compute mel-filtered spectrum and MFCCs
@@ -97,15 +125,15 @@ ssm = function(x,
     sound,
     wintime = windowLength / 1000,
     hoptime = step / 1000,
-    maxfreq = maxfreq,
-    nbands = nbands,
+    maxfreq = maxFreq,
+    nbands = nBands,
     spec_out = T,
-    numcep = max(MFCC_to_use)
+    numcep = max(MFCC)
   )
   if (input == 'cepstrum') {
     # the first cepstrum presumably makes no sense with amplitude normalization
     # (?), and it overestimates the similarity of different frames
-    target_spec = t(mel$cepstra)[MFCC_to_use, ]
+    target_spec = t(mel$cepstra)[MFCC, ]
   } else if (input == 'audiogram') {
     target_spec = t(mel$aspectrum)
   }
@@ -114,14 +142,14 @@ ssm = function(x,
   ## compute self-similarity matrix
   s = selfsim(
     m = target_spec,
-    normalizeInput = normalizeInput,
-    simil_measure = simil_measure,
+    norm = norm,
+    simil = simil,
     win = win
   )
   # s = zeroOne(s^2)  # hist(s)
 
   ## compute novelty
-  novelty = getNovelty(ssm = s, kernel_size = kernel_size, kernel_sd = kernel_sd)
+  novelty = getNovelty(ssm = s, kernelSize = kernelSize, kernelSD = kernelSD)
 
   ## plot
   if (plot) {
@@ -132,46 +160,37 @@ ssm = function(x,
         xaxt = 's',
         yaxt = 's')
     # spectrogram
-    seewave::filled.contour.modif2 (
+    do.call(seewave::filled.contour.modif2, c(list(
       x = seq(0, duration, length.out = nrow(spec)),
       y = seq(
         0,
         (samplingRate / 2) - (samplingRate / windowLength_points),
         length.out = ncol(spec)
       ) / 1000,
-      z = spec,
-      levels = seq(0, 1, length = 30),
-      color.palette = seewave::spectro.colors,
-      xlab = 'Time, ms',
-      ylab = 'kHz',
-      ylim = c(0, maxfreq / 1000)
-    )
+      z = spec
+    ), specPars
+    ))
+
     # novelty
-    lines(
+    do.call(lines, c(list(
       x = seq(0, duration, length.out = length(novelty)),
-      y = novelty / max(novelty) * maxfreq / 1000,
-      col = novelty_col,
-      type = 'b',
-      lwd = novelty_lwd,
-      pch = 16
-    )
+      y = novelty / max(novelty) * maxFreq / 1000
+      ), noveltyPars
+    ))
     axis(side = 1, labels = TRUE)
     par(mar = c(0, 4.1, 2.1, 2.1),
         xaxt = 'n',
         yaxt = 's')
     xlab = ''
+
     # SSM
     timestamps_ssm = seq(0, duration, length.out = nrow(s))
-    seewave::filled.contour.modif2 (
+    do.call(seewave::filled.contour.modif2, c(list(
       x = timestamps_ssm,
       y = timestamps_ssm,
-      z = s,
-      levels = seq(0, 1, length = 30),
-      color.palette = seewave::spectro.colors,
-      xlab = 'Time, ms',
-      ylab = 'Time, ms',
-      main = 'Self-similarity matrix'
-    )
+      z = s
+    ), ssmPars
+    ))
     # restore original pars
     par('mar' = op$mar, 'xaxt' = op$xaxt, 'yaxt' = op$yaxt, 'mfrow' = op$mfrow)
   }
@@ -192,8 +211,8 @@ ssm = function(x,
 #' @inheritParams ssm
 #' @return Returns a square self-similarity matrix.
 selfsim = function(m,
-                   normalizeInput = FALSE,
-                   simil_measure = c('cosine', 'correlation')[1],
+                   norm = FALSE,
+                   simil = c('cosine', 'correlation')[1],
                    win = 1) {
   if (win %% 2 == 0) {
     win = max(ceiling(win / 2) * 2 - 1, 1)
@@ -208,7 +227,7 @@ selfsim = function(m,
   }
 
   # normalize input by column, if needed
-  if (normalizeInput) {
+  if (norm) {
     m = apply(m, 2, zeroOne)
   }
 
@@ -223,13 +242,12 @@ selfsim = function(m,
     for (j in 1:length(winIdx)) {
       mi = as.vector(m[, winIdx[i]:(winIdx[i] + win - 1)])
       mj = as.vector(m[, winIdx[j]:(winIdx[j] + win - 1)])
-
-      if (simil_measure == 'cosine') {
+      if (simil == 'cosine') {
         # http://stackoverflow.com/questions/6597005/cosine-similarity-between-two-vectors-in-language-r
         out[i, j] = mean(crossprod(mi, mj) /
                            sqrt(crossprod(mi) * crossprod(mj)),
                          na.rm = TRUE)
-      } else if (simil_measure == 'correlation') {
+      } else if (simil == 'correlation') {
         out[i, j] = mean (cor(mi, mj), na.rm = TRUE)
       }
     }
@@ -245,30 +263,30 @@ selfsim = function(m,
 #'
 #' Prepares a square matrix \code{size x size} specifying a gaussian kernel for measuring novelty of self-similarity matrices. Called by \code{\link{getNovelty}}
 #' @param size kernel size (points), prefereably an even number
-#' @param kernel_mean,kernel_sd mean and SD of the gaussian kernel
+#' @param kernel_mean,kernelSD mean and SD of the gaussian kernel
 #' @param plot if TRUE, shows a perspective plot of the kernel
 #' @return Returns a square matrix with \code{size} rows and columns.
 #' @examples
-#' kernel = soundgen:::getCheckerboardKernel(size = 64, kernel_sd = 0.2, plot = TRUE)
+#' kernel = soundgen:::getCheckerboardKernel(size = 64, kernelSD = 0.2, plot = TRUE)
 #' dim(kernel)
 getCheckerboardKernel = function(size,
                                  kernel_mean = 0,
-                                 kernel_sd = 0.5,
+                                 kernelSD = 0.5,
                                  plot = FALSE) {
   x = seq(-1, 1, length.out = size)
-  kernel_sd = kernel_sd  # just to get rid of the "unused arg" warning in CMD check :-)
+  kernelSD = kernelSD  # just to get rid of the "unused arg" warning in CMD check :-)
   if (size < 50) {
     # faster than mvtnorm::dmvnorm for small kernels
     kernel = matrix(NA, ncol = size, nrow = size)
     for (i in 1:nrow(kernel)) {
       for (j in 1:ncol(kernel)) {
-        kernel[i, j] = dnorm(x[i], mean = kernel_mean, sd = kernel_sd) *
-          dnorm(x[j], mean = kernel_mean, sd = kernel_sd)
+        kernel[i, j] = dnorm(x[i], mean = kernel_mean, sd = kernelSD) *
+          dnorm(x[j], mean = kernel_mean, sd = kernelSD)
       }
     }
   } else {
     # this is faster for large kernels
-    sigma = diag(2) * kernel_sd
+    sigma = diag(2) * kernelSD
     kernel_long = expand.grid(x1 = x, x2 = x)
     kernel_long$dd = mvtnorm::dmvnorm(x = kernel_long,
                                       mean = c(kernel_mean, kernel_mean),
@@ -303,18 +321,18 @@ getCheckerboardKernel = function(size,
 #'
 #' Calculates novelty in a self-similarity matrix. Called by \code{\link{ssm}}.
 #' @param ssm self-similarity matrix, as produced by \code{\link{selfsim}}
-#' @param kernel_size the size of gaussian kernel (points)
-#' @param kernel_sd the SD of gaussian kernel
+#' @param kernelSize the size of gaussian kernel (points)
+#' @param kernelSD the SD of gaussian kernel
 #' @return Returns a numeric vector of length \code{nrow(ssm)}
-getNovelty = function(ssm, kernel_size, kernel_sd) {
-  kernel = getCheckerboardKernel(size = kernel_size, kernel_sd = kernel_sd)
+getNovelty = function(ssm, kernelSize, kernelSD) {
+  kernel = getCheckerboardKernel(size = kernelSize, kernelSD = kernelSD)
   ## pad matrix with size / 2 zeros, so that we can correlate it with the
   #  kernel starting from the very edge
   ssm_padded = matrix(0,
-                      nrow = nrow(ssm) + kernel_size,
-                      ncol = nrow(ssm) + kernel_size)
+                      nrow = nrow(ssm) + kernelSize,
+                      ncol = nrow(ssm) + kernelSize)
   # indices in the padded matrix where we'll paste the original ssm
-  idx = c(kernel_size / 2 + 1, nrow(ssm_padded) - kernel_size / 2)
+  idx = c(kernelSize / 2 + 1, nrow(ssm_padded) - kernelSize / 2)
   # paste original. Now we have a padded ssm
   ssm_padded [idx[1]:idx[2], idx[1]:idx[2]] = ssm
 
@@ -322,9 +340,9 @@ getNovelty = function(ssm, kernel_size, kernel_sd) {
   novelty = rep(NA, nrow(ssm))
   # for each point on the main diagonal, novelty = correlation between the checkerboard kernel and the ssm. See Badawy, "Audio novelty-based segmentation of music concerts"
   for (i in idx[1]:idx[2]) {
-    n = (i - kernel_size / 2):(i + kernel_size / 2 - 1)
+    n = (i - kernelSize / 2):(i + kernelSize / 2 - 1)
     # suppress warnings, b/c otherwise cor complains of sd = 0 for silent segments
-    novelty[i - kernel_size / 2] =  suppressWarnings(cor(as.vector(ssm_padded[n, n]),
+    novelty[i - kernelSize / 2] =  suppressWarnings(cor(as.vector(ssm_padded[n, n]),
                                         as.vector(kernel)))
   }
   novelty[is.na(novelty)] = 0

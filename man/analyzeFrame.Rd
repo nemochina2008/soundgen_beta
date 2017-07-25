@@ -5,13 +5,12 @@
 \title{Analyze fft frame}
 \usage{
 analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
-  trackPitch = TRUE, pitch_methods = c("autocor", "cep", "spec", "dom"),
-  cutoff_freq = 6000, dom_threshold = 0.1, dom_smoothing = 220,
-  autocor_threshold = 0.75, autocor_smoothing = NULL,
-  cep_threshold = 0.45, cep_smoothing = 3, cep_zp = 2^13,
-  spec_threshold = 0.45, spec_peak = 0.8, spec_singlePeakCert = 0.6,
-  spec_smoothing = 100, spec_peak_HNRslope = 0.1, spec_merge = 1,
-  pitch_floor = 75, pitch_ceiling = 3500, nCands = 1)
+  trackPitch = TRUE, pitchMethods = c("autocor", "cep", "spec", "dom"),
+  cutFreq = 6000, domThres = 0.1, domSmooth = 220, autocorThres = 0.75,
+  autocorSmooth = NULL, cepThres = 0.45, cepSmooth = 3, cepZp = 2^13,
+  specThres = 0.45, specPeak = 0.8, specSinglePeakCert = 0.6,
+  specSmooth = 100, specHNRslope = 0.1, specMerge = 1, pitchFloor = 75,
+  pitchCeiling = 3500, nCands = 1)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
@@ -25,71 +24,71 @@ analyzeFrame(frame, autoCorrelation = NULL, samplingRate = 44100,
 \item{trackPitch}{if TRUE, attempt to find F0 in this frame (FALSE if entropy
 is above some threshold - specified in \code{\link{analyze}})}
 
-\item{pitch_methods}{methods of pitch estimation to consider for determining
+\item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band}
 
-\item{cutoff_freq}{(>0 to Nyquist Hz) repeat the calculation of spectral
-descriptives after discarding all info above \code{cutoff_freq}.
+\item{cutFreq}{(>0 to Nyquist Hz) repeat the calculation of spectral
+descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
 audio files}
 
-\item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
+\item{domThres}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least
-dom_threshold}
+domThres}
 
-\item{dom_smoothing}{the width of smoothing interval (Hz) for finding
+\item{domSmooth}{the width of smoothing interval (Hz) for finding
 \code{dom}}
 
-\item{autocor_threshold}{(0 to 1) separate
+\item{autocorThres}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is calculated even for unvoiced frames.}
 
-\item{autocor_smoothing}{the width of smoothing interval (in bins) for
+\item{autocorSmooth}{the width of smoothing interval (in bins) for
 finding peaks in the autocorrelation function. Defaults to 7 for sampling
 rate 44100 and smaller odd numbers for lower values of sampling rate}
 
-\item{cep_threshold}{(0 to 1) separate
+\item{cepThres}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is calculated even for unvoiced frames.}
 
-\item{cep_smoothing}{the width of smoothing interval (in bins) for finding
+\item{cepSmooth}{the width of smoothing interval (in bins) for finding
 peaks in the cepstrum. Defaults to 31 for sampling rate 44100 and smaller
 odd numbers for lower values of sampling rate}
 
-\item{cep_zp}{zero-padding of the spectrum used for cepstral pitch detection
-(final length of spectrum after zero-padding, in points)}
+\item{cepZp}{zero-padding of the spectrum used for cepstral pitch detection
+(final length of spectrum after zero-padding in points, e.g. 2 ^ 13)}
 
-\item{spec_threshold}{(0 to 1) separate
+\item{specThres}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is calculated even for unvoiced frames.}
 
-\item{spec_peak}{when looking for putative harmonics in
+\item{specPeak}{when looking for putative harmonics in
 the spectrum, the threshold for peak detection is calculated as
-\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}}
+\code{specPeak * (1 - HNR * specHNRslope)}}
 
-\item{spec_singlePeakCert}{(0 to 1) if F0 is calculated based on a single
+\item{specSinglePeakCert}{(0 to 1) if F0 is calculated based on a single
 harmonic ratio (as opposed to several ratios converging on the same
-candidate), its certainty is taken to be \code{spec_singlePeakCert}}
+candidate), its certainty is taken to be \code{specSinglePeakCert}}
 
-\item{spec_smoothing}{the width of window for detecting peaks in the spectrum, Hz}
+\item{specSmooth}{the width of window for detecting peaks in the spectrum, Hz}
 
-\item{spec_peak_HNRslope}{when looking for putative harmonics in
+\item{specHNRslope}{when looking for putative harmonics in
 the spectrum, the threshold for peak detection is calculated as
-\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}}
+\code{specPeak * (1 - HNR * specHNRslope)}}
 
-\item{spec_merge}{pitch candidates within \code{spec_merge} semitones are
+\item{specMerge}{pitch candidates within \code{specMerge} semitones are
 merged with boosted certainty}
 
-\item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
+\item{pitchFloor}{absolute bounds for pitch candidates (Hz)}
 
-\item{pitch_ceiling}{absolute bounds for pitch candidates (Hz)}
+\item{pitchCeiling}{absolute bounds for pitch candidates (Hz)}
 
 \item{nCands}{maximum number of pitch candidates per method (except for
-\code{dom}, which returns at most one candidate per frame)}
+\code{dom}, which returns at most one candidate per frame), normally 1...4}
 }
 \value{
 Returns a list with two components: $pitch_array contains pitch

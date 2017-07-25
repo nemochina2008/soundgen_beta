@@ -1,15 +1,15 @@
-# devtools::use_data(defaults, noiseThresholds_dict, BaNa_ratios, notes_dict, internal = TRUE, overwrite = TRUE)
+# devtools::use_data(defaults, noiseThresholdsDict, BaNaRatios, notesDict, internal = TRUE, overwrite = TRUE)
 
 #' Manual counts of syllables in 260 sounds
 #'
 #' A vector of the number of syllables in the corpus of 260 human non-linguistic emotional vocalizations from Anikin & Persson (2017). The corpus can be downloaded from http://cogsci.se/personal/results/01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/01_anikin-persson_2016_naturalistic-non-linguistic-vocalizations.html
-"segment_manual"
+"segmentManual"
 
 
 #' Manual pitch estimation in 260 sounds
 #'
 #' A vector of manually verified pitch values per sound in the corpus of 590 human non-linguistic emotional vocalizations from Anikin & Persson (2017). The corpus can be downloaded from http://cogsci.se/personal/results/01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/01_anikin-persson_2016_naturalistic-non-linguistic-vocalizations.html
-"pitch_manual"
+"pitchManual"
 
 
 #' Conversion table from Hz to semitones above C0 to musical notation
@@ -24,5 +24,5 @@
 #' # 440 / 32 = 13.75  # A-1, and C0 is 3 semitones higher: 16.3516 Hz exactly.
 #' c0 = 13.75 * 2 ^ (3 / 12)
 #' notes_freq = round (c0 * 2^(0:(12 * nOct - 1) / 12), 1)
-"notes_dict"
+"notesDict"
 

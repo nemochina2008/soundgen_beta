@@ -5,7 +5,7 @@
 \title{Constant subharmonics regime}
 \usage{
 getVocalFry_per_epoch(rolloff, pitch_per_gc, nSubharm, sideband_width_vector,
-  throwaway)
+  throwaway01)
 }
 \arguments{
 \item{rolloff}{matrix of original amplitudes of each harmonic in f0 stack
@@ -23,7 +23,7 @@ pitch_per_gc): regulates how quickly the strength of subharmonics fades as
 they move away from harmonics in f0 stack. Low values produce narrow
 sidebands, high values produce uniformly strong subharmonics}
 
-\item{throwaway}{discard harmonics that are weaker than this number (between
+\item{throwaway01}{discard harmonics that are weaker than this number (between
 0 and 1) to save computational resources}
 }
 \value{

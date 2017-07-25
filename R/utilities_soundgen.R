@@ -115,7 +115,7 @@ playme = function(sound, samplingRate = 16000) {
 #' @return Returns a list of formant values, which can be fed directly into
 #'   \code{\link{getSpectralEnvelope}}
 #' @examples
-#' exactFormants = soundgen:::convertStringToFormants(
+#' formants = soundgen:::convertStringToFormants(
 #'   phonemeString = 'aaeuiiiii', speaker = 'M1')
 convertStringToFormants = function(phonemeString, speaker = 'M1') {
   availablePresets = names(presets[[speaker]]$Formants)
@@ -126,7 +126,7 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
     return(list())
 
   # for each input vowel, look up the corresponding formant values
-  # in the presets dictionary and append to exactFormants
+  # in the presets dictionary and append to formants
   vowels = list()
   formantNames = character()
   for (v in 1:length(unique_phonemes)) {
@@ -162,41 +162,41 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
   }
 
   # initialize a common list of exact formants
-  exactFormants = list()
+  formants = list()
   for (f in 1:length(formantNames)) {
-    exactFormants[[f]] = data.frame(
+    formants[[f]] = data.frame(
       'time' = vector(),
       'freq' = vector(),
       'amp' = vector(),
       'width' = vector()
     )
   }
-  names(exactFormants) = formantNames
+  names(formants) = formantNames
 
   # for each vowel, append its formants to the common list
   for (v in 1:length(valid_phonemes)) {
     vowel = vowels[[valid_phonemes[v]]]
     for (f in 1:length(vowel)) {
       formantName = names(vowel)[f]
-      exactFormants[[formantName]] = rbind(exactFormants[[formantName]],
-                                           vowel[[f]])
+      formants[[formantName]] = rbind(formants[[formantName]],
+                                      vowel[[f]])
     }
   }
 
   # specify time stamps by dividing the sound equally into vowels in valid_phonemes
   time_stamps = seq(0, 1, length.out = length(valid_phonemes))
-  for (f in 1:length(exactFormants)) {
-    if (nrow(exactFormants[[f]]) > 0) {
-      exactFormants[[f]]$time = time_stamps
+  for (f in 1:length(formants)) {
+    if (nrow(formants[[f]]) > 0) {
+      formants[[f]]$time = time_stamps
     }
   }
 
   # remove formants with amplitude 0 at all time points
-  all_zeroes = sapply(exactFormants, function(f) {
+  all_zeroes = sapply(formants, function(f) {
     sum(f$amp == 0) == length(f) # all values are 0
   })
-  exactFormants = exactFormants [which(!all_zeroes), drop = FALSE]
-  return (exactFormants)
+  formants = formants [which(!all_zeroes), drop = FALSE]
+  return (formants)
 }
 
 
@@ -338,7 +338,7 @@ crossFade = function (ampl1,
     multipl = seq(0, 1, length.out = length_points)
     idx1 = length(ampl1) - length_points
     cross = rev(multipl) * ampl1[(idx1 + 1):length(ampl1)] +
-            multipl * ampl2[1:length_points]
+      multipl * ampl2[1:length_points]
     ampl = c(ampl1[1:idx1],
              cross,
              ampl2[(length_points + 1):length(ampl2)])
@@ -527,7 +527,7 @@ divideIntoSyllables = function (nSyl,
       rect(xleft = out[i, 1], xright = out[i, 2], ybottom = .9, ytop = 1.1,
            col = 'blue')
       text(x = mean(c(out[i, 2], out[i, 1])), y = 1,
-        col = 'yellow', cex = 5, labels = i)
+           col = 'yellow', cex = 5, labels = i)
     }
   }
   return(out)

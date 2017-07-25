@@ -6,7 +6,7 @@
 \usage{
 getSmoothContour(anchors = data.frame(time = c(0, 1), value = c(0, 1)),
   len = NULL, thisIsPitch = FALSE, method = c("spline", "loess")[2],
-  value_floor = NULL, value_ceiling = NULL, plot = FALSE, main = "",
+  valueFloor = NULL, valueCeiling = NULL, plot = FALSE, main = "",
   xlim = NULL, ylim = NULL, samplingRate = 16000, voiced = NULL,
   contourLabel = NULL, ...)
 }
@@ -28,7 +28,7 @@ before smoothing and plots in both Hz and musical notation}
 much faster than 'loess', but it may produce weird results when there are
 only a few anchors}
 
-\item{value_floor, value_ceiling}{lower/upper bounds for the contour}
+\item{valueFloor, valueCeiling}{lower/upper bounds for the contour}
 
 \item{plot}{(boolean) produce a plot?}
 
@@ -58,7 +58,7 @@ axes: one showing Hz and the other showing musical notation.
 \examples{
 a = getSmoothContour(anchors = data.frame(
   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
-  voiced = 200, value_floor = 0, plot = TRUE, main = '',
+  voiced = 200, valueFloor = 0, plot = TRUE, main = '',
   samplingRate = 16000) # breathing
 
 a = getSmoothContour(anchors = data.frame(

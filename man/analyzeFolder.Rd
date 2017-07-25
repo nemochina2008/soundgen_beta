@@ -6,23 +6,22 @@
 \usage{
 analyzeFolder(myfolder, samplingRate = NULL, silence = 0.04,
   windowLength = 50, wn = "gaussian", step = 25, zp = 0,
-  cutoff_freq = 6000, pitch_methods = c("autocor", "spec", "dom"),
-  entropy_threshold = 0.6, pitch_floor = 75, pitch_ceiling = 3500,
-  prior_mean = HzToSemitones(300), prior_sd = 6, prior_plot = FALSE,
-  nCands = 1, min_voiced_cands = "autom", dom_threshold = 0.1,
-  dom_smoothing = 220, autocor_threshold = 0.7, autocor_smoothing = NULL,
-  cep_threshold = 0.3, cep_smoothing = NULL, cep_zp = 0,
-  spec_threshold = 0.3, spec_peak = 0.35, spec_singlePeakCert = 0.4,
-  spec_peak_HNRslope = 0.8, spec_smoothing = 150, spec_merge = 1,
-  shortest_syl = 20, shortest_pause = 60, interpol_window = 3,
-  interpol_tolerance = 0.3, interpol_cert = 0.3, pathfinding = c("none",
-  "fast", "slow")[2], control_anneal = list(maxit = 5000, temp = 1000),
-  cert_weight = 0.5, snake_step = 0.05, snake_plot = FALSE,
-  smooth_idx = 1, smooth_vars = c("pitch", "dom"), plot = TRUE,
-  savePath = NA, plot_spec_pars = list(contrast = 0.2, brightness = 0, ylim
-  = c(0, 5)), plot_pitch_pars = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
-  plot_pitchCands_pars = list(levels = c("autocor", "cep", "spec", "dom"), col
-  = c("green", "violet", "red", "orange"), pch = c(16, 7, 2, 3), cex = 2),
+  cutFreq = 6000, pitchMethods = c("autocor", "spec", "dom"),
+  entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
+  priorMean = HzToSemitones(300), priorSD = 6, priorPlot = FALSE,
+  nCands = 1, minVoicedCands = "autom", domThres = 0.1, domSmooth = 220,
+  autocorThres = 0.7, autocorSmooth = NULL, cepThres = 0.3,
+  cepSmooth = NULL, cepZp = 0, specThres = 0.3, specPeak = 0.35,
+  specSinglePeakCert = 0.4, specHNRslope = 0.8, specSmooth = 150,
+  specMerge = 1, shortestSyl = 20, shortestPause = 60, interpolWin = 3,
+  interpolTol = 0.3, interpolCert = 0.3, pathfinding = c("none", "fast",
+  "slow")[2], annealPars = list(maxit = 5000, temp = 1000),
+  certWeight = 0.5, snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
+  smoothVars = c("pitch", "dom"), plot = TRUE, savePath = NA,
+  specPlot = list(contrast = 0.2, brightness = 0, ylim = c(0, 5)),
+  pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
+  candPlot = list(levels = c("autocor", "cep", "spec", "dom"), col =
+  c("green", "violet", "red", "orange"), pch = c(16, 7, 2, 3), cex = 2),
   summary = TRUE, verbose = TRUE)
 }
 \arguments{
@@ -45,159 +44,157 @@ blackman, flattop}
 
 \item{zp}{zero padding, points}
 
-\item{cutoff_freq}{(>0 to Nyquist Hz) repeat the calculation of spectral
-descriptives after discarding all info above \code{cutoff_freq}.
+\item{cutFreq}{(>0 to Nyquist Hz) repeat the calculation of spectral
+descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
 audio files}
 
-\item{pitch_methods}{methods of pitch estimation to consider for determining
+\item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band}
 
-\item{entropy_threshold}{pitch tracking is not performed for frames with Weiner
-entropy above \code{entropy_threshold}, but other spectral descriptives are
+\item{entropyThres}{pitch tracking is not performed for frames with Weiner
+entropy above \code{entropyThres}, but other spectral descriptives are
 still calculated}
 
-\item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
+\item{pitchFloor}{absolute bounds for pitch candidates (Hz)}
 
-\item{pitch_ceiling}{absolute bounds for pitch candidates (Hz)}
+\item{pitchCeiling}{absolute bounds for pitch candidates (Hz)}
 
-\item{prior_mean}{specifies the mean and sd of gamma distribution
+\item{priorMean}{specifies the mean and sd of gamma distribution
 describing our prior knowledge about the most likely pitch values for this
-file. Specified in semitones: \code{prior_mean = HzToSemitones(300),
-prior_sd = 6} gives a prior with mean = 300 Hz and SD of 6 semitones (half
+file. Specified in semitones: \code{priorMean = HzToSemitones(300),
+priorSD = 6} gives a prior with mean = 300 Hz and SD of 6 semitones (half
 an octave)}
 
-\item{prior_sd}{specifies the mean and sd of gamma distribution
+\item{priorSD}{specifies the mean and sd of gamma distribution
 describing our prior knowledge about the most likely pitch values for this
-file. Specified in semitones: \code{prior_mean = HzToSemitones(300),
-prior_sd = 6} gives a prior with mean = 300 Hz and SD of 6 semitones (half
+file. Specified in semitones: \code{priorMean = HzToSemitones(300),
+priorSD = 6} gives a prior with mean = 300 Hz and SD of 6 semitones (half
 an octave)}
 
-\item{prior_plot}{if TRUE, produces a separate plot of the prior}
+\item{priorPlot}{if TRUE, produces a separate plot of the prior}
 
 \item{nCands}{maximum number of pitch candidates per method (except for
-\code{dom}, which returns at most one candidate per frame)}
+\code{dom}, which returns at most one candidate per frame), normally 1...4}
 
-\item{min_voiced_cands}{minimum number of pitch candidates that
+\item{minVoicedCands}{minimum number of pitch candidates that
 have to be defined to consider a frame voiced (defaults to 2 if \code{dom}
 is among other candidates and 1 otherwise)}
 
-\item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
+\item{domThres}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least
-dom_threshold}
+domThres}
 
-\item{dom_smoothing}{the width of smoothing interval (Hz) for finding
+\item{domSmooth}{the width of smoothing interval (Hz) for finding
 \code{dom}}
 
-\item{autocor_threshold}{(0 to 1) separate
+\item{autocorThres}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is calculated even for unvoiced frames.}
 
-\item{autocor_smoothing}{the width of smoothing interval (in bins) for
+\item{autocorSmooth}{the width of smoothing interval (in bins) for
 finding peaks in the autocorrelation function. Defaults to 7 for sampling
 rate 44100 and smaller odd numbers for lower values of sampling rate}
 
-\item{cep_threshold}{(0 to 1) separate
+\item{cepThres}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is calculated even for unvoiced frames.}
 
-\item{cep_smoothing}{the width of smoothing interval (in bins) for finding
+\item{cepSmooth}{the width of smoothing interval (in bins) for finding
 peaks in the cepstrum. Defaults to 31 for sampling rate 44100 and smaller
 odd numbers for lower values of sampling rate}
 
-\item{cep_zp}{zero-padding of the spectrum used for cepstral pitch detection
-(final length of spectrum after zero-padding, in points)}
+\item{cepZp}{zero-padding of the spectrum used for cepstral pitch detection
+(final length of spectrum after zero-padding in points, e.g. 2 ^ 13)}
 
-\item{spec_threshold}{(0 to 1) separate
+\item{specThres}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is calculated even for unvoiced frames.}
 
-\item{spec_peak}{when looking for putative harmonics in
+\item{specPeak}{when looking for putative harmonics in
 the spectrum, the threshold for peak detection is calculated as
-\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}}
+\code{specPeak * (1 - HNR * specHNRslope)}}
 
-\item{spec_singlePeakCert}{(0 to 1) if F0 is calculated based on a single
+\item{specSinglePeakCert}{(0 to 1) if F0 is calculated based on a single
 harmonic ratio (as opposed to several ratios converging on the same
-candidate), its certainty is taken to be \code{spec_singlePeakCert}}
+candidate), its certainty is taken to be \code{specSinglePeakCert}}
 
-\item{spec_peak_HNRslope}{when looking for putative harmonics in
+\item{specHNRslope}{when looking for putative harmonics in
 the spectrum, the threshold for peak detection is calculated as
-\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}}
+\code{specPeak * (1 - HNR * specHNRslope)}}
 
-\item{spec_smoothing}{the width of window for detecting peaks in the spectrum, Hz}
+\item{specSmooth}{the width of window for detecting peaks in the spectrum, Hz}
 
-\item{spec_merge}{pitch candidates within \code{spec_merge} semitones are
+\item{specMerge}{pitch candidates within \code{specMerge} semitones are
 merged with boosted certainty}
 
-\item{shortest_syl}{the smallest length of a voiced segment (ms) that
+\item{shortestSyl}{the smallest length of a voiced segment (ms) that
 constitutes a voiced syllable (shorter segments will be replaced by NA, as
 if unvoiced)}
 
-\item{shortest_pause}{the smallest gap between voiced syllables (ms) that
+\item{shortestPause}{the smallest gap between voiced syllables (ms) that
 means they shouldn't be merged into one voiced syllable}
 
-\item{interpol_window}{control the behavior of
+\item{interpolWin}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpol_window} to NULL. See
-\code{\link{pathfinder}} for details.}
+interpolation, set \code{interpolWin} to NULL. See
+\code{soundgen:::pathfinder} for details.}
 
-\item{interpol_tolerance}{control the behavior of
+\item{interpolTol}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpol_window} to NULL. See
-\code{\link{pathfinder}} for details.}
+interpolation, set \code{interpolWin} to NULL. See
+\code{soundgen:::pathfinder} for details.}
 
-\item{interpol_cert}{control the behavior of
+\item{interpolCert}{control the behavior of
 interpolation algorithm when postprocessing pitch candidates. To turn off
-interpolation, set \code{interpol_window} to NULL. See
-\code{\link{pathfinder}} for details.}
+interpolation, set \code{interpolWin} to NULL. See
+\code{soundgen:::pathfinder} for details.}
 
 \item{pathfinding}{method of finding the optimal path through pitch
-candidates: 'slow' for annealing, 'fast' for a simple heuristic, 'none' for
-none. See \code{\link{soundgen:::pathfinder}} for details.}
+candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
+'slow' = annealing. See \code{soundgen:::pathfinder} and the
+vignette on acoustic analysis}
 
-\item{control_anneal}{a list of control parameters for postprocessing of
+\item{annealPars}{a list of control parameters for postprocessing of
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
-only relevant if \code{pathfinding} is 'slow'}
+only relevant if \code{pathfinding = 'slow'}}
 
-\item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
+\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
 tension of the resulting pitch curve}
 
-\item{snake_step}{optimized path through pitch candidates is further
+\item{snakeStep}{optimized path through pitch candidates is further
 processed to minimize the elastic force acting on pitch contour. To
-disable, set \code{snake_step} to NULL}
+disable, set \code{snakeStep} to NULL}
 
-\item{snake_plot}{if TRUE, plots the snake}
+\item{snakePlot}{if TRUE, plots the snake}
 
-\item{smooth_idx}{if \code{smooth_idx} is a positive number,
-contours of the variables in \code{smooth_vars} are smoothed using a
-customized version of median smoothing. \code{smooth_idx} of 1 corresponds
-to a window of ~100 ms and tolerated deviation of ~4 semitones. To disable,
-set \code{smooth_idx} to NULL.}
+\item{smooth}{if \code{smooth} is a positive number, outliers of
+the variables in \code{smoothVars} are adjusted with median smoothing.
+\code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
+deviation of ~4 semitones. To disable, set \code{smooth} to NULL}
 
-\item{smooth_vars}{if \code{smooth_idx} is a positive number,
-contours of the variables in \code{smooth_vars} are smoothed using a
-customized version of median smoothing. \code{smooth_idx} of 1 corresponds
-to a window of ~100 ms and tolerated deviation of ~4 semitones. To disable,
-set \code{smooth_idx} to NULL.}
+\item{smoothVars}{if \code{smooth} is a positive number, outliers of
+the variables in \code{smoothVars} are adjusted with median smoothing.
+\code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
+deviation of ~4 semitones. To disable, set \code{smooth} to NULL}
 
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 
 \item{savePath}{if a valid path is specified, a plot is saved in this
 folder (defaults to NA)}
 
-\item{plot_spec_pars}{a list of graphical parameters passed on to
-\code{\link{spec}}. Set to \code{NULL} or \code{NA} to suppress plotting
-the spectrogram}
+\item{specPlot}{a list of graphical parameters passed to \code{\link{spec}}.
+Set to \code{NULL} to suppress plotting just the spectrogram}
 
-\item{plot_pitch_pars}{a list of graphical parameters for displaying the
+\item{pitchPlot}{a list of graphical parameters for displaying the
 final pitch contour. Set to \code{NULL} or \code{NA} to suppress}
 
-\item{plot_pitchCands_pars}{a list of graphical parameters for displaying
+\item{candPlot}{a list of graphical parameters for displaying
 individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress}
 
 \item{summary}{if TRUE, summarizes acoustics per file}

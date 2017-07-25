@@ -4,10 +4,10 @@
 \alias{getSpectralEnvelope}
 \title{Spectral envelope}
 \usage{
-getSpectralEnvelope(nr, nc, exactFormants = NA, formantDep = 1,
-  rolloff_lipRad = 6, mouthAnchors = NA, mouthOpening_threshold = 0,
+getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1, rolloffLip = 6,
+  mouthAnchors = NA, mouthOpening_threshold = 0,
   amplBoost_openMouth_dB = 0, vocalTract = NULL, temperature = 0,
-  formDrift = 0.3, formDisp = 0.2, extraFormants_stochastic = 30,
+  formDrift = 0.3, formDisp = 0.2, formantDepStoch = 30,
   smoothLinear_factor = 1, samplingRate = 16000, speedSound = 35400,
   plot = FALSE, dur_ms = NULL, colorTheme = c("bw", "seewave", "...")[1],
   nCols = 100, xlab = "Time", ylab = "Frequency, kHz", ...)
@@ -18,17 +18,17 @@ windowLength_points is the size of window for Fourier transform}
 
 \item{nc}{the number of time steps for Fourier transform}
 
-\item{exactFormants}{either a character string like "aaui" referring to
-default presets for speaker "M1" or a list of formant times, frequencies,
-amplitudes, and bandwidths (see ex. below). exactFormants = NA defaults to
-schwa. Time stamps for exactFormants and mouthOpening can be specified in
-ms or an any other arbitarary scale, since duration is determined by
+\item{formants}{either a character string like "aaui" referring to default
+presets for speaker "M1" or a list of formant times, frequencies,
+amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
+to schwa. Time stamps for formants and mouthOpening can be specified in ms
+or an any other arbitarary scale, since duration is determined by
 length(ampl). See \code{\link{getSpectralEnvelope}} for more details}
 
 \item{formantDep}{scale factor of formant amplitude (1 = no change relative
-to amplitudes in \code{exactFormants})}
+to amplitudes in \code{formants})}
 
-\item{rolloff_lipRad}{the effect of lip radiation on source spectrum, dB/oct
+\item{rolloffLip}{the effect of lip radiation on source spectrum, dB/oct
 (the default of +6 dB/oct produces a high-frequency boost when the mouth is
 open)}
 
@@ -52,12 +52,12 @@ in sound generation}
 
 \item{formDisp}{scale factor regulating the effect of temperature on the irregularity of the dispersion of stochastic formants: the higher, the more unevenly stochastic formants are spaced at a given temperature}
 
-\item{extraFormants_stochastic}{the amplitude of additional formants added above
+\item{formantDepStoch}{the amplitude of additional formants added above
 the highest specified formant (only if temperature > 0)}
 
 \item{smoothLinear_factor}{regulates smoothing of formant anchors (0 to +Inf)
 as they are upsampled to the number of fft steps \code{nc}. This is
-necessary because the input \code{exactFormants} normally contains fewer
+necessary because the input \code{formants} normally contains fewer
 sets of formant values than the number of fft steps.
 \code{smoothLinear_factor} = 0: close to default spline; >3: approaches
 linear extrapolation}
@@ -89,7 +89,7 @@ Internal soundgen function.
 \details{
 Prepares a spectral envelope for filtering a sound to add formants, lip
 radiation, and some stochastic component regulated by temperature.
-exactFormants is specified as a list containing time, frequency, amplitude,
+formants is specified as a list containing time, frequency, amplitude,
 and width values for each formant (see examples). NB: each formant is
 generated as a gamma distribution with mean = freq and SD = width. Formant
 bandwidths in soundgen are therefore NOT compatible with formant bandwidths
@@ -99,23 +99,23 @@ FFT.
 \examples{
 # [a] with F1-F4 visible
 image(t(getSpectralEnvelope(nr = 512, nc = 50,
-  exactFormants = soundgen:::convertStringToFormants('a'),
+  formants = soundgen:::convertStringToFormants('a'),
   temperature = 0)))
 # some "wiggling" of specified formants plus extra formants on top
 image(t(getSpectralEnvelope(nr = 512, nc = 50,
-  exactFormants = soundgen:::convertStringToFormants('a'),
-  temperature = 0.1, extraFormants_stochastic = 10)))
+  formants = soundgen:::convertStringToFormants('a'),
+  temperature = 0.1, formantDepStoch = 10)))
 # stronger extra formants
 image(t(getSpectralEnvelope(nr = 512, nc = 50,
-  exactFormants = soundgen:::convertStringToFormants('a'),
-  temperature = 0.1, extraFormants_stochastic = 30)))
+  formants = soundgen:::convertStringToFormants('a'),
+  temperature = 0.1, formantDepStoch = 30)))
 # a schwa based on the length of vocal tract = 15.5 cm
-image(t(getSpectralEnvelope(nr = 512, nc = 50, exactFormants = NA,
+image(t(getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
   temperature = .1, vocalTract = 15.5)))
 
 # manual specification of formants
 image(t(getSpectralEnvelope(nr = 512, nc = 50,
-samplingRate = 16000, exactFormants = list(
+samplingRate = 16000, formants = list(
   'f1' = data.frame('time' = 0, 'freq' = 900, 'amp' = 30, 'width' = 120),
   'f2' = data.frame('time' = 0, 'freq' = 1300, 'amp' = 30, 'width' = 120),
   'f3' = data.frame('time' = 0, 'freq' = 3200, 'amp' = 20, 'width' = 200)))))

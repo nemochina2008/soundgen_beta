@@ -5,9 +5,9 @@
 \title{Generate noise}
 \usage{
 generateNoise(len, noiseAnchors = data.frame(time = c(0, 300), value = c(-120,
-  -120)), rolloff_noise = -6, attackLen = 10, windowLength_points = 1024,
-  samplingRate = 16000, overlap = 75, throwaway_dB = -120,
-  filter_noise = NA)
+  -120)), rolloffNoise = -6, attackLen = 10, windowLength_points = 1024,
+  samplingRate = 16000, overlap = 75, throwaway = -120,
+  filterNoise = NA)
 }
 \arguments{
 \item{len}{length of output}
@@ -17,12 +17,12 @@ output. $time: timing of aspiration noise, ms c(start,finish) relative to
 voiced part, eg c(-100,500) means breathing starts 100 ms before the voiced
 part and lasts until 500 ms into the voiced part (eg total duration of
 breathing = 500 - (-100) = 600 ms). noiseAnchors$value: the amount of
-aspiration noise at the given time anchors (to be smoothed). throwaway_dB =
+aspiration noise at the given time anchors (to be smoothed). throwaway =
 no breathing, 0 = as strong as the voiced (harmonic) part}
 
-\item{rolloff_noise}{rolloff of noise, dB/octave. It is analogous to
+\item{rolloffNoise}{rolloff of noise, dB/octave. It is analogous to
 \code{rolloff}, but while \code{rolloff} applies to the harmonic component,
-\code{rolloff_noise} applies to the noise component}
+\code{rolloffNoise} applies to the noise component}
 
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms)}
@@ -31,12 +31,12 @@ noise (ms)}
 
 \item{samplingRate}{sampling frequency, Hz}
 
-\item{overlap}{Fourier window overlap, \%}
+\item{overlap}{FFT window overlap, \%}
 
-\item{throwaway_dB}{discard harmonics and noise that are quieter than this
+\item{throwaway}{discard harmonics and noise that are quieter than this
 number (in dB) to save computational resources}
 
-\item{filter_noise}{(optional): in addition to using rolloff_noise,
+\item{filterNoise}{(optional): in addition to using rolloffNoise,
 we can provide the exact filter - a vector of length windowLength_points/2
 or, if we want moving formants, a matrix with windowLength_points/2 rows
 and an arbitrary number of columns}
@@ -46,8 +46,8 @@ Internal soundgen function.
 }
 \details{
 Generates white noise of length \code{len} and with spectrum defined by
-exponential decay \code{rolloff_noise} and/or a specified filter
-\code{filter_noise}. Algorithm: paints a spectrum with desired
+exponential decay \code{rolloffNoise} and/or a specified filter
+\code{filterNoise}. Algorithm: paints a spectrum with desired
 characteristics, sets phase to zero, and generates a time sequence via
 inverse FFT. Noise can then be used as an additional source to be added to
 the glottal source AFTER the glottal source has been formant-filtered, or
@@ -57,28 +57,28 @@ BEFORE formant-filtering for glottal breathing noise.
 # 1 s of white noise
 samplingRate = 16000
 noise = soundgen:::generateNoise(len = samplingRate,
-  rolloff_noise = 0, samplingRate = samplingRate)
+  rolloffNoise = 0, samplingRate = samplingRate)
 # playme (noise, samplingRate = samplingRate)
 # 1 s of noise with rolloff -6 dB
 noise = soundgen:::generateNoise(len = samplingRate,
-  rolloff_noise = -6, samplingRate = samplingRate)
+  rolloffNoise = -6, samplingRate = samplingRate)
 
 # To create a sibilant [s], specify a single strong, broad formant at ~7 kHz:
 windowLength_points = 1024
-filter_noise = soundgen:::getSpectralEnvelope(
+filterNoise = soundgen:::getSpectralEnvelope(
   nr = windowLength_points / 2, nc = 1, samplingRate = samplingRate,
- exactFormants = list('f1' = data.frame(time = 0, freq = 7000,
-                                        amp = 50, width = 2000)))
-noise = soundgen:::generateNoise(len = samplingRate, rolloff_noise = -12,
-  samplingRate = samplingRate, filter_noise = filter_noise)
-# plot (filter_noise, type = 'l')
+ formants = list('f1' = data.frame(time = 0, freq = 7000,
+                                   amp = 50, width = 2000)))
+noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -12,
+  samplingRate = samplingRate, filterNoise = filterNoise)
+# plot (filterNoise, type = 'l')
 # playme (noise, samplingRate = samplingRate)
 
 # low-frequency, wind-like noise
-filter_noise = soundgen:::getSpectralEnvelope(
-  nr = windowLength_points / 2, nc = 1, rolloff_lipRad = 0,
-  samplingRate = samplingRate, exactFormants = list('f1' = data.frame(
+filterNoise = soundgen:::getSpectralEnvelope(
+  nr = windowLength_points / 2, nc = 1, rolloffLip = 0,
+  samplingRate = samplingRate, formants = list('f1' = data.frame(
     time = 0, freq = 150, amp = 30, width = 90)))
-noise = soundgen:::generateNoise(len = samplingRate, rolloff_noise = -12,
-  samplingRate = samplingRate, filter_noise = filter_noise)
+noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -12,
+  samplingRate = samplingRate, filterNoise = filterNoise)
 }

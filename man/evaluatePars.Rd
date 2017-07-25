@@ -4,29 +4,29 @@
 \alias{evaluatePars}
 \title{Evaluate parameters for optimization}
 \usage{
-evaluatePars(p, pars_to_optimize, myfun, pars_bounds = NULL, fitness_par,
-  fitness_crit = function(x) 1 - cor(x, key, use = "pairwise.complete.obs"),
+evaluatePars(p, pars, myfun, bounds = NULL, fitnessPar,
+  fitnessFun = function(x) 1 - cor(x, key, use = "pairwise.complete.obs"),
   myfolder, key, otherPars = list(plot = FALSE, verbose = FALSE),
   verbose = TRUE)
 }
 \arguments{
 \item{p}{numeric vector of evaluated values of parameters}
 
-\item{pars_to_optimize}{names of arguments to \code{myfun} that should be
+\item{pars}{names of arguments to \code{myfun} that should be
 optimized}
 
 \item{myfun}{the function being optimized: either 'segmentFolder' or
 'analyzeFolder' (in quotes)}
 
-\item{pars_bounds}{a list setting the lower and upper boundaries for possible
+\item{bounds}{a list setting the lower and upper boundaries for possible
 values of optimized parameters. For ex., if we optimize \code{smooth_ms}
-and \code{smooth_overlap}, reasonable pars_bounds might be list(low = c(5,
+and \code{smooth_overlap}, reasonable bounds might be list(low = c(5,
 0), high = c(500, 95))}
 
-\item{fitness_par}{the name of output variable that we are comparing with the
+\item{fitnessPar}{the name of output variable that we are comparing with the
 key, e.g. 'nBursts' or 'pitch_median'}
 
-\item{fitness_crit}{the function used to evaluate how well the output of
+\item{fitnessFun}{the function used to evaluate how well the output of
 \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is
 perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a
 good fitness criterion is \code{function(x) 1 - cor(log(x), key, use =

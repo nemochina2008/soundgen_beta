@@ -23,7 +23,7 @@
 #'   'spline' if you have a lot of anchors and not much patience, since it is
 #'   much faster than 'loess', but it may produce weird results when there are
 #'   only a few anchors
-#' @param value_floor,value_ceiling lower/upper bounds for the contour
+#' @param valueFloor,valueCeiling lower/upper bounds for the contour
 #' @param plot (boolean) produce a plot?
 #' @param samplingRate sampling rate used to convert time values to points (Hz)
 #' @param voiced,contourLabel graphical pars for plotting breathing contours
@@ -35,7 +35,7 @@
 #' @examples
 #' a = getSmoothContour(anchors = data.frame(
 #'   time = c(50, 137, 300), value = c(0.03, 0.78, 0.5)),
-#'   voiced = 200, value_floor = 0, plot = TRUE, main = '',
+#'   voiced = 200, valueFloor = 0, plot = TRUE, main = '',
 #'   samplingRate = 16000) # breathing
 #'
 #' a = getSmoothContour(anchors = data.frame(
@@ -55,8 +55,8 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             len = NULL,
                             thisIsPitch = FALSE,
                             method = c('spline', 'loess')[2],
-                            value_floor = NULL,
-                            value_ceiling = NULL,
+                            valueFloor = NULL,
+                            valueCeiling = NULL,
                             plot = FALSE,
                             main = '',
                             xlim = NULL,
@@ -66,18 +66,18 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             contourLabel = NULL,
                             ...) {
   if (class(anchors) == 'list') anchors = as.data.frame(anchors)
-  if (!is.null(value_floor)) {
-    anchors$value[anchors$value < value_floor] = value_floor
+  if (!is.null(valueFloor)) {
+    anchors$value[anchors$value < valueFloor] = valueFloor
   }
-  if (!is.null(value_ceiling)) {
-    anchors$value[anchors$value > value_ceiling] = value_ceiling
+  if (!is.null(valueCeiling)) {
+    anchors$value[anchors$value > valueCeiling] = valueCeiling
   }
   if (thisIsPitch) {
     anchors$value = HzToSemitones(anchors$value)
-    if (!is.null(value_floor))
-      value_floor = HzToSemitones(value_floor)
-    if (!is.null(value_ceiling))
-      value_ceiling = HzToSemitones(value_ceiling)
+    if (!is.null(valueFloor))
+      valueFloor = HzToSemitones(valueFloor)
+    if (!is.null(valueCeiling))
+      valueCeiling = HzToSemitones(valueCeiling)
   }
 
   if (is.null(len)) {
@@ -135,8 +135,8 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
       }
       # plot (smoothContour, type = 'l')
 
-      while (sum(smoothContour < value_floor - 1e-6, na.rm = TRUE) > 0) {
-        # in case we get values below value_floor, less smoothing should be used
+      while (sum(smoothContour < valueFloor - 1e-6, na.rm = TRUE) > 0) {
+        # in case we get values below valueFloor, less smoothing should be used
         # NB: -1e-6 avoids floating point problem, otherwise we get
         # weird cases of -120 (float) < -120 (integer)
         span = span / 1.1
@@ -144,8 +144,8 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
         smoothContour = try (predict(l, time), silent = TRUE)
       }
     }
-    smoothContour[smoothContour < value_floor] = value_floor
-    smoothContour[smoothContour > value_ceiling] = value_ceiling
+    smoothContour[smoothContour < valueFloor] = valueFloor
+    smoothContour[smoothContour > valueCeiling] = valueCeiling
   }
   # plot (smoothContour, type='l')
 
@@ -171,7 +171,7 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
       }
       lbls_semitones = unique(seq(ylim[1], ylim[2], length.out = 5))
       # unique to remove duplicates, max 5 labels
-      lbls_notes = notes_dict$note[lbls_semitones + 1]
+      lbls_notes = notesDict$note[lbls_semitones + 1]
       lbls_Hz = round(semitonesToHz(lbls_semitones))
 
       par(mar = c(5, 4, 4, 3)) # c(bottom, left, top, right)
@@ -198,15 +198,15 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
               anchors$time[length(anchors$time)],
               length.out = length(smoothContour_downsampled))
       plot(x = x, y = smoothContour_downsampled, type = 'l', ylab = 'Amplitude',
-            xlab = 'Time, ms', xlim = xlim, ylim = ylim, ...)
+           xlab = 'Time, ms', xlim = xlim, ylim = ylim, ...)
       points(anchors$time, anchors$value, col = 'blue', cex = 3)
       if (is.numeric(voiced)) {
         lines(x = c(0, voiced), y = c(0, 0), col = 'blue', lwd = 10)
         text(x = voiced / 2, y = abs(ylim[2] - ylim[1]) / 25,
-          adj = 0.5, labels = 'voiced part', col = 'blue')
+             adj = 0.5, labels = 'voiced part', col = 'blue')
         text(x = anchors$time[nrow(anchors)],
              y = anchors$value[nrow(anchors)] - (ylim[2] - ylim[1]) / 25,
-            adj = 1, labels = contourLabel, col = 'red')
+             adj = 1, labels = contourLabel, col = 'red')
       }
     }
     par("mar" = op)  # restore original margin settings
@@ -236,8 +236,8 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
 getDiscreteContour = function(len,
                               anchors = data.frame(time = c(0, 1), value = c(1, 1)),
                               method = c('spline', 'loess')[2],
-                              value_floor = NULL,
-                              value_ceiling = NULL,
+                              valueFloor = NULL,
+                              valueCeiling = NULL,
                               ylim = NULL,
                               plot = FALSE,
                               ...) {
@@ -245,8 +245,8 @@ getDiscreteContour = function(len,
     len = len,
     anchors = anchors,
     method = method,
-    value_floor = value_floor,
-    value_ceiling = value_ceiling
+    valueFloor = valueFloor,
+    valueCeiling = valueCeiling
   )
   if (plot) {
     if (is.null(ylim)) {
@@ -256,7 +256,7 @@ getDiscreteContour = function(len,
     plot (contour, type = 'b', xlab = 'Syllable', col = 'red', bg = 'red',
           cex = 1, pch = 23, ylim = ylim, ...)
     points (x = anchors$time * (len - 1) + 1, y = anchors$value, col = 'blue',
-             cex = 3)
+            cex = 3)
   }
   return(contour)
 }

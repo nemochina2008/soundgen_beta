@@ -4,7 +4,7 @@
 \alias{costPerPath}
 \title{Cost per path}
 \usage{
-costPerPath(path, pitchCands, pitchCert, cert_weight, pitchCenterGravity)
+costPerPath(path, pitchCands, pitchCert, certWeight, pitchCenterGravity)
 }
 \arguments{
 \item{path}{evaluated path through pitch candidates (as integers specifying
@@ -16,7 +16,7 @@ column is one fft frame, each row is one candidate.}
 \item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
 our certainty in pitch candidates}
 
-\item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
+\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
 tension of the resulting pitch curve}
 

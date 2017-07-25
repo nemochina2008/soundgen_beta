@@ -4,7 +4,7 @@
 \alias{forcePerPath}
 \title{Force per path}
 \usage{
-forcePerPath(pitch, pitchCands, pitchCert, pitchCenterGravity, cert_weight)
+forcePerPath(pitch, pitchCands, pitchCert, pitchCenterGravity, certWeight)
 }
 \arguments{
 \item{pitch}{numeric vector representing our best guess at pitch contour,
@@ -20,7 +20,7 @@ our certainty in pitch candidates}
 candidates per fft frame weighted by our certainty in each of these
 candidates}
 
-\item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
+\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
 tension of the resulting pitch curve}
 }

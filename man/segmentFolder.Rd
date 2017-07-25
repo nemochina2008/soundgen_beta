@@ -4,67 +4,66 @@
 \alias{segmentFolder}
 \title{Segment all files in a folder}
 \usage{
-segmentFolder(myfolder, shortest_syl = 40, shortest_pause = 40,
-  syl_to_global_mean = 0.9, interburst_min_ms = NULL,
-  interburst_min_scale = 1, peak_to_global_max = 0.075,
-  peak_to_trough = 3, trough_left = TRUE, trough_right = FALSE,
-  smooth_ms = 40, smooth_overlap = 80, summary = TRUE, plot = FALSE,
-  savePath = NA, verbose = TRUE, ...)
+segmentFolder(myfolder, shortestSyl = 40, shortestPause = 40,
+  sylThres = 0.9, interburst = NULL, interburstMult = 1,
+  burstThres = 0.075, peakToTrough = 3, troughLeft = TRUE,
+  troughRight = FALSE, smoothLen = 40, smoothOverlap = 80,
+  summary = TRUE, plot = FALSE, savePath = NA, verbose = TRUE, ...)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
 
-\item{shortest_syl}{minimum acceptable length of syllables (ms)}
+\item{shortestSyl}{minimum acceptable length of syllables (ms)}
 
-\item{shortest_pause}{minimum acceptable break between syllables (ms).
+\item{shortestPause}{minimum acceptable break between syllables (ms).
 Syllables separated by less time are merged. To avoid merging, specify
-\code{shortest_pause = NA}}
+\code{shortestPause = NA}}
 
-\item{syl_to_global_mean}{amplitude threshold for syllable detection (as a
+\item{sylThres}{amplitude threshold for syllable detection (as a
 proportion of global mean amplitude of smoothed envelope)}
 
-\item{interburst_min_ms}{minimum time between two consecutive bursts (ms). If
+\item{interburst}{minimum time between two consecutive bursts (ms). If
 specified, it overrides \code{interburst_min_idx}}
 
-\item{interburst_min_scale}{multiplier of the default minimum interburst
+\item{interburstMult}{multiplier of the default minimum interburst
 interval (median syllable length or, if no syllables are detected, the same
-number as \code{shortest_syl}). Only used if \code{interburst_min_ms} is
+number as \code{shortestSyl}). Only used if \code{interburst} is
 not specified. Larger values improve detection of unusually broad shallow
 peaks, while smaller values improve the detection of sharp narrow peaks}
 
-\item{peak_to_global_max}{to qualify as a burst, a local maximum has to be at
-least \code{peak_to_global_max} time the height of the global maximum of
+\item{burstThres}{to qualify as a burst, a local maximum has to be at
+least \code{burstThres} time the height of the global maximum of
 the entire amplitude envelope}
 
-\item{peak_to_trough}{to qualify as a burst, a local maximum has to be at
-least \code{peak_to_trough}  times the local minimum on the LEFT over
-analysis window (which is controlled by \code{interburst_min_ms} or
-\code{interburst_min_scale})}
+\item{peakToTrough}{to qualify as a burst, a local maximum has to be at
+least \code{peakToTrough} times the local minimum on the LEFT over
+analysis window (which is controlled by \code{interburst} or
+\code{interburstMult})}
 
-\item{trough_left}{should local maxima be compared to the trough
-on the left and/or right of it? TRUE / FALSE}
+\item{troughLeft}{should local maxima be compared to the trough
+on the left and/or right of it? Default to TRUE and FALSE, respectively}
 
-\item{trough_right}{should local maxima be compared to the trough
-on the left and/or right of it? TRUE / FALSE}
+\item{troughRight}{should local maxima be compared to the trough
+on the left and/or right of it? Default to TRUE and FALSE, respectively}
 
-\item{smooth_ms}{length of smoothing window (ms). Capped at half the length
+\item{smoothLen}{length of smoothing window, ms. Capped at half the length
 of sound. Low values dramatically increase processing time}
 
-\item{smooth_overlap}{overlap between smoothing windows (%): the higher, the
+\item{smoothOverlap}{overlap between smoothing windows (%): the higher, the
 more accurate, but also slower}
 
 \item{summary}{if TRUE, returns only a summary of the number and spacing of
 syllables and vocal bursts. If FALSE, returns a list containing full stats
 on each syllable and bursts (location, duration, amplitude, ...)}
 
-\item{plot}{should a segmentation plot be plotted? TRUE / FALSE}
+\item{plot}{if TRUE, produces a segmentation plot}
 
-\item{savePath}{full path to the folder in which to save the plots. If you
-don't want to save the plots, set \code{savePath} to NA (default)}
+\item{savePath}{full path to the folder in which to save the plots. Defaults
+to NA}
 
 \item{verbose}{if TRUE, reports progress and estimated time left}
 
-\item{...}{other graphical parameters}
+\item{...}{other graphical parameters passed to \code{\link[graphics]{plot}}}
 }
 \value{
 If \code{summary} is TRUE, returns a dataframe with one row per audio

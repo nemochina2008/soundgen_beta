@@ -4,46 +4,45 @@
 \alias{getPitchSpec}
 \title{BaNa pitch tracker}
 \usage{
-getPitchSpec(frame, spec_smoothing, spec_peak_HNRslope, bin, HNR = NULL,
-  spec_threshold, spec_peak, spec_singlePeakCert, pitch_floor, pitch_ceiling,
-  spec_merge, nCands)
+getPitchSpec(frame, specSmooth, specHNRslope, bin, HNR = NULL, specThres,
+  specPeak, specSinglePeakCert, pitchFloor, pitchCeiling, specMerge, nCands)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
 \code{\link[stats]{fft}}}
 
-\item{spec_smoothing}{the width of window for detecting peaks in the spectrum, Hz}
+\item{specSmooth}{the width of window for detecting peaks in the spectrum, Hz}
 
-\item{spec_peak_HNRslope}{when looking for putative harmonics in
+\item{specHNRslope}{when looking for putative harmonics in
 the spectrum, the threshold for peak detection is calculated as
-\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}}
+\code{specPeak * (1 - HNR * specHNRslope)}}
 
 \item{bin}{the width of spectral bin in \code{frame}, Hz}
 
 \item{HNR}{harmonics-to-noise ratio returned by \code{\link{getPitchAutocor}}}
 
-\item{spec_threshold}{(0 to 1) separate
+\item{specThres}{(0 to 1) separate
 voicing thresholds for detecting pitch candidates with three different
 methods: autocorrelation, cepstrum, and BaNa algorithm (see Details). Note
 that HNR is calculated even for unvoiced frames.}
 
-\item{spec_peak}{when looking for putative harmonics in
+\item{specPeak}{when looking for putative harmonics in
 the spectrum, the threshold for peak detection is calculated as
-\code{spec_peak * (1 - HNR * spec_peak_HNRslope)}}
+\code{specPeak * (1 - HNR * specHNRslope)}}
 
-\item{spec_singlePeakCert}{(0 to 1) if F0 is calculated based on a single
+\item{specSinglePeakCert}{(0 to 1) if F0 is calculated based on a single
 harmonic ratio (as opposed to several ratios converging on the same
-candidate), its certainty is taken to be \code{spec_singlePeakCert}}
+candidate), its certainty is taken to be \code{specSinglePeakCert}}
 
-\item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
+\item{pitchFloor}{absolute bounds for pitch candidates (Hz)}
 
-\item{pitch_ceiling}{absolute bounds for pitch candidates (Hz)}
+\item{pitchCeiling}{absolute bounds for pitch candidates (Hz)}
 
-\item{spec_merge}{pitch candidates within \code{spec_merge} semitones are
+\item{specMerge}{pitch candidates within \code{specMerge} semitones are
 merged with boosted certainty}
 
 \item{nCands}{maximum number of pitch candidates per method (except for
-\code{dom}, which returns at most one candidate per frame)}
+\code{dom}, which returns at most one candidate per frame), normally 1...4}
 }
 \value{
 Returns either NULL or a dataframe of pitch candidates.

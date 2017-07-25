@@ -69,12 +69,12 @@ If you need to generate a single syllable without pauses, the only temporal para
 1.  Set `nSyl` ("Number of syllables" in the app). Unvoiced noise is then allowed to fill in the pauses (if noise is longer than the voiced part), and you can specify an amplitude contour, intonation contour, and formant transitions that will span the entire bout. For ex., if the vowel sequence in a three-syllable bout is “uai”, the output will be approximately “[u] – pause – [a] – pause – [i]”. 
 ```{r}
 library(soundgen)
-s = soundgen(exactFormants = 'uai', nSyl = 3, play = TRUE)
+s = soundgen(formants = 'uai', nSyl = 3, play = TRUE)
 # "play = TRUE": to replay without re-generating the sound, type "playme(s)"
 ```
 1.  Set `repeatBout` ("Repeat bout # times" in the app). This is the same as calling `soundgen` repeatedly with the same settings or clicking the Generate button in the app several times. If temperature = 0, you will get exactly the same sound repeated each time, otherwise some variation will be introduced. For the same “uai” example, the output will be “[uai] – pause – [uai] – pause – [uai]”.
 ```{r}
-s = soundgen(exactFormants = 'uai', repeatBout = 3)
+s = soundgen(formants = 'uai', repeatBout = 3)
 # playme(s)
 ```
 
@@ -107,11 +107,11 @@ To draw F0 contour in the app, use "Main / Intonation syllable" tab and click th
 
 *TIP The same principles apply to all contour plots in soundgen (amplitude, mouth opening, and noise contours). Note also that all contours are rescaled when the duration changes, with the single exception of negative time anchors for noise (i.e. the length of pre-syllable aspiration does not depend on syllable duration).*
 
-If the bout consists of several syllables (`nSyl > 1`), you can also specify the overall intonation over several syllables using `pitchAnchors_global` (app: "Main / Intonation global"). The global intonation contour specifies the deviation of pitch per syllable from the main pitch contour in semitones, i.e. 12 semitones = 1 octave. In other words, it shows how much higher or lower the average pitch of each syllable is compared to the rest of the syllables. For ex., we can generate five seagull-like sounds, which have the same intonation contour within each syllable, but which vary in average pitch spanning about an octave in an inverted U-shaped curve:
+If the bout consists of several syllables (`nSyl > 1`), you can also specify the overall intonation over several syllables using `pitchAnchorsGlobal` (app: "Main / Intonation global"). The global intonation contour specifies the deviation of pitch per syllable from the main pitch contour in semitones, i.e. 12 semitones = 1 octave. In other words, it shows how much higher or lower the average pitch of each syllable is compared to the rest of the syllables. For ex., we can generate five seagull-like sounds, which have the same intonation contour within each syllable, but which vary in average pitch spanning about an octave in an inverted U-shaped curve:
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140, plot = TRUE, play = TRUE,
                  pitchAnchors = data.frame(time = c(0, 0.65, 1), value = c(977, 1540, 826)),
-                 pitchAnchors_global = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
+                 pitchAnchorsGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 ```
 
 *TIP Calling `soudngen` with argument `plot = TRUE` produces a spectrogram using a function from soundgen package, `spec`. Type `?spec` and see the vignette on acoustic analysis for plotting tips and advanced options. Or you can plot the waveform produced by `soundgen` using another function of your choice, e.g. `seewave::spectro`*
@@ -143,8 +143,8 @@ mf = c(-1,  # male: 100% lower F0, 25% lower formants, 25% longer vocal tract
        0,   # neutral (default)
        1)   # female: 100% higher F0, 25% higher formants, 25% shorter vocal tract
 for (i in mf){
-  s = soundgen(maleFemale = i, exactFormants = NA, vocalTract = 25, play = TRUE)
-  # Since `exactFormants` are not specified, but temperature is above zero, a 
+  s = soundgen(maleFemale = i, formants = NA, vocalTract = 25, play = TRUE)
+  # Since `formants` are not specified, but temperature is above zero, a 
   # schwa-like sound with approximately equidistant formants is generated using
   # `vocalTract_length` (cm) to calculate the expected formant dispersion.
 }
@@ -163,17 +163,17 @@ for (i in cb){
 ```
 
 ## Amplitude contours
-Use `amplAnchors` and `amplAnchors_global` to modulate the amplitude (loudness) of an individual syllable or a polysyllabic bout, respectively. In the app, they are found under "Main / Amplitude syllable"" and "Main / Amplitude global". Note that they both affect only the voiced component. In contrast, `attackLen` ("Attack length, ms" in the app) and `trill_dep` ("Trill") affect both the voiced and the unvoiced components. 
+Use `amplAnchors` and `amplAnchorsGlobal` to modulate the amplitude (loudness) of an individual syllable or a polysyllabic bout, respectively. In the app, they are found under "Main / Amplitude syllable"" and "Main / Amplitude global". Note that they both affect only the voiced component. In contrast, `attackLen` ("Attack length, ms" in the app) and `trill_dep` ("Trill") affect both the voiced and the unvoiced components. 
 ```{r fig.width = 5, fig.height = 5}
 # each syllable has a 20-dB dip in the middle, and there is an overall fade-out over the entire bout
 s = soundgen(nSyl = 4, plot = TRUE, osc = TRUE, play = TRUE,
              amplAnchors = data.frame(time = c(0, .5, 1), value = c(120, 100, 120)),
-             amplAnchors_global = data.frame(time = c(0, 1), value = c(120, 0)))
+             amplAnchorsGlobal = data.frame(time = c(0, 1), value = c(120, 0)))
 ```
 
 Rapid amplitude modulation imitating the uvular trill (as in French [r]) is implemented by multiplying the synthesized waveform by a sine wave:
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(sylLen = 1000, exactFormants = NA,
+s = soundgen(sylLen = 1000, formants = NA,
              trillDep = .5,   # halves the amplitude at troughs
              trillFreq = 35,  # amplitude modulation with frequency 35 Hz
              plot = TRUE, osc = TRUE, play = TRUE)
@@ -183,14 +183,14 @@ s = soundgen(sylLen = 1000, exactFormants = NA,
 Buckle up now, for the remaining sections are going to be a bit heavier. If the terminology seems obscure, don't despair: with a bit of trial-and-error and a quick ear you can quickly master all the following features, even if you are not familiar with the theoretical concepts.
 
 ### Vowel presets
-Argument `exactFormants` (tab "Voiced / Vowel" in the app) sets the formants – frequency bands used to filter the excitation source. If this sounds fancy, think of the sort of equalizer you might use to boost the bass when listening to a song. Some frequencies are amplified, others are dampened. When appropriate filters are applied to a tonal sound like human voice, we perceive different vowels.
+Argument `formants` (tab "Voiced / Vowel" in the app) sets the formants – frequency bands used to filter the excitation source. If this sounds fancy, think of the sort of equalizer you might use to boost the bass when listening to a song. Some frequencies are amplified, others are dampened. When appropriate filters are applied to a tonal sound like human voice, we perceive different vowels.
 
-For human voices (callers M1 and F1 in the app), you can specify a string of vowels from the dictionary of presets. When you call `soundgen` with `exactFormants = 'ai'` or some other character string, the values are taken from `presets$M1$Formants` or `presets$F1$Formants`. Formants can remain the same throughout the vocalizations, or they can move. For example, `exactFormants = 'ai'` produces a sound that goes smoothly from [a] to [i], while `exactFormants = 'aaai'` produces mostly [a] with a rapid transition to [i] at the very end. Argument `formantStrength` ("Formant prominence" in the app) adjusts the overall effect of all formant filters at once.
+For human voices (callers M1 and F1 in the app), you can specify a string of vowels from the dictionary of presets. When you call `soundgen` with `formants = 'ai'` or some other character string, the values are taken from `presets$M1$Formants` or `presets$F1$Formants`. Formants can remain the same throughout the vocalizations, or they can move. For example, `formants = 'ai'` produces a sound that goes smoothly from [a] to [i], while `formants = 'aaai'` produces mostly [a] with a rapid transition to [i] at the very end. Argument `formantStrength` ("Formant prominence" in the app) adjusts the overall effect of all formant filters at once.
 
 ### Manual formants
 Presets give you some rudimentary control over vowels. More subtle control may be necessary for animal sounds, as well as for human vowels that are not included in the presets dictionary. For such cases you will have to specify the actual frequency, amplitude, and bandwidth of each formant manually, as well as time stamps for each value. If you want stationary formants, type `time = 0` for each formant. For moving formants, you can specify values at different time points, where time varies from 0 to 1 (to be scaled appropriately depending on the length of sound). For example, the following example uses two moving formants with frequency, amplitude, and bandwidth specified at the beginning (time 0) and end (time 1) of the syllable:
 ```{r}
-exactFormants = list(
+formants = list(
   f1 = data.frame(time = c(0, 1), freq = c(300, 900), amp = c(30, 10), width = 120),
   f2 = data.frame(time = c(0, 1), freq = c(2500, 1500), amp = 30, width = c(0, 240)))
 ```
@@ -200,16 +200,16 @@ Normally you would simply feed this list into soundgen(), but sometimes it may b
 s = getSpectralEnvelope(nr = 1024,  # freq bins in FFT frame (window_length / 2)
                         nc = 50,    # time 
                         samplingRate = 16000, 
-                        exactFormants = exactFormants,
+                        formants = formants,
                         plot = TRUE, 
                         dur_ms = 1500,   # just an example
                         colorTheme = 'seewave',
-                        rolloff_lipRad = 6) 
+                        rolloffLip = 6) 
 ```
 
-Note that lip radiation is specified in exactFormants together with formants!  This has the effect of amplifying higher frequencies to mimic lip radiation. To synthesize a sound using this spectral filter, type:
+Note that lip radiation is specified in formants together with formants!  This has the effect of amplifying higher frequencies to mimic lip radiation. To synthesize a sound using this spectral filter, type:
 ```{r}
-s = soundgen(exactFormants = exactFormants, play = TRUE)
+s = soundgen(formants = formants, play = TRUE)
 ```
 
 *TIP When using the app, you can start with a preset by typing in a vowel string, and then you can modify it. This way you don't have to remember the right format. If you edit the list of formants and nothing in the sound seems to be changing, there may be a misprint, missing comma, etc. To make sure your formants are correctly specified, you can also plot them directly in R by calling `getSpectralEnvelope` (see above)*
@@ -218,7 +218,7 @@ For even more advanced spectral filters, you can specify both formants and antif
 ```{r fig.show = "hold", fig.width = 5, fig.height = 5}
 s = soundgen(sylLen = 1500, play = TRUE,
              pitchAnchors = data.frame(time = c(0, 1), value = c(140, 140)), 
-             exactFormants = list(
+             formants = list(
                f1   = data.frame(time = c(0, 1), freq = c(880, 900), 
                                  amp = c(40,20), width = c(80,120)), 
                f1.5 = data.frame(time = c(0, 1), freq = 600, 
@@ -230,19 +230,19 @@ s = soundgen(sylLen = 1500, play = TRUE,
                f3   = data.frame(time=c(0, 1), freq = c(2900, 3100), 
                                  amp = 40, width = 200)))
 # The spectrogram of the resulting sound clearly shows the zero-pole pair:
-spec(s, samplingRate = 16000, ylim = c(0, 4), contrast = .5, 
+spectrogram(s, samplingRate = 16000, ylim = c(0, 4), contrast = .5, 
      windowLength = 10, step = 5, colorTheme = 'seewave')
 # long-term average spectrum (less helpful for moving formants but very good for stationary):
-# seewave::meanspec(s, f = 16000, wl = 256)  
+# seewave::meanspectrogram(s, f = 16000, wl = 256)  
 ```
 
 ### Mouth opening
-A convenient shortcut for manipulating formants without coding all transitions by hand is provided by `mouthAnchors` argument (in the app, tab "Main / Mouth opening"). This can be thought of as a hyper-parameter offering an easy way to define moving formants within a syllable: formants go down as the mouth closes and rise as it opens. In addition, lip radiation is removed when the mouth is completely closed, and the vowel is automatically nasalized. This feature can save you a lot of manual coding, but it is basically redundant – you can always achieve the same effect by specifying moving formants manually in `exactFormants`. Here is a simple example, with the mouth gradually opening and closing again:
+A convenient shortcut for manipulating formants without coding all transitions by hand is provided by `mouthAnchors` argument (in the app, tab "Main / Mouth opening"). This can be thought of as a hyper-parameter offering an easy way to define moving formants within a syllable: formants go down as the mouth closes and rise as it opens. In addition, lip radiation is removed when the mouth is completely closed, and the vowel is automatically nasalized. This feature can save you a lot of manual coding, but it is basically redundant – you can always achieve the same effect by specifying moving formants manually in `formants`. Here is a simple example, with the mouth gradually opening and closing again:
 ```{r fig.width = 7, fig.height = 5}
 s = soundgen(sylLen = 2500, play = TRUE,
              pitchAnchors = data.frame(time = c(0, 1), value = c(140, 140)), 
              mouthAnchors = list(time = c(0, .3, .75, 1), value = c(0, 0, .7, 0)))
-spec(s, samplingRate = 16000, ylim = c(0, 4), contrast = .5, windowLength = 10, step = 5,
+spectrogram(s, samplingRate = 16000, ylim = c(0, 4), contrast = .5, windowLength = 10, step = 5,
      colorTheme = 'seewave', osc = TRUE)
 ```
 
@@ -252,13 +252,13 @@ Soundgen produces tonal sounds by means of generating a separate sine wave for e
 Soundgen allows a lot of flexibility when specifying source spectrum. You can change the basic rolloff of harmonics per octave, adjust rolloff depending on F0, add parabolic terms that affect the first few harmonics, etc. Working from R console, the relevant function is `getRolloff`. Its arguments are well-documented: type `?getRolloff` for help. Here is just a single example:
 ```{r fig.width = 4, fig.height = 4}
 # strong F0, rolloff with a "shoulder"
-r = getRolloff(rolloff = -20, rolloffAdjust_per_octave = -3,
-               rolloffAdjust_quadratic = -10, rolloffAdjust_quadratic_nHarm = 13, 
+r = getRolloff(rolloff = -20, rolloffOct = -3,
+               rolloffParab = -10, rolloffParabHarm = 13, 
                pitch_per_gc = c(170, 340), plot = TRUE)
 
 # to generate the corresponding sound:
-s = soundgen(rolloff = -20, rolloffAdjust_per_octave = -3, play = TRUE,
-             olloffAdjust_quadratic = -10, rolloffAdjust_quadratic_nHarm = 13,
+s = soundgen(rolloff = -20, rolloffOct = -3, play = TRUE,
+             olloffAdjust_quadratic = -10, rolloffParabHarm = 13,
              pitchAnchors = data.frame(time = c(0, 1), value = c(170, 340)))
 ```
 
@@ -270,24 +270,24 @@ Several effects in soudngen work by modifying individual glottal cycles. Technic
 ### Subharmonics, jitter, and shimmer
 These effects basically make the sound appear harsh. Jitter and shimmer are created by adding random noise to the periods and amplitudes, respectively, of the "glottal cycles". Subharmonics could be created by adding rapid frequency modulation to F0 contour, but for maximum flexibility soundgen uses a different - slightly hacky, but powerful - technique of literally setting up an additional sine wave for each subharmonic based on the desired frequency of subharmonics (`subFreq`). The amplitude of each subharmonic is a function of its distance from the nearest harmonic from F0 stack and the desired width of sidebands (`subDep`). This way we can create sidebands that vary naturally as F0 changes over time, producing bifurcations, and dynamically vary the nature of subharmonic regimes (see Wilden et al., 2012). The main limitation of this approach is that it is too computationally costly to generate variable numbers of subharmonics for the entire bout. The solution currently adopted in soundgen is to break longer sounds into so-called "epochs" with a constant number of subharmonics in each. The epochs are synthesized separately, trimmed to the nearest zero crossing, and then glued together with a rapid cross-fade. This is suboptimal, since it shortens the sound and may introduce audible artifacts at transitions between epochs. `shortestEpoch` controls the approximate minimum length of each epoch. Longer epochs minimize problems with transitions, but the behavior of subharmonics then becomes less variable, since their number is constrained to be stable within each epoch.
 
-To add pitch effects, you can use just two parameters – `pitchEffects_amount` and `pitchEffects_intensity`  – to regulate approximately how harsh the sound becomes and what proportion of the sound is affected, respectively. However, for best results it is advisable to set advanced settings manually (see below). At temperature > 0, `pitchEffects_amount` creates a random walk that divides each syllable into epochs defined by their regime, using two thresholds to determine when a new regime begins (see Fitch et al., 2002):
+To add pitch effects, you can use just two parameters – `pitchEffectsAmount` and `pitchEffectsIntensity`  – to regulate approximately how harsh the sound becomes and what proportion of the sound is affected, respectively. However, for best results it is advisable to set advanced settings manually (see below). At temperature > 0, `pitchEffectsAmount` creates a random walk that divides each syllable into epochs defined by their regime, using two thresholds to determine when a new regime begins (see Fitch et al., 2002):
 
 1.  No pitch effects. 
-    If pitchEffects_amount = 0%, the whole syllable is in pitch regime 1.
+    If pitchEffectsAmount = 0%, the whole syllable is in pitch regime 1.
 1.  Subharmonics only. 
     Note that subharmonics are only added to segments with subFreq < F0 / 2.
 1.  Subharmonics and jitter. 
-    If pitchEffects_amount = 100%, the whole syllable is in pitch regime 3. 
+    If pitchEffectsAmount = 100%, the whole syllable is in pitch regime 3. 
 
-`pitchEffects_intensity` is a hyper-parameter that adjusts several settings at once, making the voice harsher in pitch regimes 2 and 3, but without affecting the balance between regimes.
+`pitchEffectsIntensity` is a hyper-parameter that adjusts several settings at once, making the voice harsher in pitch regimes 2 and 3, but without affecting the balance between regimes.
 
 Moving on to advanced pitch effects settings, `subFreq` ("Subharmonic frequency, Hz" in the app) and `subDep` ("Width of sidebands, Hz") define the properties of subharmonics in pitch regimes 2 and 3. Say your vocalization has a relatively flat intonation contour with a fundamental frequency of about 800 Hz, and you want to add a single subharmonic (G0). You then set the expected subharmonic frequency to 400 Hz. Since G0 is forced to be an integer fraction of F0 at all time points, it will not be exactly 400 Hz, but it will produce a single subharmonic at F0 / 2 (as long as F0 stays close to 800 Hz: if F0 goes up to 1200 Hz, you will get two subharmonics instead, since 1200 / 400 = 3). The width of sidebands defines how quickly the energy of subharmonics decays at a remove from the nearest harmonic. For example, our single subharmonic is audible but weak at sideband width = 150 Hz, while it becomes strong enough to be perceived as a new fundamental at sideband width = 400 Hz, effectively halving the pitch:
 ```{r fig.width = 5, fig.height = 5}
-s1 = soundgen(subFreq = 400, subDep = 150, pitchEffects_amount = 100,
+s1 = soundgen(subFreq = 400, subDep = 150, pitchEffectsAmount = 100,
               jitterDep = 0, shimmerDep = 0, temperature = 0, 
               sylLen = 500, pitchAnchors = data.frame(time=c(0, 1), value = c(800, 900)),
               plot = TRUE, play = TRUE)
-s2 = soundgen(subFreq = 400, subDep = 400, pitchEffects_amount = 100,
+s2 = soundgen(subFreq = 400, subDep = 400, pitchEffectsAmount = 100,
               jitterDep = 0, shimmerDep = 0, temperature = 0, 
               sylLen = 500, pitchAnchors = data.frame(time=c(0, 1), value = c(800, 900)),
               plot = TRUE, play = TRUE)
@@ -295,7 +295,7 @@ s2 = soundgen(subFreq = 400, subDep = 400, pitchEffects_amount = 100,
 
 Sidebands may be easier to understand for high-pitched sounds with low subharmonic frequencies. For example, chimpanzees emit piercing screams with narrow subharmonic bands. If we set `subFreq` to 75 Hz and `subDep` to 130 Hz, subharmonics literally form a band around each harmonic of the main stack, creating very distinct, immediately recognizable sound quality:
 ```{r fig.width = 5, fig.height = 5}
-s = soundgen(subFreq = 75, subDep = 130, pitchEffects_amount = 100,
+s = soundgen(subFreq = 75, subDep = 130, pitchEffectsAmount = 100,
              jitterDep = 0, shimmerDep = 0, temperature = 0, 
              sylLen = 800, plot = TRUE, play = TRUE,
              pitchAnchors = data.frame(time=c(0, .3, .9, 1), 
@@ -307,20 +307,20 @@ As for jitter in pitch regime 3, it wiggles both F0 and G0 harmonic stacks, blur
 # To get jitter without subharmonics, set `temperature = 0, subDep = 0` 
 # and specify the required jitter depth and period
 s1 = soundgen(jitterLen = 50, jitterDep = 1,  # shaky voice
-              sylLen = 1000, subDep = 0, pitchEffects_amount = 100,
+              sylLen = 1000, subDep = 0, pitchEffectsAmount = 100,
               pitchAnchors = data.frame(time = c(0, 1), value = c(150, 170)),
               play = TRUE)
 s2 = soundgen(jitterLen = 1, jitterDep = 1,  # harsh voice
-              sylLen = 1000, subDep = 0, pitchEffects_amount = 100,
+              sylLen = 1000, subDep = 0, pitchEffectsAmount = 100,
               pitchAnchors = data.frame(time = c(0, 1), value = c(150, 170)),
               play = TRUE)
 ```
 
-To get both jitter and subharmonics, set both manually and/or use pitchEffects_amount close to 100% with temperature > 0. For example, barks of a small, annoying dog can be roughly approximated with this minimal code:
+To get both jitter and subharmonics, set both manually and/or use pitchEffectsAmount close to 100% with temperature > 0. For example, barks of a small, annoying dog can be roughly approximated with this minimal code:
 ```{r}
 s = soundgen(repeatBout = 2, sylLen = 140, pauseLen = 100, vocalTract = 8,
              pitchAnchors = list(time = c(0, 0.52, 1), value = c(559, 785, 557)), 
-             pitchEffects_amount = 100, jitterDep = 1, subDep = 60, play = TRUE,
+             pitchEffectsAmount = 100, jitterDep = 1, subDep = 60, play = TRUE,
              mouthAnchors = list(time = c(0, 0.5, 1), value = c(0, 0.5, 0)))
 ```
 
@@ -339,20 +339,20 @@ s2 = soundgen(vibratoDep = 3, vibratoFreq = 3, sylLen = 1000, play = TRUE,
 ## Unvoiced component = noise
 In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces broad-spectrum noise (unvoiced component). This noise can be added to the voiced component to create breathing, snuffing, hissing, etc. This can be done in two ways:
 
-1.  Breathing. This noise type is generated as white noise with spectral rolloff given by `rolloff_noise` ("Noise rolloff, dB/octave" in the app). It is added to the voiced component *before* formant filtering. As a result, it follows exactly the same formant structure as the voiced component, and you cannot modify its spectrum beyond the basic rolloff setting. This is useful for adding noise that originates deep in the throat, close to the vocal cords. To generate breathing, specify `noiseAnchors`, but leave `exactFormants_noise` blank (NA, which is its default value). Soundgen then assumes that the unvoiced component should have the same formant structure as the voiced component.
+1.  Breathing. This noise type is generated as white noise with spectral rolloff given by `rolloffNoise` ("Noise rolloff, dB/octave" in the app). It is added to the voiced component *before* formant filtering. As a result, it follows exactly the same formant structure as the voiced component, and you cannot modify its spectrum beyond the basic rolloff setting. This is useful for adding noise that originates deep in the throat, close to the vocal cords. To generate breathing, specify `noiseAnchors`, but leave `formantsNoise` blank (NA, which is its default value). Soundgen then assumes that the unvoiced component should have the same formant structure as the voiced component.
 
-1.  Any other noise type is added to the voiced component *after* formant filtering, and therefore this noise can be filtered independently of the voiced component. To generate such noise, you can use one of the available presets in the app (for now, only a few human consonants) or specify the formants for the unvoiced component manually in exactly the same format (`exactFormants_noise`) as for the voiced component (`exactFormants`). 
+1.  Any other noise type is added to the voiced component *after* formant filtering, and therefore this noise can be filtered independently of the voiced component. To generate such noise, you can use one of the available presets in the app (for now, only a few human consonants) or specify the formants for the unvoiced component manually in exactly the same format (`formantsNoise`) as for the voiced component (`formants`). 
 
 In the shiny app, the tab "Unvoiced / Noise timing" is for specifying the amplitude contour of the unvoiced component. It shows the timing of noise relative to the voiced component of a typical syllable. Note that noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
 ```{r fig.width = 7, fig.height = 5}
 s = soundgen(nSyl = 2, sylLen = 120, pauseLen = 120, 
-             temperature = 0, rolloff_noise = -5, 
+             temperature = 0, rolloffNoise = -5, 
              noiseAnchors = data.frame(time = c(39, 56, 209), value = c(-120, -10, -120)),
-             exactFormants = list(f1 = data.frame(time = c(0, 1), freq = c(860, 530), 
+             formants = list(f1 = data.frame(time = c(0, 1), freq = c(860, 530), 
                                                   amp = 30, width = c(120, 50)), 
                                   f2 = data.frame(time = c(0, 1), freq = c(1280, 2400), 
                                                   amp = 40, width = c(120, 300))),
-             exactFormants_noise = list(f1 = data.frame(time = 0, freq = 420, 
+             formantsNoise = list(f1 = data.frame(time = 0, freq = 420, 
                                                         amp = 20, width = 150),
                                         f2 = data.frame(time = 0, freq = 1200, 
                                                         amp = 50, width = 250)),
@@ -371,11 +371,11 @@ a = getSmoothContour(anchors = data.frame(time = c(-50, 200, 300),
 Note that at temperature > 0 breathing noise is enriched with stochastically added formants, just like the voiced component. To create simple sighs, you can just specify the length of your creature's vocal tract:
 ```{r}
 s1 = soundgen(vocalTract = 17.5,  # ~human throat
-              sylLen = 10, exactFormants = NULL, attackLen = 200, play = TRUE,
+              sylLen = 10, formants = NULL, attackLen = 200, play = TRUE,
               noiseAnchors = list(time = c(-8, 813), value = c(40, 40)))
 
 s2 = soundgen(vocalTract = 30,    # a large animal
-              sylLen = 10, exactFormants = NULL, attackLen = 200, play = TRUE,
+              sylLen = 10, formants = NULL, attackLen = 200, play = TRUE,
               noiseAnchors = list(time = c(-8, 813), value = c(40, 40)))
 
 ```

@@ -5,7 +5,7 @@
 \title{Subharmonics}
 \usage{
 getVocalFry(rolloff, pitch_per_gc, subFreq = 100, subDep = 100,
-  throwaway_dB = -120, shortestEpoch = 300)
+  throwaway = -120, shortestEpoch = 300)
 }
 \arguments{
 \item{rolloff}{matrix of original amplitudes of each harmonic in f0 stack
@@ -22,7 +22,7 @@ strength of subharmonics fades as they move away from harmonics in f0
 stack. Low values produce narrow sidebands, high values produce uniformly
 strong subharmonics}
 
-\item{throwaway_dB}{discard harmonics and noise that are quieter than this
+\item{throwaway}{discard harmonics and noise that are quieter than this
 number (in dB) to save computational resources}
 
 \item{shortestEpoch}{minimum duration of each epoch with unchanging

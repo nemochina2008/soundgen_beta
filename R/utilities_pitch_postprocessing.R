@@ -12,28 +12,28 @@
 #' @param pitchCert a matrix of the same dimensionality as pitchCands specifying
 #'   our certainty in pitch candidates
 #' @inheritParams analyze
-#' @param interpol_window when interpolating pitch candidates, the median is
-#'   calculated over \code{± interpol_window}
-#' @param interpol_tolerance when interpolating pitch candidates, the criterion
+#' @param interpolWin when interpolating pitch candidates, the median is
+#'   calculated over \code{± interpolWin}
+#' @param interpolTol when interpolating pitch candidates, the criterion
 #'   for needing to interpolate is the absense of pitch candidates with values
-#'   within \code{1 ± interpol_tolerance} of the median of pitch center of
-#'   gravity over the interpolation window. For ex., if \code{interpol_tolerance}
+#'   within \code{1 ± interpolTol} of the median of pitch center of
+#'   gravity over the interpolation window. For ex., if \code{interpolTol}
 #'   is .05, we look for values from 0.95 to 1.05 time the median value over
 #'   interpolation window.
-#' @param interpol_cert when interpolating pitch candidates, all generated pitch
-#'   candidates are assigned a certainty equal to \code{interpol_cert}
+#' @param interpolCert when interpolating pitch candidates, all generated pitch
+#'   candidates are assigned a certainty equal to \code{interpolCert}
 #' @return Returns a numeric vector of pitch values representing the best found
 #'   path through pitch candidates.
 pathfinder = function(pitchCands,
                       pitchCert,
-                      cert_weight = 0.5,
+                      certWeight = 0.5,
                       pathfinding = c('none', 'fast', 'slow')[2],
-                      control_anneal = list(maxit = 5000, temp = 1000),
-                      interpol_window = 3,
-                      interpol_tolerance = 0.05,
-                      interpol_cert = 0.3,
-                      snake_step = 0.05,
-                      snake_plot = FALSE) {
+                      annealPars = list(maxit = 5000, temp = 1000),
+                      interpolWin = 3,
+                      interpolTol = 0.05,
+                      interpolCert = 0.3,
+                      snakeStep = 0.05,
+                      snakePlot = FALSE) {
   # take log to approximate human perception of pitch differences
   pitchCands[!is.na(pitchCands)] = log2(pitchCands[!is.na(pitchCands)])
 
@@ -51,13 +51,13 @@ pathfinder = function(pitchCands,
   # if a frame has no pitch candidate at all (NA) or no candidate
   # between the most likely candidates for the adjacent frames, add such a
   # candidate with ~low certainty
-  if (is.numeric(interpol_window) && interpol_window > 0) {
+  if (is.numeric(interpolWin) && interpolWin > 0) {
     intplt = interpolate(pitchCands = pitchCands,
                          pitchCert = pitchCert,
                          pitchCenterGravity = pitchCenterGravity,
-                         interpol_window = interpol_window,
-                         interpol_tolerance = interpol_tolerance,
-                         interpol_cert = interpol_cert)
+                         interpolWin = interpolWin,
+                         interpolTol = interpolTol,
+                         interpolCert = interpolCert)
     pitchCands = intplt$pitchCands
     pitchCert = intplt$pitchCert
     pitchCenterGravity = intplt$pitchCenterGravity
@@ -94,15 +94,15 @@ pathfinder = function(pitchCands,
       pitchCands = pitchCands,
       pitchCert = pitchCert,
       pitchCenterGravity = pitchCenterGravity,
-      cert_weight = cert_weight
+      certWeight = certWeight
     )
   } else if (pathfinding == 'slow') {
     bestPath = pathfinding_slow(
       pitchCands = pitchCands,
       pitchCert = pitchCert,
-      cert_weight = cert_weight,
+      certWeight = certWeight,
       pitchCenterGravity = pitchCenterGravity,
-      control_anneal = control_anneal
+      annealPars = annealPars
     )
   } else {
     bestPath = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
@@ -114,15 +114,15 @@ pathfinder = function(pitchCands,
   ## SNAKE
   # apply the snake algorithm to minimize the elastic forces acting on this
   # pitch contour without deviating too far from high-certainty anchors
-  if (is.numeric(snake_step) && snake_step > 0) {
+  if (is.numeric(snakeStep) && snakeStep > 0) {
     bestPath = snake(
       pitch = bestPath,
       pitchCands = pitchCands,
       pitchCert = pitchCert,
-      cert_weight = cert_weight,
+      certWeight = certWeight,
       pitchCenterGravity = pitchCenterGravity,
-      snake_step = snake_step,
-      snake_plot = snake_plot
+      snakeStep = snakeStep,
+      snakePlot = snakePlot
     )
   }
 
@@ -146,17 +146,17 @@ pathfinder = function(pitchCands,
 interpolate = function(pitchCands,
                        pitchCert,
                        pitchCenterGravity,
-                       interpol_window = 3,
-                       interpol_tolerance = 0.3,
-                       interpol_cert = 0.3) {
+                       interpolWin = 3,
+                       interpolTol = 0.3,
+                       interpolCert = 0.3) {
   for (f in 1:ncol(pitchCands)) {
-    left = max(1, f - interpol_window)
-    right = min(ncol(pitchCands), f + interpol_window)
+    left = max(1, f - interpolWin)
+    right = min(ncol(pitchCands), f + interpolWin)
     # median over interpolation window (by default ±2 points)
     med = median(pitchCenterGravity[left:right], na.rm = TRUE)
     sum_pitchCands = sum(
-      pitchCands[, f] > (1 - interpol_tolerance) * med &
-        pitchCands[, f] < (1 + interpol_tolerance) * med,
+      pitchCands[, f] > (1 - interpolTol) * med &
+        pitchCands[, f] < (1 + interpolTol) * med,
       na.rm = TRUE
     )
     if (sum_pitchCands == 0 & !is.na(med)) {
@@ -168,7 +168,7 @@ interpolate = function(pitchCands,
       # use median of adjacent frames for the new pitch cand
       pitchCands[nrow(pitchCands), f] = med
       # certainty assigned to interpolated frames
-      pitchCert[nrow(pitchCert), f] = interpol_cert
+      pitchCert[nrow(pitchCert), f] = interpolCert
       # update pitchCenterGravity for the interpolated frame
       pitchCenterGravity[f] = mean(pitchCands[, f],
                                    weights = pitchCert[, f] / sum(pitchCert[, f]),
@@ -199,7 +199,7 @@ interpolate = function(pitchCands,
 pathfinding_fast = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             pitchCenterGravity = pitchCenterGravity,
-                            cert_weight = cert_weight) {
+                            certWeight = certWeight) {
   # start at the beginning of the snake: find the most plausible starting pitch
   # by taking median over the first few frames, weighted by certainty
   p = median(pitchCenterGravity[1:min(5, length(pitchCenterGravity))],
@@ -220,7 +220,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
     })
     # get a weighted average of transition costs associated with the certainty
     # of each estimate vs. the magnitude of pitch jumps
-    costs = cert_weight * cost_cert + (1 - cert_weight) * cost_pitchJump
+    costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
     path = c(path, pitchCands[which.min(costs), i])
     costPathForward = costPathForward + min(costs)
   }
@@ -243,7 +243,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
     cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
       costJumps(point_current, cands[x])
     })
-    costs = cert_weight * cost_cert + (1 - cert_weight) * cost_pitchJump
+    costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
     path_rev = c(path_rev, pitchCands_rev[which.min(costs), i])
     costPathBackward = costPathBackward + min(costs)
   }
@@ -288,9 +288,9 @@ costJumps = function(cand1, cand2) {
 #'   candidates
 pathfinding_slow = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
-                            cert_weight = cert_weight,
+                            certWeight = certWeight,
                             pitchCenterGravity = pitchCenterGravity,
-                            control_anneal = list(maxit = 5000, temp = 1000)) {
+                            annealPars = list(maxit = 5000, temp = 1000)) {
   # start with the pitch contour most faithful to center of gravity of pitch
   # candidates for each frame
   path_init = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
@@ -304,10 +304,10 @@ pathfinding_slow = function(pitchCands = pitchCands,
     gr = generatePath,
     pitchCands = pitchCands,
     pitchCert = pitchCert,
-    cert_weight = cert_weight,
+    certWeight = certWeight,
     pitchCenterGravity = pitchCenterGravity,
     method = 'SANN',
-    control = control_anneal
+    control = annealPars
   )
 
   bestPath = apply(matrix(1:ncol(pitchCands)), 1, function(x) {
@@ -334,7 +334,7 @@ pathfinding_slow = function(pitchCands = pitchCands,
 costPerPath = function(path,
                        pitchCands,
                        pitchCert,
-                       cert_weight,
+                       certWeight,
                        pitchCenterGravity) {
   # if there is nothing to wiggle, generatePath() returns NA and we want
   # annealing to terminate quickly, so we return very high cost
@@ -354,7 +354,7 @@ costPerPath = function(path,
 
   # get a weighted average of transition costs associated with the certainty
   # of each estimate vs. the magnitude of pitch jumps
-  costs = cert_weight * cost_cert + (1 - cert_weight) * cost_pitchJump
+  costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
   return(costs)
 }
 
@@ -404,22 +404,22 @@ generatePath = function(path, pitchCands, ...) {
 snake = function(pitch,
                  pitchCands,
                  pitchCert,
-                 cert_weight,
+                 certWeight,
                  pitchCenterGravity,
-                 snake_step = 0.05,
-                 snake_plot = FALSE) {
+                 snakeStep = 0.05,
+                 snakePlot = FALSE) {
   ran = diff(range(pitchCands, na.rm = TRUE)) # range of pitch
-  maxIter = floor(ran / snake_step * 2)  # just heuristic, no theory behind this
+  maxIter = floor(ran / snakeStep * 2)  # just heuristic, no theory behind this
 
   # plot for debugging or esthetic appreciation
-  if (snake_plot) {
+  if (snakePlot) {
     # plot all pitch candidates and the initial path
     plot(seq(1, ncol(pitchCands)), pitch,
-      type = 'n', xlab = 'FFT frame', ylab = 'log(pitch)',
-      ylim = c(
-        range(pitchCands, na.rm = TRUE)[1] - .3 * ran,
-        range(pitchCands, na.rm = TRUE)[2] + .3 * ran
-      )
+         type = 'n', xlab = 'FFT frame', ylab = 'log(pitch)',
+         ylim = c(
+           range(pitchCands, na.rm = TRUE)[1] - .3 * ran,
+           range(pitchCands, na.rm = TRUE)[2] + .3 * ran
+         )
     )
     for (r in 1:nrow(pitchCands)) {
       points (seq(1, ncol(pitchCands)),
@@ -437,22 +437,22 @@ snake = function(pitch,
                          pitchCands = pitchCands,
                          pitchCert = pitchCert,
                          pitchCenterGravity = pitchCenterGravity,
-                         cert_weight = cert_weight)
+                         certWeight = certWeight)
     force_new = mean(abs(force))
     force_delta = (force_old - force_new) / force_old
     force_old = force_new
-    if (is.na(force_delta) || force_delta < snake_step) break
+    if (is.na(force_delta) || force_delta < snakeStep) break
     # wiggle the snake along the gradient of the total force acting on it
     # (elastic + attraction of high-certainty pitch candidates)
-    pitch = pitch + snake_step * force
-    if (snake_plot) {
+    pitch = pitch + snakeStep * force
+    if (snakePlot) {
       lines(seq(1, length(pitch)), pitch,
             type = 'l', col = 'green', lty = 4)
     }
     i = i + 1
   }
 
-  if (snake_plot) {
+  if (snakePlot) {
     lines(seq(1, length(pitch)), pitch,
           type = 'l', col = 'blue', lwd = 3)
   }
@@ -480,7 +480,7 @@ forcePerPath = function (pitch,
                          pitchCands,
                          pitchCert,
                          pitchCenterGravity,
-                         cert_weight) {
+                         certWeight) {
   ran = diff(range(pitchCands, na.rm = TRUE))
   # external_force = -(pitch_path - pitchCenterGravity) / ran
   external_force = pitch # just a quick way to initialize a vector of the right length
@@ -497,7 +497,7 @@ forcePerPath = function (pitch,
   internal_force = -findGrad(pitch)
   # internal_force is the elastic force trying to make the curve smooth
 
-  total_force = cert_weight * external_force + (1 - cert_weight) * internal_force
+  total_force = certWeight * external_force + (1 - certWeight) * internal_force
   # weighted average of internal and external forces
 
   return(total_force)
@@ -554,15 +554,15 @@ findGrad = function(path, interpol = 3) {
 #' @param df dataframe (each column is processed separately, so multiple
 #'   contours can be fed into this function at once to speed things up)
 #' @param smoothing_ww width of smoothing window (points)
-#' @param smoothing_threshold tolerated deviance from moving median (semitones)
+#' @param smoothingThres tolerated deviance from moving median (semitones)
 #' @return Returns a dataframe of the same dimensions as df.
 #' @examples
 #' df = data.frame(a = rnorm(100, mean = 100, sd = 20),
 #'                 b = rnorm(100, mean = 100, sd = 10))
-#' df1 = soundgen:::medianSmoother(df, smoothing_ww = 5, smoothing_threshold = 1)
+#' df1 = soundgen:::medianSmoother(df, smoothing_ww = 5, smoothingThres = 1)
 #' plot(df[, 2], type='b')
 #' lines(df1[, 2], type='b', col='blue', pch=3)
-medianSmoother = function (df, smoothing_ww, smoothing_threshold) {
+medianSmoother = function (df, smoothing_ww, smoothingThres) {
   temp = df # to calculate median_over_window for original values
   hw = floor(smoothing_ww / 2) # smooth over ± half the smoothing_ww
   for (i in 1:nrow(df)) {
@@ -574,7 +574,7 @@ medianSmoother = function (df, smoothing_ww, smoothing_threshold) {
     })
     # difference from median pitch etc over window, in semitones
     deviance = 12 * log2(as.numeric(df[i, ]) / median_over_window)
-    cond = which(abs(deviance - 1) > smoothing_threshold)
+    cond = which(abs(deviance - 1) > smoothingThres)
     df[i, cond] = median_over_window[cond]
   }
   return (df)
@@ -586,33 +586,34 @@ medianSmoother = function (df, smoothing_ww, smoothing_threshold) {
 #' Internal soundgen function.
 #'
 #' Internal helper function for postprocessing of pitch contours. Merges voiced
-#' segments at least \code{shortest_syl} ms long and separated by less than
-#' \code{shortest_pause} ms.
+#' segments at least \code{shortestSyl} ms long and separated by less than
+#' \code{shortestPause} ms.
 #' @param pitchCands matrix of possible pitch values per column. One column is
 #'   one fft frame, one row is one pitch candidate
 #' @inheritParams analyze
+#' @inheritParams spectrogram
 #' @param samplingRate sampling rate (Hz)
-#' @param min_voiced_cands a frame is considered to be voiced if at least this
+#' @param minVoicedCands a frame is considered to be voiced if at least this
 #'   many pitch candidates are not NA. Defaults to 2: since dom is usually
 #'   defined, in practice this means that we also want at least one other pitch
 #'   candidate (autocor, cep or BaNa)
 #' @return Returns a dataframe specifying where each voiced segment starts and
 #'   ends (in fft frames, not ms!)
 findVoicedSegments = function(pitchCands,
-                              shortest_syl,
-                              shortest_pause,
+                              shortestSyl,
+                              shortestPause,
                               step,
                               samplingRate,
-                              min_voiced_cands) {
+                              minVoicedCands) {
   putativelyVoiced = apply(pitchCands, 2, function(x) {
-    ifelse(sum(!is.na(x)) >= min_voiced_cands, 1, NA)
+    ifelse(sum(!is.na(x)) >= minVoicedCands, 1, NA)
   })
   # the smallest number of consecutive non-NA pitch values that constitute a
   # voiced segment; but at least 1
-  noRequired = max(1, ceiling(shortest_syl / step))
+  noRequired = max(1, ceiling(shortestSyl / step))
   # the greatest number of NA values that we tolerate before we say a new voiced
   # syllable begins
-  nToleratedNA = floor(shortest_pause / step)
+  nToleratedNA = floor(shortestPause / step)
 
   # find and save separately all voiced segments
   segmentStart = numeric()

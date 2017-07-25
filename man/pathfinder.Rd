@@ -4,10 +4,10 @@
 \alias{pathfinder}
 \title{Pathfinder}
 \usage{
-pathfinder(pitchCands, pitchCert, cert_weight = 0.5, pathfinding = c("none",
-  "fast", "slow")[2], control_anneal = list(maxit = 5000, temp = 1000),
-  interpol_window = 3, interpol_tolerance = 0.05, interpol_cert = 0.3,
-  snake_step = 0.05, snake_plot = FALSE)
+pathfinder(pitchCands, pitchCert, certWeight = 0.5, pathfinding = c("none",
+  "fast", "slow")[2], annealPars = list(maxit = 5000, temp = 1000),
+  interpolWin = 3, interpolTol = 0.05, interpolCert = 0.3,
+  snakeStep = 0.05, snakePlot = FALSE)
 }
 \arguments{
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
@@ -16,36 +16,37 @@ column is one fft frame, each row is one candidate.}
 \item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
 our certainty in pitch candidates}
 
-\item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
+\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
 tension of the resulting pitch curve}
 
 \item{pathfinding}{method of finding the optimal path through pitch
-candidates: 'slow' for annealing, 'fast' for a simple heuristic, 'none' for
-none. See \code{\link{soundgen:::pathfinder}} for details.}
+candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
+'slow' = annealing. See \code{soundgen:::pathfinder} and the
+vignette on acoustic analysis}
 
-\item{control_anneal}{a list of control parameters for postprocessing of
+\item{annealPars}{a list of control parameters for postprocessing of
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
-only relevant if \code{pathfinding} is 'slow'}
+only relevant if \code{pathfinding = 'slow'}}
 
-\item{interpol_window}{when interpolating pitch candidates, the median is
-calculated over \code{± interpol_window}}
+\item{interpolWin}{when interpolating pitch candidates, the median is
+calculated over \code{± interpolWin}}
 
-\item{interpol_tolerance}{when interpolating pitch candidates, the criterion
+\item{interpolTol}{when interpolating pitch candidates, the criterion
 for needing to interpolate is the absense of pitch candidates with values
-within \code{1 ± interpol_tolerance} of the median of pitch center of
-gravity over the interpolation window. For ex., if \code{interpol_tolerance}
+within \code{1 ± interpolTol} of the median of pitch center of
+gravity over the interpolation window. For ex., if \code{interpolTol}
 is .05, we look for values from 0.95 to 1.05 time the median value over
 interpolation window.}
 
-\item{interpol_cert}{when interpolating pitch candidates, all generated pitch
-candidates are assigned a certainty equal to \code{interpol_cert}}
+\item{interpolCert}{when interpolating pitch candidates, all generated pitch
+candidates are assigned a certainty equal to \code{interpolCert}}
 
-\item{snake_step}{optimized path through pitch candidates is further
+\item{snakeStep}{optimized path through pitch candidates is further
 processed to minimize the elastic force acting on pitch contour. To
-disable, set \code{snake_step} to NULL}
+disable, set \code{snakeStep} to NULL}
 
-\item{snake_plot}{if TRUE, plots the snake}
+\item{snakePlot}{if TRUE, plots the snake}
 }
 \value{
 Returns a numeric vector of pitch values representing the best found

@@ -5,65 +5,80 @@
 \title{Self-similarity matrix}
 \usage{
 ssm(x, samplingRate = NULL, windowLength = 40, step = NULL,
-  maxfreq = NULL, nbands = NULL, MFCC_to_use = 2:13,
-  input = c("cepstrum", "audiogram")[1], normalizeInput = FALSE,
-  simil_measure = c("cosine", "correlation")[1], plot = T, returnSSM = T,
-  novelty_col = "black", novelty_lwd = 3, kernel_ms = 200,
-  kernel_sd = 0.2, win = 3, ...)
+  maxFreq = NULL, nBands = NULL, MFCC = 2:13, input = c("cepstrum",
+  "audiogram")[1], norm = FALSE, simil = c("cosine", "correlation")[1],
+  returnSSM = TRUE, kernelLen = 200, kernelSD = 0.2, win = 3,
+  plot = TRUE, specPars = list(levels = seq(0, 1, length = 30),
+  color.palette = seewave::spectro.colors, xlab = "Time, ms", ylab = "kHz", ylim
+  = c(0, maxFreq/1000)), ssmPars = list(levels = seq(0, 1, length = 30),
+  color.palette = seewave::spectro.colors, xlab = "Time, ms", ylab = "Time, ms",
+  main = "Self-similarity matrix"), noveltyPars = list(type = "b", pch = 16,
+  col = "black", lwd = 3))
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
 samplingRate}
 
-\item{samplingRate}{sampling rate of \code{x} (only needed if
-\code{x} is a numeric vector, rather than a .wav file)}
+\item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
+numeric vector, rather than a .wav file)}
 
 \item{windowLength}{length of fft window (ms)}
 
 \item{step}{fft step (ms). Defaults to \code{windowLength / 4}}
 
-\item{maxfreq}{highest band edge of mel filters (Hz). Defaults to \code{samplingRate / 2}. See \code{\link[tuneR]{melfcc}}}
+\item{maxFreq}{highest band edge of mel filters (Hz). Defaults to
+\code{samplingRate / 2}. See \code{\link[tuneR]{melfcc}}}
 
-\item{nbands}{number of warped spectral bands to use. Defaults to \code{100 * windowLength / 20} See \code{\link[tuneR]{melfcc}}}
+\item{nBands}{number of warped spectral bands to use. Defaults to \code{100 *
+windowLength / 20}. See \code{\link[tuneR]{melfcc}}}
 
-\item{MFCC_to_use}{mel-frequency cepstral coefficients to use}
+\item{MFCC}{if \code{input = 'audiogram'}, which mel-frequency cepstral
+coefficients to use. Ddefaults to \code{2:13})}
 
 \item{input}{either MFCCs ("cepstrum") or mel-filtered spectrum ("audiogram")}
 
-\item{normalizeInput}{if TRUE, each fft frame is normalized by max power. NB: do this if using cosine similarity with spectrum (audiogram)}
+\item{norm}{if TRUE, each fft frame is normalized by max power. NB:
+recommended if using cosine similarity with spectrum (audiogram)}
 
-\item{simil_measure}{method for comparing frames: either cosine similarity or Pearson's correlation}
-
-\item{plot}{if TRUE, produces a SSM plot}
+\item{simil}{method for comparing frames: either cosine similarity or
+Pearson's correlation}
 
 \item{returnSSM}{if TRUE, returns the SSM}
 
-\item{novelty_col}{the color of novelty contour}
+\item{kernelLen}{length of checkerboard kernel for calculating novelty, ms (the
+larger, the more global vs. local the novelty)}
 
-\item{novelty_lwd}{the linewidth of novelty contour}
+\item{kernelSD}{SD of checkerboard kernel for calculating novelty}
 
-\item{kernel_ms}{size of checkerboard kernel for calculating novelty (the larger, the more global vs. local the novelty)}
+\item{win}{window for averaging SSM (reduces its size). Forced to de odd}
 
-\item{kernel_sd}{SD of checkerboard kernel for calculating novelty}
+\item{plot}{if TRUE, plots the SSM}
 
-\item{win}{window for averaging SSM (reduces its size). Forced to odd: 1 3 5 etc}
+\item{specPars}{graphical parameters passed to
+\code{seewave::filled.contour.modif2} and affecting the spectrogram}
 
-\item{...}{other graphical parameters}
+\item{ssmPars}{graphical parameters passed to
+\code{seewave::filled.contour.modif2} and affecting the plot of SSM}
+
+\item{noveltyPars}{graphical parameters passed to
+\code{\link[graphics]{lines}} and affecting the novelty contour}
 }
 \value{
-If \code{returnSSM} is TRUE, returns a list of two components: $ssm contains the self-similarity matrix, and $novelty contains the novelty vector. If \code{returnSSM} is FALSE, only produces a plot.
+If \code{returnSSM} is TRUE, returns a list of two components: $ssm
+  contains the self-similarity matrix, and $novelty contains the novelty
+  vector. If \code{returnSSM} is FALSE, only produces a plot.
 }
 \description{
 Calculates the self-similarity matrix and novelty vector for a sound.
 }
 \examples{
-sound = c(soundgen(), soundgen(nSyl = 4, sylDur_mean = 200,
-  pauseDur_mean = 140,  pitchAnchors = list(time = c(0, 0.65, 1),
-  value = c(977, 1540, 826)), exactFormants = NA))
+sound = c(soundgen(), soundgen(nSyl = 4, sylLen = 200,
+  pauseLen = 140,  pitchAnchors = list(time = c(0, 0.65, 1),
+  value = c(977, 1540, 826)), formants = NA))
 s = ssm(sound, samplingRate = 16000,
-        input = 'cepstrum', win = 3, kernel_ms = 350)  # detailed, local features
+        input = 'cepstrum', win = 3, kernelLen = 350)  # detailed, local features
 s = ssm(sound, samplingRate = 16000,
-        input = 'cepstrum', win = 7, kernel_ms = 800)  # more global
+        input = 'cepstrum', win = 7, kernelLen = 800)  # more global
 plot(s$novelty, type='b')  # use for peak detection, etc
 }
 \references{

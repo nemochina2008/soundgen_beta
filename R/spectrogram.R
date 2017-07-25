@@ -45,7 +45,7 @@
 #'   or another color theme (e.g. 'heat.colors')
 #' @param xlab label for x-axis
 #' @param ... other graphical parameters passed to
-#'   \code{\link{seewave::filled.contour.modif2}}
+#'   \code{seewave:::filled.contour.modif2}
 #' @param frameBank ignore (only needed for pitch tracking)
 #' @param duration ignore (only needed for pitch tracking)
 #' @export
@@ -56,61 +56,61 @@
 #' @examples
 #' # synthesize a sound 1 s long, with gradually increasing hissing noise
 #' sound = soundgen(sylLen = 1000, temperature = 0, noiseAnchors = list(
-#'   time = c(0, 1300), value = c(-120, 0)), exactFormants_noise = list(
+#'   time = c(0, 1300), value = c(-120, 0)), formantsNoise = list(
 #'   f1 = list(time = 0, freq = 5000, width = 10000, amp = 0)))
 #' # playme(sound, samplingRate = 16000)
 #'
 #' # basic spectrogram
-#' spec(sound, samplingRate = 16000)
+#' spectrogram(sound, samplingRate = 16000)
 #' # add an oscillogram
-#' spec(sound, samplingRate = 16000, osc = TRUE)
+#' spectrogram(sound, samplingRate = 16000, osc = TRUE)
 #' # broad-band instead of narrow-band
-#' spec(sound, samplingRate = 16000, windowLength = 5)
+#' spectrogram(sound, samplingRate = 16000, windowLength = 5)
 #' # spectral derivatives
-#' spec(sound, samplingRate = 16000, method = 'spectralDerivative')
+#' spectrogram(sound, samplingRate = 16000, method = 'spectralDerivative')
 #'
 #' # focus only on values in the upper 5% for each frequency bin
-#' spec(sound, samplingRate = 16000, denoise_median_time = 0.95)
+#' spectrogram(sound, samplingRate = 16000, denoise_median_time = 0.95)
 #'
 #' # detect 10% of the noisiest frames based on entropy and remove the pattern
 #' # found in those frames (in this cases, breathing)
-#' spec(sound, samplingRate = 16000,  noiseReduction = 1.1,
+#' spectrogram(sound, samplingRate = 16000,  noiseReduction = 1.1,
 #'   brightness = -2)  # white noise almost gone
 #'
 #' # apply median smoothing in both time and frequency domains
-#' spec(sound, samplingRate = 16000, median_smoothing_freq = 5,
+#' spectrogram(sound, samplingRate = 16000, median_smoothing_freq = 5,
 #'   median_smoothing_time = 5)
 #'
 #' # increase contrast, reduce brightness
-#' spec(sound, samplingRate = 16000, contrast = 1, brightness = -1)
+#' spectrogram(sound, samplingRate = 16000, contrast = 1, brightness = -1)
 #'
 #' # add bells and whistles
-#' spec(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
+#' spectrogram(sound, samplingRate = 16000, osc = TRUE, noiseReduction = 1.1,
 #'   brightness = -1, colorTheme = 'heat.colors', xlab = 'Time, ms',
 #'   ylab = 'Frequency, kHz', ylim = c(0,5))
-spec = function (x,
-                 samplingRate = NULL,
-                 windowLength = 50,
-                 step = 15,
-                 wn = 'gaussian',
-                 zp = 0,
-                 median_smoothing_freq = 0,
-                 median_smoothing_time = 0,
-                 denoise_median_time = 0,
-                 percentNoise = 10,
-                 noiseReduction = 0,
-                 contrast = .2,
-                 brightness = 0,
-                 method = c('spectrum', 'spectralDerivative')[1],
-                 output = c('none', 'original', 'processed')[1],
-                 ylim = NULL,
-                 plot = TRUE,
-                 osc = FALSE,
-                 colorTheme = c('bw', 'seewave', '...')[1],
-                 xlab = '',
-                 frameBank = NULL,
-                 duration = NULL,
-                 ...) {
+spectrogram = function(x,
+                       samplingRate = NULL,
+                       windowLength = 50,
+                       step = 15,
+                       wn = 'gaussian',
+                       zp = 0,
+                       median_smoothing_freq = 0,
+                       median_smoothing_time = 0,
+                       denoise_median_time = 0,
+                       percentNoise = 10,
+                       noiseReduction = 0,
+                       contrast = .2,
+                       brightness = 0,
+                       method = c('spectrum', 'spectralDerivative')[1],
+                       output = c('none', 'original', 'processed')[1],
+                       ylim = NULL,
+                       plot = TRUE,
+                       osc = FALSE,
+                       colorTheme = c('bw', 'seewave', '...')[1],
+                       xlab = '',
+                       frameBank = NULL,
+                       duration = NULL,
+                       ...) {
   # import audio
   if (class(x) == 'character') {
     sound_wav = tuneR::readWave(x)
@@ -268,7 +268,7 @@ spec = function (x,
   } else if (output == 'processed') {
     return (t(Z1))  # denoised spectrum / spectralDerivative
   }
-  }
+}
 
 
 #' Fourier transform windows (seewave)
@@ -319,7 +319,7 @@ gaussian.w = function(n) {
 #' zero-padded) frames, i.e. chunks of the sound file of the right size and
 #' spacing. Handy for further processing.
 #' @param sound numeric vector
-#' @inheritParams spec
+#' @inheritParams spectrogram
 #' @param windowLength_points length of fft window (points)
 #' @param filter fft window filter (defaults to NULL)
 #' @return A matrix with \code{nrow = windowLength_points/2} and \code{ncol}

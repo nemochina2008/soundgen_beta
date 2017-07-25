@@ -4,18 +4,18 @@
 \alias{mergeSyllables}
 \title{Merge syllables}
 \usage{
-mergeSyllables(syllables, shortest_pause)
+mergeSyllables(syllables, shortestPause)
 }
 \arguments{
 \item{syllables}{a dataframe listing syllables with time_start and time_end}
 
-\item{shortest_pause}{minimum acceptable break between syllables (ms).
+\item{shortestPause}{minimum acceptable break between syllables (ms).
 Syllables separated by less time are merged. To avoid merging, specify
-\code{shortest_pause = NA}}
+\code{shortestPause = NA}}
 }
 \description{
 Internal soundgen function.
 }
 \details{
-Merges syllables if they are separated by less than \code{shortest_pause ms}. Called by \code{\link{findSyllables}}.
+Merges syllables if they are separated by less than \code{shortestPause ms}. Called by \code{\link{findSyllables}}.
 }

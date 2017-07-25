@@ -5,8 +5,8 @@
 \title{Path through pitch candidates: slow}
 \usage{
 pathfinding_slow(pitchCands = pitchCands, pitchCert = pitchCert,
-  cert_weight = cert_weight, pitchCenterGravity = pitchCenterGravity,
-  control_anneal = list(maxit = 5000, temp = 1000))
+  certWeight = certWeight, pitchCenterGravity = pitchCenterGravity,
+  annealPars = list(maxit = 5000, temp = 1000))
 }
 \arguments{
 \item{pitchCands}{a matrix of multiple pitch candidates per fft frame. Each
@@ -15,7 +15,7 @@ column is one fft frame, each row is one candidate.}
 \item{pitchCert}{a matrix of the same dimensionality as pitchCands specifying
 our certainty in pitch candidates}
 
-\item{cert_weight}{(0 to 1) in pitch postprocessing, specifies how much we
+\item{certWeight}{(0 to 1) in pitch postprocessing, specifies how much we
 prioritize the certainty of pitch candidates vs. pitch jumps / the internal
 tension of the resulting pitch curve}
 
@@ -23,9 +23,9 @@ tension of the resulting pitch curve}
 candidates per fft frame weighted by our certainty in each of these
 candidates}
 
-\item{control_anneal}{a list of control parameters for postprocessing of
+\item{annealPars}{a list of control parameters for postprocessing of
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
-only relevant if \code{pathfinding} is 'slow'}
+only relevant if \code{pathfinding = 'slow'}}
 }
 \description{
 Internal soundgen function.

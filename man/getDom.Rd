@@ -4,7 +4,7 @@
 \alias{getDom}
 \title{Get lowest dominant frequency band}
 \usage{
-getDom(frame, samplingRate, bin, dom_smoothing, dom_threshold, pitch_floor)
+getDom(frame, samplingRate, bin, domSmooth, domThres, pitchFloor)
 }
 \arguments{
 \item{frame}{the real part of the spectrum of a frame, as returned by
@@ -14,14 +14,14 @@ getDom(frame, samplingRate, bin, dom_smoothing, dom_threshold, pitch_floor)
 
 \item{bin}{the width of one bin in spectrogram, Hz}
 
-\item{dom_smoothing}{the width of smoothing interval (Hz) for finding
+\item{domSmooth}{the width of smoothing interval (Hz) for finding
 \code{dom}}
 
-\item{dom_threshold}{(0 to 1) to find the lowest dominant frequency band, we
+\item{domThres}{(0 to 1) to find the lowest dominant frequency band, we
 do short-term FFT and take the lowest frequency with amplitude at least
-dom_threshold}
+domThres}
 
-\item{pitch_floor}{absolute bounds for pitch candidates (Hz)}
+\item{pitchFloor}{absolute bounds for pitch candidates (Hz)}
 }
 \value{
 Returns a list of $dom (NA or numeric) and $dom_array
@@ -31,6 +31,6 @@ Returns a list of $dom (NA or numeric) and $dom_array
 Internal soundgen function.
 }
 \details{
-Calculate the lowest frequency band in the spectrum above pitch_floor whose
+Calculate the lowest frequency band in the spectrum above pitchFloor whose
 power exceeds a certain threshold.
 }

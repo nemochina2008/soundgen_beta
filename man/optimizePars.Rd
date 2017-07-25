@@ -4,12 +4,11 @@
 \alias{optimizePars}
 \title{Optimize parameters for acoustic analysis}
 \usage{
-optimizePars(myfolder, key, myfun, pars_to_optimize, pars_bounds = NULL,
-  fitness_par, fitness_crit = function(x) 1 - cor(x, key, use =
-  "pairwise.complete.obs"), nIter = 10, init = NULL, wiggle_init = 0.2,
-  control = list(maxit = 50, reltol = 0.01, trace = 0),
-  otherPars = list(plot = FALSE, verbose = FALSE), mygrid = NULL,
-  verbose = TRUE)
+optimizePars(myfolder, key, myfun, pars, bounds = NULL, fitnessPar,
+  fitnessFun = function(x) 1 - cor(x, key, use = "pairwise.complete.obs"),
+  nIter = 10, init = NULL, initSD = 0.2, control = list(maxit = 50,
+  reltol = 0.01, trace = 0), otherPars = list(plot = FALSE, verbose = FALSE),
+  mygrid = NULL, verbose = TRUE)
 }
 \arguments{
 \item{myfolder}{path to where the .wav files live}
@@ -20,18 +19,18 @@ to reproduce}
 \item{myfun}{the function being optimized: either 'segmentFolder' or
 'analyzeFolder' (in quotes)}
 
-\item{pars_to_optimize}{names of arguments to \code{myfun} that should be
+\item{pars}{names of arguments to \code{myfun} that should be
 optimized}
 
-\item{pars_bounds}{a list setting the lower and upper boundaries for possible
+\item{bounds}{a list setting the lower and upper boundaries for possible
 values of optimized parameters. For ex., if we optimize \code{smooth_ms}
-and \code{smooth_overlap}, reasonable pars_bounds might be list(low = c(5,
+and \code{smooth_overlap}, reasonable bounds might be list(low = c(5,
 0), high = c(500, 95))}
 
-\item{fitness_par}{the name of output variable that we are comparing with the
+\item{fitnessPar}{the name of output variable that we are comparing with the
 key, e.g. 'nBursts' or 'pitch_median'}
 
-\item{fitness_crit}{the function used to evaluate how well the output of
+\item{fitnessFun}{the function used to evaluate how well the output of
 \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is
 perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a
 good fitness criterion is \code{function(x) 1 - cor(log(x), key, use =
@@ -42,8 +41,8 @@ good fitness criterion is \code{function(x) 1 - cor(log(x), key, use =
 \item{init}{initial values of optimized parameters (if NULL, the default
 values are taken from the definition of \code{myfun})}
 
-\item{wiggle_init}{each optimization begins with a random seed, and
-\code{wiggle_init} specifies the SD of normal distribution used to generate
+\item{initSD}{each optimization begins with a random seed, and
+\code{initSD} specifies the SD of normal distribution used to generate
 random deviation of initial values from the defaults}
 
 \item{control}{a list of control parameters passed on to
@@ -59,7 +58,7 @@ simply evaluates each combination of parameter values (see examples).}
 }
 \value{
 Returns a matrix with one row per iteration, containing Pearson's
-  correlation between the key and \code{fitness_par} in the first column
+  correlation between the key and \code{fitnessPar} in the first column
   and the best values of each of the optimized parameters in the remaining
   columns.
 }
@@ -97,8 +96,8 @@ key = segment_manual  # a vector of 260 integers
 # run optimization loop several times with random initial values to check convergence
 # NB: with 260 sounds and default settings, this might take ~20 min per iteration!
 res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = key,
-  pars_to_optimize = c('shortest_syl', 'shortest_pause', 'syl_to_global_mean'),
-  fitness_par = 'nBursts',
+  pars = c('shortest_syl', 'shortest_pause', 'syl_to_global_mean'),
+  fitnessPar = 'nBursts',
   nIter = 2, control = list(maxit = 50, reltol = .01, trace = 0))
 
 # examine the results
@@ -108,14 +107,14 @@ for (c in 2:ncol(res)) {
 }
 pars = as.list(res[1, 2:ncol(res)])  # top candidate (best pars)
 s = do.call(segmentFolder, c(myfolder, pars))  # segment with best pars
-cor(key, as.numeric(s[, fitness_par]))
-boxplot(as.numeric(s[, fitness_par]) ~ as.integer(key), xlab='key')
+cor(key, as.numeric(s[, fitnessPar]))
+boxplot(as.numeric(s[, fitnessPar]) ~ as.integer(key), xlab='key')
 abline(a=0, b=1, col='red')
 
 # Try a grid with particular parameter values instead of formal optimization
 res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = segment_manual,
-  pars_to_optimize = c('shortest_syl', 'shortest_pause'),
-  fitness_par = 'nBursts',
+  pars = c('shortest_syl', 'shortest_pause'),
+  fitnessPar = 'nBursts',
   mygrid = expand.grid(shortest_syl = c(30, 40),
                        shortest_pause = c(30, 40, 50)))
 1 - res$fit  # correlations with key
@@ -124,17 +123,17 @@ res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = segment_m
 res = optimizePars(myfolder = myfolder,
                    myfun = 'analyzeFolder',
                    key = log(pitch_manual),  # log-scale better for pitch
-                   pars_to_optimize = c('voiced_threshold_spec',
+                   pars = c('voiced_threshold_spec',
                                         'specPitchThreshold_nullNA',
                                         'pitchSpec_only_peak_weight',
                                         'slope_spec'),
-                   fitness_par = 'pitch_median',
-                   pars_bounds = list(low = c(0, 0, 0, 0),
+                   fitnessPar = 'pitch_median',
+                   bounds = list(low = c(0, 0, 0, 0),
                                       high = c(1, 1, 1, Inf)),
                    nIter = 2,
                    otherPars = list(plot = FALSE, verbose = FALSE, step = 50,
                                     pitch_methods = c('autocor', 'spec', 'dom')),
-                   fitness_crit = function(x) {
+                   fitnessFun = function(x) {
                      1 - cor(log(x), key, use = 'pairwise.complete.obs') *
                        (1 - mean(is.na(x) & !is.na(key)))  # penalize failing to detect F0
                      })

@@ -18,14 +18,14 @@
 #'   pitch_per_gc): regulates how quickly the strength of subharmonics fades as
 #'   they move away from harmonics in f0 stack. Low values produce narrow
 #'   sidebands, high values produce uniformly strong subharmonics
-#' @param throwaway discard harmonics that are weaker than this number (between
+#' @param throwaway01 discard harmonics that are weaker than this number (between
 #'   0 and 1) to save computational resources
 #' @return Returns a modified rolloff matrix with added subharmonics
 getVocalFry_per_epoch = function(rolloff,
                                  pitch_per_gc,
                                  nSubharm,
                                  sideband_width_vector,
-                                 throwaway) {
+                                 throwaway01) {
   if (nSubharm < 1) {
     return(rolloff)
   }
@@ -73,13 +73,13 @@ getVocalFry_per_epoch = function(rolloff,
       # add up the contribution of the closest f harmonics immediately below and
       # above the current g harmonic
       harm_g = rolloff_new[row_lwr] * multipl_lwr[[g]] +
-               rolloff_new[row_upr] * multipl_upr[[g]]
+        rolloff_new[row_upr] * multipl_upr[[g]]
       rolloff_new[g_idx[g],] = harm_g
     }
   }
 
   # clean up
-  rolloff_new[rolloff_new < throwaway] = 0
+  rolloff_new[rolloff_new < throwaway01] = 0
   rolloff_new = rolloff_new [apply(rolloff_new, 1, sum) > 0, , drop = FALSE]
   return(rolloff_new)
 }
@@ -107,7 +107,7 @@ getVocalFry = function(rolloff,
                        pitch_per_gc,
                        subFreq = 100,
                        subDep = 100,
-                       throwaway_dB = -120,
+                       throwaway = -120,
                        shortestEpoch = 300) {
   # force subFreq to be a multiple of f0 at each point
   nSubharm = round(pitch_per_gc / subFreq, 0) - 1
@@ -122,7 +122,7 @@ getVocalFry = function(rolloff,
     subDep = rep(subDep[1], length(pitch_per_gc))
   }
 
-  throwaway = 2 ^ (throwaway_dB / 10)
+  throwaway01 = 2 ^ (throwaway / 10)
   period_ms = 1000 / pitch_per_gc
   min_epoch_length_points = round(shortestEpoch / period_ms)
 
@@ -149,7 +149,7 @@ getVocalFry = function(rolloff,
       pitch_per_gc = pitch_per_gc[idx],
       nSubharm = nSubharm_per_epoch[e],
       sideband_width_vector = subDep[idx],
-      throwaway = throwaway
+      throwaway01 = throwaway01
     )
     # View(rolloff_new[[1]])
   }

@@ -83,26 +83,26 @@ morph = function(formula1,
   f2 = f2[match(names(f1), names(f2))]
 
   # fill in formant stuff if it is missing for one sound but defined for the other
-  if (!is.list(f1$exactFormants) & is.list(f2$exactFormants)) {
+  if (!is.list(f1$formants) & is.list(f2$formants)) {
     # class list means it's not NA or NULL
-    f1$exactFormants = f2$exactFormants
-    for (f in 1:length(f1$exactFormants))
-      f1$exactFormants[[f]]$amp = 0
+    f1$formants = f2$formants
+    for (f in 1:length(f1$formants))
+      f1$formants[[f]]$amp = 0
   }
-  if (!is.list(f1$exactFormants_noise) & is.list(f2$exactFormants_noise)) {
-    f1$exactFormants_noise = f2$exactFormants_noise
-    for (f in 1:length(f1$exactFormants_noise))
-      f1$exactFormants_noise[[f]]$amp = 0
+  if (!is.list(f1$formantsNoise) & is.list(f2$formantsNoise)) {
+    f1$formantsNoise = f2$formantsNoise
+    for (f in 1:length(f1$formantsNoise))
+      f1$formantsNoise[[f]]$amp = 0
   }
-  if (!is.list(f2$exactFormants) & is.list(f1$exactFormants)) {
-    f2$exactFormants = f1$exactFormants
-    for (f in 1:length(f2$exactFormants))
-      f2$exactFormants[[f]]$amp = 0
+  if (!is.list(f2$formants) & is.list(f1$formants)) {
+    f2$formants = f1$formants
+    for (f in 1:length(f2$formants))
+      f2$formants[[f]]$amp = 0
   }
-  if (!is.list(f2$exactFormants_noise) & is.list(f1$exactFormants_noise)) {
-    f2$exactFormants_noise = f1$exactFormants_noise
-    for (f in 1:length(f2$exactFormants_noise))
-      f2$exactFormants_noise[[f]]$amp = 0
+  if (!is.list(f2$formantsNoise) & is.list(f1$formantsNoise)) {
+    f2$formantsNoise = f1$formantsNoise
+    for (f in 1:length(f2$formantsNoise))
+      f2$formantsNoise[[f]]$amp = 0
   }
 
   # log-transform pitch and formant frequencies before morphing
@@ -110,16 +110,16 @@ morph = function(formula1,
     f1$pitchAnchors$value = log(f1$pitchAnchors$value)
     f2$pitchAnchors$value = log(f2$pitchAnchors$value)
   }
-  if ('exactFormants' %in% names(f1)) {
-    for (l in 1:length(f1$exactFormants)) {
-      f1$exactFormants[[l]]$freq = log(f1$exactFormants[[l]]$freq)
-      f2$exactFormants[[l]]$freq = log(f2$exactFormants[[l]]$freq)
+  if ('formants' %in% names(f1)) {
+    for (l in 1:length(f1$formants)) {
+      f1$formants[[l]]$freq = log(f1$formants[[l]]$freq)
+      f2$formants[[l]]$freq = log(f2$formants[[l]]$freq)
     }
   }
-  if ('exactFormants_noise' %in% names(f1)) {
-    for (l in 1:length(f1$exactFormants_noise)) {
-      f1$exactFormants_noise[[l]]$freq = log(f1$exactFormants_noise[[l]]$freq)
-      f2$exactFormants_noise[[l]]$freq = log(f2$exactFormants_noise[[l]]$freq)
+  if ('formantsNoise' %in% names(f1)) {
+    for (l in 1:length(f1$formantsNoise)) {
+      f1$formantsNoise[[l]]$freq = log(f1$formantsNoise[[l]]$freq)
+      f2$formantsNoise[[l]]$freq = log(f2$formantsNoise[[l]]$freq)
     }
   }
 
@@ -134,7 +134,7 @@ morph = function(formula1,
     # morph each element of the formula list according to its type
     if (class(f1[[p]]) == 'numeric') {
       m[[p]] = seq(f1[[p]], f2[[p]], length.out = nMorphs)
-    } else if (names(f1[p]) %in% c('exactFormants', 'exactFormants_noise')) {
+    } else if (names(f1[p]) %in% c('formants', 'formantsNoise')) {
       m[[p]] = morphList(f1[[p]], f2[[p]], nMorphs = nMorphs)
     } else {
       m[[p]] = morphDF(as.data.frame(f1[[p]]), as.data.frame(f2[[p]]), nMorphs = nMorphs)
@@ -153,19 +153,19 @@ morph = function(formula1,
       formulas[[h]]$pitchAnchors$value = exp(formulas[[h]]$pitchAnchors$value)
     }
   }
-  if ('exactFormants' %in% names(f1)) {
+  if ('formants' %in% names(f1)) {
     for (h in 1:nMorphs) {
-      for (l in 1:length(f1$exactFormants)) {
-        formulas[[h]]$exactFormants[[l]]$freq =
-          exp(formulas[[h]]$exactFormants[[l]]$freq)
+      for (l in 1:length(f1$formants)) {
+        formulas[[h]]$formants[[l]]$freq =
+          exp(formulas[[h]]$formants[[l]]$freq)
       }
     }
   }
-  if ('exactFormants_noise' %in% names(f1)) {
+  if ('formantsNoise' %in% names(f1)) {
     for (h in 1:nMorphs) {
-      for (l in 1:length(f1$exactFormants_noise)) {
-        formulas[[h]]$exactFormants_noise[[l]]$freq =
-          exp(formulas[[h]]$exactFormants_noise[[l]]$freq)
+      for (l in 1:length(f1$formantsNoise)) {
+        formulas[[h]]$formantsNoise[[l]]$freq =
+          exp(formulas[[h]]$formantsNoise[[l]]$freq)
       }
     }
   }

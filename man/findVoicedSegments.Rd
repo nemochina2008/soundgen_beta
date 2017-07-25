@@ -4,25 +4,25 @@
 \alias{findVoicedSegments}
 \title{Find voiced segments}
 \usage{
-findVoicedSegments(pitchCands, shortest_syl, shortest_pause, step, samplingRate,
-  min_voiced_cands)
+findVoicedSegments(pitchCands, shortestSyl, shortestPause, step, samplingRate,
+  minVoicedCands)
 }
 \arguments{
 \item{pitchCands}{matrix of possible pitch values per column. One column is
 one fft frame, one row is one pitch candidate}
 
-\item{shortest_syl}{the smallest length of a voiced segment (ms) that
+\item{shortestSyl}{the smallest length of a voiced segment (ms) that
 constitutes a voiced syllable (shorter segments will be replaced by NA, as
 if unvoiced)}
 
-\item{shortest_pause}{the smallest gap between voiced syllables (ms) that
+\item{shortestPause}{the smallest gap between voiced syllables (ms) that
 means they shouldn't be merged into one voiced syllable}
 
 \item{step}{fft step, ms}
 
 \item{samplingRate}{sampling rate (Hz)}
 
-\item{min_voiced_cands}{a frame is considered to be voiced if at least this
+\item{minVoicedCands}{a frame is considered to be voiced if at least this
 many pitch candidates are not NA. Defaults to 2: since dom is usually
 defined, in practice this means that we also want at least one other pitch
 candidate (autocor, cep or BaNa)}
@@ -36,6 +36,6 @@ Internal soundgen function.
 }
 \details{
 Internal helper function for postprocessing of pitch contours. Merges voiced
-segments at least \code{shortest_syl} ms long and separated by less than
-\code{shortest_pause} ms.
+segments at least \code{shortestSyl} ms long and separated by less than
+\code{shortestPause} ms.
 }

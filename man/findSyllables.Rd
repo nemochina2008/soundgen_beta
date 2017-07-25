@@ -4,7 +4,7 @@
 \alias{findSyllables}
 \title{Find fyllables}
 \usage{
-findSyllables(envelope, timestep, threshold, shortest_syl, shortest_pause,
+findSyllables(envelope, timestep, threshold, shortestSyl, shortestPause,
   merge_close_syl)
 }
 \arguments{
@@ -15,14 +15,14 @@ findSyllables(envelope, timestep, threshold, shortest_syl, shortest_pause,
 \item{threshold}{all continuous segments above this value are considered to
 be syllables}
 
-\item{shortest_syl}{minimum acceptable length of syllables (ms)}
+\item{shortestSyl}{minimum acceptable length of syllables (ms)}
 
-\item{shortest_pause}{minimum acceptable break between syllables (ms).
+\item{shortestPause}{minimum acceptable break between syllables (ms).
 Syllables separated by less time are merged. To avoid merging, specify
-\code{shortest_pause = NA}}
+\code{shortestPause = NA}}
 
 \item{merge_close_syl}{if TRUE, syllable separated by less than
-\code{shortest_pause} will be merged}
+\code{shortestPause} will be merged}
 }
 \value{
 Returns a dataframe with timing of syllables.
