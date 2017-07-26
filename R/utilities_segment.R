@@ -11,7 +11,7 @@
 #' @param threshold all continuous segments above this value are considered to
 #'   be syllables
 #' @inheritParams segment
-#' @param merge_close_syl if TRUE, syllable separated by less than
+#' @param mergeSyl if TRUE, syllable separated by less than
 #'   \code{shortestPause} will be merged
 #' @return Returns a dataframe with timing of syllables.
 findSyllables = function(envelope,
@@ -19,7 +19,7 @@ findSyllables = function(envelope,
                          threshold,
                          shortestSyl,
                          shortestPause,
-                         merge_close_syl) {
+                         mergeSyl) {
   # find strings of TTTTT
   envelope$aboveThres = ifelse (envelope$value > threshold, 1, 0)
   env_above_thres = data.frame (value = rle(envelope$aboveThres)[[2]],
@@ -51,7 +51,7 @@ findSyllables = function(envelope,
     syllables$time_end = syllables$time_start + env_short$count * timestep
 
     # Optional: merge syllables with very short intervals in between them
-    if (merge_close_syl) {
+    if (mergeSyl) {
       syllables = mergeSyllables(syllables, shortestPause)
       syllables$syllable = 1:nrow(syllables)
     }
@@ -159,9 +159,9 @@ findBursts = function(envelope,
   # prepare output
   bursts = bursts[-1, ]  # remove the first empty row
   if (nrow(bursts) > 0) {
-    bursts$interburst_int = NA
+    bursts$interburstInt = NA
     if (nrow(bursts) > 1) {
-      bursts$interburst_int[1:(nrow(bursts)-1)] = diff(bursts$time)
+      bursts$interburstInt[1:(nrow(bursts)-1)] = diff(bursts$time)
     }
   }
 

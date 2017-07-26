@@ -4,18 +4,15 @@
 \alias{selfsim}
 \title{Compute self-similarity}
 \usage{
-selfsim(m, norm = FALSE, simil = c("cosine", "correlation")[1], win = 1)
+selfsim(m, norm = FALSE, simil = c("cosine", "cor")[1], win = 1)
 }
 \arguments{
 \item{m}{input matrix such as a spectrogram}
 
-\item{norm}{if TRUE, each fft frame is normalized by max power. NB:
-recommended if using cosine similarity with spectrum (audiogram)}
+\item{norm}{if TRUE, each FFT frame is normalized by max power}
 
-\item{simil}{method for comparing frames: either cosine similarity or
-Pearson's correlation}
-
-\item{win}{window for averaging SSM (reduces its size). Forced to de odd}
+\item{simil}{method for comparing frames: "cosine" = cosine similarity, "cor"
+= Pearson's correlation}
 }
 \value{
 Returns a square self-similarity matrix.

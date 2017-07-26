@@ -3,59 +3,60 @@ title: "Acoustic analysis with soundgen"
 author: "Andrey Anikin"
 date: "`r Sys.Date()`"
 output: 
-rmarkdown::html_vignette:
-toc: true
-toc_depth: 4
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 4
 vignette: >
   %\VignetteIndexEntry{Acoustic analysis with soundgen}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-  ---
+---
   
-  # Purpose
+# Purpose
   
-  There are numerous programs out there for performing acoustic analysis, including several open-source options and R packages. For in-depth analysis of individual mammalian sounds it's hard to beat <a href="http://www.fon.hum.uva.nl/praat/">PRAAT</a> (batch processing is possible, but a bit tricky, because PRAAT uses its own, rather unusual scripting language). For bird sounds, a sophisticated tool is <a href="http://soundanalysispro.com/">Sound Analysis Pro</a>. In R, the most extensive toolkit by far is the <a href="https://cran.r-project.org/web/packages/seewave/index.html">seewave</a> package. Soundgen builds upon the functionality of seewave, adding specialized functions for sound synthesis (see the vignette on sound synthesis) and acoustic analysis, particularly pitch tracking and audio segmentation.
+There are numerous programs out there for performing acoustic analysis, including several open-source options and R packages. For in-depth analysis of individual mammalian sounds it's hard to beat <a href="http://www.fon.hum.uva.nl/praat/">PRAAT</a> (batch processing is possible, but a bit tricky, because PRAAT uses its own, rather unusual scripting language). For bird sounds, a sophisticated tool is <a href="http://soundanalysispro.com/">Sound Analysis Pro</a>. In R, the most extensive toolkit by far is the <a href="https://cran.r-project.org/web/packages/seewave/index.html">seewave</a> package. Soundgen builds upon the functionality of seewave, adding specialized functions for sound synthesis (see the vignette on sound synthesis) and acoustic analysis, particularly pitch tracking and audio segmentation.
   
-  Reasons to use `soundgen` for acoustic analysis might be: 
+Reasons to use `soundgen` for acoustic analysis might be: 
   
   1. User-friendly approach: a single call to the `analyzeFolder` function will give you a dataframe containing dozens of commonly used acoustic descriptors for each file in an entire folder. So if you'd rather get started with model-building without delving too deeply into acoustics, you are one line of code away from your dataset.
   1. Flexible pitch tracking: soundgen uses several popular methods of pitch detection in parallel, followed by their integration and postprocessing. While the abundance of parameters may initially seem daunting, for those who do wish to delve deeply this makes soundgen's pitch tracker very versatile and offers a lot of power for high-precision analysis.
   1. Audio segmentation with in-built optimization: the tools for syllable segmentation are again very flexible. Control parameters can even be optimized automatically, as long as you have a manually segmented training sample.
   
-  To summarize, you might want to look at soundgen's tools for acoustic analysis if you are extracting a large number of acoustic predictors from a large number of audio files, for example:
+To summarize, you might want to look at soundgen's tools for acoustic analysis if you are extracting a large number of acoustic predictors from a large number of audio files, for example:
   
-  * describing the vocal repertoire of a species (clustering),
-  * using machine learning for acoustic classification,
-  * comparing different classes of sounds in terms of specific acoustic predictors.
+* describing the vocal repertoire of a species (clustering),
+* using machine learning for acoustic classification,
+* comparing different classes of sounds in terms of specific acoustic predictors.
   
-  The most relevant functions are:
+The most relevant functions are:
   
-  * `analyze`: analyzes a single sound and extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per FFT frame.
-  * `analyzeFolder`: same as `analyze` but applied to all .wav files in a folder
-  * `segment`: finds syllables and bursts of energy in a single sound using its amplitude envelope
-  * `segmentFolder`: same as `segment` but applied to all .wav files in a folder
-  * `optimizePars`: optimizes control parameters of `segment` or `analyze` aiming to reproduce manual segmentation of a training sample
-  * `ssm`: produces a self-similarity matrix and calculates novelty as an alternative method of audio segmentation
+* `analyze`: analyzes a single sound and extracts a number of acoustic predictors such as pitch, harmonics-to-noise ratio, mean frequency, peak frequency, etc. The output can be a summary per file, with each variable presented as mean / median / SD, or you can obtain detailed statistics per FFT frame.
+* `analyzeFolder`: same as `analyze` but applied to all .wav files in a folder
+* `segment`: finds syllables and bursts of energy in a single sound using its amplitude envelope
+* `segmentFolder`: same as `segment` but applied to all .wav files in a folder
+* `optimizePars`: optimizes control parameters of `segment` or `analyze` aiming to reproduce manual segmentation of a training sample
+* `ssm`: produces a self-similarity matrix and calculates novelty as an alternative method of audio segmentation
   
-  *TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R with `tuneR::melfcc`, so there was no need to include it in soundgen. LPC is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`), but, to be perfectly honest, for serious formant analysis I would actually recommend using PRAAT and checking everything manually. You can thus start with `soundgen::analyze` to get a table of many common acoustic predictors and then add some more using other R packages and/or other software or manual measurements, or you could customize `soundgen::analyze` to extract additional predictors.*
+*TIP Soundgen's functions for acoustic analysis are not meant to be exhaustive. MFCC extraction is readily available in R with `tuneR::melfcc`, so there was no need to include it in soundgen. LPC is also implemented in R (see `phonTools::lpc` and `phonTools::findformants`), but, to be perfectly honest, for serious formant analysis I would actually recommend using PRAAT and checking everything manually. You can thus start with `soundgen::analyze` to get a table of many common acoustic predictors and then add some more using other R packages and/or other software or manual measurements, or you could customize `soundgen::analyze` to extract additional predictors.*
   
-  This vignette is designed to show how soundgen can be used effectively to perform acoustic analysis. It assumes that the reader is already familiar with key concepts of phonetics and bioacoustics. In case some parts of the presentation seem obscure, helpful sources for further reading are suggested below in References. 
+This vignette is designed to show how soundgen can be used effectively to perform acoustic analysis. It assumes that the reader is already familiar with key concepts of phonetics and bioacoustics. In case some parts of the presentation seem obscure, helpful sources for further reading are suggested below in References. 
   
-  # Acoustic analysis with `analyze`
-  To demonstrate acoustic analysis in practice, let's begin by generating a sound with known pitch. To make pitch tracking less trivial and demonstrate some of the challenges, let's add some noise, subharmonics, and jitter:
-  ```{r}
+# Acoustic analysis with `analyze`
+To demonstrate acoustic analysis in practice, let's begin by generating a sound with known pitch. To make pitch tracking less trivial and demonstrate some of the challenges, let's add some noise, subharmonics, and jitter:
+```{r}
 library(soundgen)
 s = soundgen(sylLen = 900, temperature = 0,
-pitchAnchors = list(time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
-noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
-subDep = 100, jitterDep = 0.5, pitchEffectsAmount = 100)
+             pitchAnchors = list(time = c(0, .3, .8, 1), 
+                                 value = c(300, 900, 400, 2300)),
+             noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
+             subDep = 100, jitterDep = 0.5, pitchEffectsAmount = 100)
 # playme(s)  # replay as many times as needed w/o re-synthesizing the sound
 ```
 
 The contour of F0 is determined by our pitchAnchors, so we can calculate its true median pitch:
 ```{r}
 true_pitch = getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
-                                             value = c(300, 900, 400, 2300)), 
+                                             value = c(300, 900, 400, 2300)),
                               len = 1000)  # any length will do
 # median(true_pitch)  # 611 Hz
 ```
@@ -125,6 +126,7 @@ a2 = analyze(s, samplingRate = 16000, plot = FALSE, priorPlot = TRUE,
              priorMean = HzToSemitones(2000), priorSD = 1)
 par(mfrow = c(1, 1))
 ``` 
+
 *TIP The final pitch contour can still pass through low-certainty candidates, especially if no better candidates are available. You can therefore think of the prior as a soft alternative (or addition) to `pitchFloor` and `pitchCeiling`*
 
 * `nCands`: maximum number of pitch candidates to use per method. This only affects `pitchAutocor`, `pitchCep`, and `pitchSpec`. `dom` never returns more than one candidate per frame, since it doesn't make sense to consider several lowest dominant frequency bands - this simply drags the final pitch contour upwards without improving the accuracy.
@@ -212,13 +214,12 @@ a = analyze(s, samplingRate = 16000, plot = TRUE, priorMean = NA,
 ## Postprocessing of pitch contour
 Pitch postprocessing in soundgen includes a whole battery of distinct operations through which the pitch candidates generated by one or more tracking methods are integrated into the final pitch contour. We will look at them one by one, in the order in which they are performed in `analyze`. But first of all, here is how to disable them all:
 ```{r fig.height = 5, fig.width = 7}
-a = analyze(
-  s, samplingRate = 16000, plot = TRUE, priorMean = NA,
+a = analyze(s, samplingRate = 16000, plot = TRUE, priorMean = NA,
   shortestSyl = 0, shortestPause = 0,  # any length of voiced fragments
-  interpolWin = NULL,  # don't interpolate missing F0 values
-  pathfinding = 'none',    # don't look for optimal path through candidates
+  interpolWin = NULL,     # don't interpolate missing F0 values
+  pathfinding = 'none',   # don't look for optimal path through candidates
   snakeStep = NULL,       # don't run the snake
-  smooth = NULL        # don't run median smoothing
+  smooth = NULL           # don't run median smoothing
 )       
 ```
 
@@ -357,16 +358,117 @@ dev.off()
 This is simply more efficient than squeezing all these graphical parameters into `analyze`. In practice, the only time you might want to save the output from within `analyze` is when you do batch processing of multiple files with `analyzeFolder` (see below).
 
 ## Batch processing with `analyzeFolder`
-You may not feel too excited to learn that soundgen contains a wrapper for `analyze` that is meant for analyzing all .wav files in a folder. Indeed, calling `analyze` in a loop will achieve the same result. However, `analyzedFolder` can save you some manual coding, mostly because it can summarize the results. 
+You may not feel too excited to learn that soundgen contains a wrapper around `analyze` that is meant for analyzing all .wav files in a folder. Indeed, calling `analyze` in a loop will achieve the same result. However, `analyzedFolder` can save you some manual coding, mostly because it can summarize the results. 
 
 `analyze` takes one file at a time and returns a matrix, in which each column corresponds to one acoustic descriptor and each row corresponds to one FFT frame. If you want to preserve all this information for each file in a folder, you can either loop through the files manually or call `analyzeFolder(myfolder, summary = FALSE)`, which returns a list of matrices. In contrast, `analyzeFolder(myfolder, summary = TRUE)` returns a single matrix, in which each acoustic predictor is summarized as the mean, median, and SD of frame-by-frame measurements. Since this is the kind of data you would normally use as input for things like classification of sounds or cluster analysis, this is a convenient shortcut for generating an acoustic dataset for further statistical modeling. In addition, `analyzeFolder` allows you to simultaneously save the plots and prints out estimated time to completion. 
 
 *TIP Processing time varies a lot depending on the exact settings and input, but expect up to a few seconds of machine time per second of audio. The surest way to speed things up is to reduce `step` and to avoid `pathfinding = 'slow'` (other types of postprocessing have very little effect on the speed)*
 
 
-# Audio segmentation with `segment`
 
-# Self-similarity matrices
+
+# Audio segmentation 
+## Bursts and syllables 
+### Segmenting a single sound: `segment`
+In addition to measuring spectral characteristics and fundamental frequency, it is often important to analyze the temporal structure of a sound. In particular, it is often helpful to divide a sound into separate "syllables" - continuous acoustic fragments separated by what we consider to be "silence". If this "silence" was not full of background noise and breathing, the task would be trivial: we could simply define syllables as continuous segments with ampiltude above some threshold. As it is, with non-studio material it is problematic to find a single threshold that would accurately coincide with the beginning and end of syllables in different sounds (presuming that we are interested in batch processing multiple sounds without manually adjusting the settings for each sound). 
+
+Sometimes we are more interested in the rate of syllables per second and in their regularity, rather than the absolute duration of each syllable. In this case it makes more sense to look for bursts of acoustic energy - local maxima in amplitude envelope that are high enough both in absolute terms (relative to the global maximum) and with respect to the surrounding region (relative to local mimima). The spacing between bursts - the interburst interval - can allow us to recover the perceptually salient temporal structure of a bout of vocalizing, such as the number of syllables in a bout of laughing, their average frequency, and regularity.
+
+Soundgen contains a function called `segment`, which uses both these approaches: it looks for both syllables and bursts. These two algorithms are not independent: syllables are found first, and then the median length of a syllable becomes the expected interburst interval, guiding burst detection. `segment` operates with amplitude envelopes - smoothed contours of sound intensity. To demonstrate how it works, we will look at the example from `?segment` and go through the control parameters.
+
+```{r fig.height = 3, fig.width = 7}
+s2 = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70, temperature = 0,
+              pitchAnchors = list(time = c(0, 1), value = c(368, 284)),
+              noiseAnchors = list(time = c(0, 67, 86, 186), 
+                                  value = c(-45, -47, -89, -120)),
+              rolloff_noise = -8, amplAnchorsGlobal = list(time = c(0, 1), 
+                                                           value = c(120, 20)))
+# spectrogram(sound, samplingRate = 16000, osc = TRUE)
+# playme(sound, samplingRate = 16000)
+a = segment(s2, samplingRate = 16000, plot = TRUE)
+```
+
+This synthesized laugh-like sound contains 8 syllables, each 50 ms long and separated by 70 ms of unvoiced fragments with some overlapping aspiration noise (NOT silence!). With default settings, `segment` finds 7 syllables of median length `median(a$syllables$dur, na.rm = TRUE)` = 57 ms. The syllables are shown by blue line segments in the plot above. The last syllable is actually above the default detection threshold `sylThres` (90% of the global mean amplitude), but it is missed because its duration falls below the default `shortestSyl` of 40 ms due to its low amplitude. All 8 bursts are correctly detected. The interburst interval is estimated to be `median(a$bursts$interburstInt, na.rm = TRUE)` = 123 ms (the correct number is 120 ms), with SD = `sd(a$bursts$interburstInt, na.rm = TRUE)` = 4 ms (the correct number is 0, since we set temperature to 0). Note that, just as with many real-life sounds, the question of when each syllable starts and ends is pretty meaningless, given the continuous and loud breathing noise. In contrast, the spacing of bursts is both meaningful and can be accurately recovered.
+
+Some other settings worth mentioning are:
+
+* `windowLength`, `overlap`: length (ms) and overlap (%) of the smoothing window used to produce the amplitude envelope. See `?seewave::env`, which is called with the argument msmooth = c(smooth_points, smoothOverlap), where smooth_points =  ceiling(windowLength * samplingRate / 1000). Setting the overlap too low makes the enveloped jagged and imprecise, while setting the window length too low produces insufficient smoothing:
+
+```{r fig.show = "hold", fig.height = 7, fig.width = 5}
+par(mfrow = c(3, 1))
+a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
+             windowLength = 40, overlap = 0)   # overlap too low
+a2 = suppressWarnings(segment(s2, samplingRate = 16000, plot = TRUE, 
+             windowLength = 5, overlap = 80))  # window too short
+a3 = segment(s2, samplingRate = 16000, plot = TRUE, 
+             windowLength = 150, overlap = 80) # window too long
+par(mfrow = c(1, 1))
+```
+
+* `shortestSyl` and `shortestPause` incorporate our prior knowledge by expecting the syllables and pauses between them to be at least 40 ms long (by default). If `shortestSyl` is too high, excluding shorter fragments, we don't find any syllables, but burst detection can still succeed. The most damaging mistake is to set `shortestPause` too high, because separate syllables are then merged and the expected interburst interval becomes inflated, preventing the algorithm from recognizing closely spaced bursts (see the example below). Setting `shortestSyl` and `shortestPause` too low may inflate the number of discovered syllables, but burst detection should not be affected as much.
+
+```{r fig.show = "hold", fig.height = 5, fig.width = 5}
+par(mfrow = c(2, 1))
+a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
+             shortestSyl = 80)    # too long, but at least bursts are detected
+a2 = segment(s2, samplingRate = 16000, plot = TRUE, 
+             shortestPause = 80)  # merges syllables
+par(mfrow = c(1, 1))
+```
+
+* `burstThres` and `peakToTrough` control how high a burst has to be in absolute terms (compared to the global maximum of the envelope) and in relative terms (compared to the local minimum). So a burst is a local maximum that is at least `burstThres` high and at least `peakToTrough` times higher than the local minimum. The size of the analysis window for finding local maxima and minima is controlled by `interburst`, which defaults to the median length of detected syllables times `interburstMult`. By default the local minimum is only calculated to the left of the candidate burst (`troughLeft = TRUE, troughRight = FALSE`). The left-right distinction is irrelevant with this artificial, perfectly symmetrical example, but it appears to improve performance with real-life sounds, which often have assymmetrical attack.
+
+```{r fig.show = "hold", fig.height = 5, fig.width = 5}
+par(mfrow = c(2, 1))
+# absolute threshold burstThres set too high
+a1 = segment(s2, samplingRate = 16000, plot = TRUE, 
+             burstThres = 0.5)
+# improper syllable merging due to shortestPause, but overriden by manually 
+# specified interburst
+a2 = segment(s2, samplingRate = 16000, plot = TRUE, 
+             shortestPause = 80, interburst = 100) 
+par(mfrow = c(1, 1))
+```
+
+### Batch processing: `segmentFolder`
+Just as `analyzeFolder` is a wrapper around `analyze` that simplifies looping through a whole folder of .wav files, `segmentFolder` provides a convenient wrapper around `segment`. It accepts the same arguments as `segment`, can optionally save segmentation plots in the designated folder (e.g., `savePath = ~/Downloads/`) as 900 x 500 .jpg files, and reports estimated time left (`verbose = TRUE`). You can save either detailed stats on individual syllables and bursts (`summary = FALSE`) or produce a summary table with means, medians, and SDs (`summary = TRUE`).
+
+*TIP If you are analyzing a single sound and are willing to adjust the settings manually, you can measure both syllables and bursts accurately. For batch processing without manual adjustments, stick with bursts*
+
+
+## Self-similarity matrices
+The basic idea behind self-similarity matrices (SSMs) is to compare different parts of the same sound with each other and present their pairwise similarity indices as a square matrix with time along both dimensions. The diagonal going from bottom-left to top-right represents the similarity of each fragment with itself. For example, at (100, 100) we have the similarity of the fragment at 100 ms with itself while at (100, 200) we have the similarity of the fragments at 100 ms and 200 ms. Let's begin with an example taken from `?ssm`:
+
+```{r fig.show = "hold", fig.height = 6, fig.width = 7}
+s3 = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70, 
+       formants = NA, pitchAnchors = list(time = c(0, 1), 
+                                          value = c(500, 330))))
+# playme(s3, 16000)
+m = ssm(s3, samplingRate = 16000)
+```
+
+Look at the upper panel first. There are three main regions: the large red square in the lower left corner, which corresponds to the first bout; the red square in the center, which corresponds to the long pause between the bouts; and the checkered field of 4 x 4 small red squares in the upper right corner, which corresponds to the second bout. Observe the characteristic diagonal. The SSM clearly shows periodicity within the second bout, which confirms that these syllables are very similar to each other in terms of their spectral characteristics. Now look at the lower panel of the plot. This is a spectrogram overlaid with so-called "novelty": peaks show when something changes in the sound, based on the SSM.
+
+The results of SSM analysis can vary dramatically, depending on how it is performed. We begin by extracting some form of spectrogram of the entire sound, then we somehow compare each frame to each other frame, and finally we calculate a measure of novelty. At each step there are crucial decisions to make, which can dramatically alter the result. Let's look at the settings that control each step. As you play with these settings, don't be surprised if your SSM suddenly looks completely different!
+
+  1. Spectrogram extraction is controlled by some already familiar settings such as `windowLength` and `overlap` (or `step`, if you prefer). However, it can often be helpful to base the SSM on some other spectral characteristics than the usual spectrogram. Under the hood, `ssm` calls `tuneR::melfcc` to return the power spectrum (as in a spectrogram, `input = 'spectrum'`), mel-transformed spectrum (audiogram, which is supposed to be closer to how humans perceive sounds, `input = 'audiogram'`), or mel-frequency cepstral coefficients (MFCCs - a popular choice of input for automatic sound classification, as in speech recognition software, `input = 'mfcc'`). There are also several arguments that are passed to `tuneR::melfcc`: `maxFreq` controls the highest frequency analyzed, `MFCC` controls the number of mel-frequency cepstral coefficients to extract, and `nBands` basically controls the frequency resolution. 
+
+  1. SSM calculation starts with the spectrogram (or the audiogram, or the MFCCs matrix) produced at the previous stage. This input is divided into windows, each of which can be one or several FFT frames in length, and then each window is compared to each other window using either cosine similarity (`simil = 'cosine'`) or Pearson's correlation (`simil = 'cor'`). Prior to this the input matrix can be normalized column-wise, so as to level out the differences in sound intensity across frames (`norm = TRUE`). The size of analysis window is controlled by the argument `ssmWin`, ms. Note that as you increase `ssmWin`, the resulting SSM literally shrinks in size, reducing its resolution. This is a great feature if your sound is very long, but it is seldom needed for shorter sounds. As you decrease `ssmWin`, it ultimately reaches the size of a single FFT frame (`step`) and can't go down any further, unless you improve time resolution of the spectrogram itself by reducing `windowLength` and/or increasing `overlap`. 
+
+  1. Novelty calculation starts with the SSM computed at the previous step. Here the idea is to move along the diagonal and multiply the SSM by a Gaussian checkerboard matrix, so as to detect changes in the spectral structure (see Foote, 2001). The settings that control this algorithm are `kernelLen` and `kernelSD`. The crucial parameter is `kernelLen` (ms): a large kernel is good for detecting global changes in the sound, such as transitions between different vocalizations, whereas a small kernel is good for detecting rapid changes, such as individual bursts in a laugh. If you are curious about the kernel itself, take a look at `?soundgen:::getCheckerboardKernel`.
+
+```{r fig.show = "hold", fig.height = 6, fig.width = 7}
+par(mfrow = c(2, 1))
+m1 = ssm(s3, samplingRate = 16000,
+         input = 'audiogram', simil = 'cor', norm = FALSE, 
+         ssmWin = 10, kernelLen = 150)  # detailed, local features
+m2 = ssm(s3, samplingRate = 16000,
+         input = 'mfcc', simil = 'cosine', norm = TRUE, 
+         ssmWin = 50, kernelLen = 600)  # more global
+par(mfrow = c(1, 1))
+```
+
+*TIP The output of `segment` can potentially be combined with novelty from `ssm` and perhaps also with pitch tracking to improve audio segmentation using all these sources of information. At present this integration has not been implemented*
 
 # Optimization
 

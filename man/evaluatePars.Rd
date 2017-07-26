@@ -24,7 +24,7 @@ and \code{smooth_overlap}, reasonable bounds might be list(low = c(5,
 0), high = c(500, 95))}
 
 \item{fitnessPar}{the name of output variable that we are comparing with the
-key, e.g. 'nBursts' or 'pitch_median'}
+key, e.g. 'nBursts' or 'pitchMedian'}
 
 \item{fitnessFun}{the function used to evaluate how well the output of
 \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is

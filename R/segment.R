@@ -2,7 +2,7 @@
 
 #' Segment a sound
 #'
-#' Finds syllables and bursts. Syllables are defined as continous segments with
+#' Finds syllables and bursts. Syllables are defined as continuous segments with
 #' ampiltude above threshold. Bursts are defined as local maxima in amplitude
 #' envelope that are high enough both in absolute terms (relative to the global
 #' maximum) and with respect to the surrounding region (relative to local
@@ -10,7 +10,7 @@
 #'
 #' The algorithm is very flexible, but the parameters may be hard to optimize by
 #' hand. If you have an annotated sample of the sort of audio you are planning
-#' to analyze, with syllables or bursts counted manually, you can use it for
+#' to analyze, with syllables and/or bursts counted manually, you can use it for
 #' automatic optimization of control parameters (see
 #' \code{\link{optimizePars}}. The defaults are the results of just such
 #' optimization against 260 human vocalizations in Anikin, A. & Persson, T.
@@ -20,32 +20,31 @@
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if \code{x} is a
 #'   numeric vector, rather than a .wav file)
-#' @param shortestSyl minimum acceptable length of syllables (ms)
-#' @param shortestPause minimum acceptable break between syllables (ms).
+#' @param windowLength,overlap length (ms) and overlap (%) of the smoothing
+#'   window used to produce the amplitude envelope, see
+#'   \code{\link[seewave]{env}}
+#' @param shortestSyl minimum acceptable length of syllables, ms
+#' @param shortestPause minimum acceptable break between syllables, ms.
 #'   Syllables separated by less time are merged. To avoid merging, specify
 #'   \code{shortestPause = NA}
 #' @param sylThres amplitude threshold for syllable detection (as a
 #'   proportion of global mean amplitude of smoothed envelope)
 #' @param interburst minimum time between two consecutive bursts (ms). If
-#'   specified, it overrides \code{interburst_min_idx}
+#'   specified, it overrides \code{interburstMult}
 #' @param interburstMult multiplier of the default minimum interburst
 #'   interval (median syllable length or, if no syllables are detected, the same
 #'   number as \code{shortestSyl}). Only used if \code{interburst} is
 #'   not specified. Larger values improve detection of unusually broad shallow
 #'   peaks, while smaller values improve the detection of sharp narrow peaks
-#' @param burstThres to qualify as a burst, a local maximum has to be at
-#'   least \code{burstThres} time the height of the global maximum of
-#'   the entire amplitude envelope
+#' @param burstThres to qualify as a burst, a local maximum has to be at least
+#'   \code{burstThres} times the height of the global maximum of amplitude
+#'   envelope
 #' @param peakToTrough to qualify as a burst, a local maximum has to be at
 #'   least \code{peakToTrough} times the local minimum on the LEFT over
 #'   analysis window (which is controlled by \code{interburst} or
 #'   \code{interburstMult})
 #' @param troughLeft,troughRight should local maxima be compared to the trough
 #'   on the left and/or right of it? Default to TRUE and FALSE, respectively
-#' @param smoothLen length of smoothing window, ms. Capped at half the length
-#'   of sound. Low values dramatically increase processing time
-#' @param smoothOverlap overlap between smoothing windows (%): the higher, the
-#'   more accurate, but also slower
 #' @param summary if TRUE, returns only a summary of the number and spacing of
 #'   syllables and vocal bursts. If FALSE, returns a list containing full stats
 #'   on each syllable and bursts (location, duration, amplitude, ...)
@@ -59,14 +58,10 @@
 #'   amplitude, ...).
 #' @export
 #' @examples
-#' sound = soundgen(nSyl = 8, sylDur_mean = 50, pauseDur_mean = 70,
+#' sound = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70,
 #'   pitchAnchors = list(time = c(0, 1), value = c(368, 284)), temperature = 0.1,
-#'   attackLen = 10, exactFormants = list(f1 = list(time = 0, freq = 790, amp = 30, width = 100),
-#'   f2 = list(time = 0, freq = 1600, amp = 30, width = 100),
-#'   f3 = list(time = 0, freq = 3100, amp = 30, width = 100),
-#'   f4 = list(time = 0, freq = 3900, amp = 30, width = 100)),
-#'   breathingAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
-#'   rolloff_breathing = -8, amplAnchors_global = list(time = c(0, 1), value = c(120, 20)))
+#'   noiseAnchors = list(time = c(0, 67, 86, 186), value = c(-45, -47, -89, -120)),
+#'   rolloff_noise = -8, amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 20)))
 #' spectrogram(sound, samplingRate = 16000, osc = TRUE)
 #'  # playme(sound, samplingRate = 16000)
 #'
@@ -80,6 +75,8 @@
 #'   interburstMult = 1)
 segment = function(x,
                    samplingRate = NULL,
+                   windowLength = 40,
+                   overlap = 80,
                    shortestSyl = 40,
                    shortestPause = 40,
                    sylThres = 0.9,
@@ -89,18 +86,16 @@ segment = function(x,
                    peakToTrough = 3,
                    troughLeft = TRUE,
                    troughRight = FALSE,
-                   smoothLen = 40,
-                   smoothOverlap = 80,
                    summary = FALSE,
                    plot = FALSE,
                    savePath = NA,
                    ...) {
-  merge_close_syl = ifelse(is.null(shortestPause) || is.na(shortestPause), F, T)
-  if (smoothLen < 10) {
-    warning('smoothLen < 10 ms is slow and usually not very useful')
+  mergeSyl = ifelse(is.null(shortestPause) || is.na(shortestPause), F, T)
+  if (windowLength < 10) {
+    warning('windowLength < 10 ms is slow and usually not very useful')
   }
-  if (smoothOverlap < 0) smoothOverlap = 0
-  if (smoothOverlap > 99) smoothOverlap = 99
+  if (overlap < 0) overlap = 0
+  if (overlap > 99) overlap = 99
 
   ## import a sound
   if (class(x) == 'character') {
@@ -126,15 +121,15 @@ segment = function(x,
   # plot(sound, type='l')
 
   ## extract amplitude envelope
-  smooth_points = ceiling(smoothLen * samplingRate / 1000)
-  if (smooth_points > length(sound) / 2) {
-    smooth_points = length(sound) / 2
+  windowLength_points = ceiling(windowLength * samplingRate / 1000)
+  if (windowLength_points > length(sound) / 2) {
+    windowLength_points = length(sound) / 2
   }
 
   sound_downsampled = seewave::env(
     sound,
     f = samplingRate,
-    msmooth = c(smooth_points, smoothOverlap),
+    msmooth = c(windowLength_points, overlap),
     fftw = TRUE,
     plot = FALSE
   )
@@ -151,7 +146,7 @@ segment = function(x,
                             threshold = threshold,
                             shortestSyl = shortestSyl,
                             shortestPause = shortestPause,
-                            merge_close_syl = merge_close_syl)
+                            mergeSyl = mergeSyl)
 
   ## find bursts and get descriptives
   # calculate the window for analyzing bursts based on the median duration of
@@ -174,18 +169,18 @@ segment = function(x,
 
   ## prepare a dataframe containing descriptives for syllables and bursts
   result = data.frame(
-    nSyllables = nrow(syllables),
-    syllableLength_mean = suppressWarnings(mean(syllables$dur)),
-    syllableLength_median = ifelse(nrow(syllables) > 0,
+    nSyl = nrow(syllables),
+    sylLen_mean = suppressWarnings(mean(syllables$dur)),
+    sylLen_median = ifelse(nrow(syllables) > 0,
                                    median(syllables$dur),
                                    NA),  # otherwise returns NULL
-    syllableLength_sd = sd(syllables$dur),
+    sylLen_sd = sd(syllables$dur),
     nBursts = nrow(bursts),
-    interBurst_mean = suppressWarnings(mean(bursts$interburst_int, na.rm = TRUE)),
-    interBurst_median = ifelse(nrow(bursts) > 0,
-                               median(bursts$interburst_int, na.rm = TRUE),
+    interburst_mean = suppressWarnings(mean(bursts$interburstInt, na.rm = TRUE)),
+    interburst_median = ifelse(nrow(bursts) > 0,
+                               median(bursts$interburstInt, na.rm = TRUE),
                                NA),  # otherwise returns NULL
-    interBurst_sd = sd(bursts$interburst_int, na.rm = TRUE)
+    interburst_sd = sd(bursts$interburstInt, na.rm = TRUE)
   )
 
   ## plotting (optional)
@@ -240,7 +235,7 @@ segment = function(x,
 #' s = segmentFolder(myfolder, verbose = TRUE)
 #'
 #' # Check accuracy: import a manual count of syllables (our "key")
-#' key = segment_manual  # a vector of 260 integers
+#' key = segmentManual  # a vector of 260 integers
 #' trial = as.numeric(s$nBursts)
 #' cor(key, trial, use = 'pairwise.complete.obs')
 #' boxplot(trial ~ as.integer(key), xlab='key')
@@ -256,8 +251,8 @@ segmentFolder = function (myfolder,
                           peakToTrough = 3,
                           troughLeft = TRUE,
                           troughRight = FALSE,
-                          smoothLen = 40,
-                          smoothOverlap = 80,
+                          windowLength = 40,
+                          overlap = 80,
                           summary = TRUE,
                           plot = FALSE,
                           savePath = NA,
@@ -281,8 +276,8 @@ segmentFolder = function (myfolder,
         peakToTrough = peakToTrough,
         troughLeft = troughLeft,
         troughRight = troughRight,
-        smoothLen = smoothLen,
-        smoothOverlap = smoothOverlap,
+        windowLength = windowLength,
+        overlap = overlap,
         plot = plot,
         savePath = savePath,
         summary = summary

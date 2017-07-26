@@ -13,11 +13,11 @@ findBursts(envelope, timestep, interburst, burstThres, peakToTrough,
 \item{timestep}{time difference between two points in the envelope (ms)}
 
 \item{interburst}{minimum time between two consecutive bursts (ms). If
-specified, it overrides \code{interburst_min_idx}}
+specified, it overrides \code{interburstMult}}
 
-\item{burstThres}{to qualify as a burst, a local maximum has to be at
-least \code{burstThres} time the height of the global maximum of
-the entire amplitude envelope}
+\item{burstThres}{to qualify as a burst, a local maximum has to be at least
+\code{burstThres} times the height of the global maximum of amplitude
+envelope}
 
 \item{peakToTrough}{to qualify as a burst, a local maximum has to be at
 least \code{peakToTrough} times the local minimum on the LEFT over

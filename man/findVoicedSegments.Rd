@@ -18,7 +18,7 @@ if unvoiced)}
 \item{shortestPause}{the smallest gap between voiced syllables (ms) that
 means they shouldn't be merged into one voiced syllable}
 
-\item{step}{fft step, ms}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms}
 
 \item{samplingRate}{sampling rate (Hz)}
 

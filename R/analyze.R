@@ -140,8 +140,9 @@ analyze = function(x,
                    samplingRate = NULL,
                    silence = 0.04,
                    windowLength = 50,
+                   step = NULL,
+                   overlap = 50,
                    wn = 'gaussian',
-                   step = 25,
                    zp = 0,
                    cutFreq = 6000,
                    pitchMethods = c('autocor', 'spec', 'dom'),
@@ -238,12 +239,25 @@ analyze = function(x,
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
   # to ensure that the window length in points is a power of 2, say 2048 or 1024:
   # windowLength_points = 2^round (log(windowLength * samplingRate /1000)/log(2), 0)
-  if (!is.numeric(step) || step <= 0 || step > (duration * 1000)) {
+  if (!is.numeric(step)) {
+    if (!is.numeric(overlap) || overlap < 0 || overlap > 99) {
+      overlap = 50
+      warning('If "step" is not specified, overlap must be between 0 and 99%',
+              '; overlap reset to 50%')
+    } else {
+      step = windowLength * (1 - overlap / 100)
+    }
+  } else {
+    if (is.numeric(overlap) && overlap != 50) {  # step specified, overlap != default
+      warning('"overlap" is ignored if "step" is not NULL')
+    }
+  }
+  if (step <= 0 || step > (duration * 1000)) {
     step = windowLength / 2
     warning('"step" must be between 0 and sound_duration ms;
             defaulting to windowLength / 2')
   }
-  if (is.numeric(step) && step > windowLength) {
+  if (step > windowLength) {
     warning(paste('"step" should normally not be larger than "windowLength" ms:',
                   'you are skipping parts of the sound!'))
   }

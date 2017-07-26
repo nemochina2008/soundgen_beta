@@ -5,7 +5,7 @@
 \title{Find fyllables}
 \usage{
 findSyllables(envelope, timestep, threshold, shortestSyl, shortestPause,
-  merge_close_syl)
+  mergeSyl)
 }
 \arguments{
 \item{envelope}{downsampled amplitude envelope}
@@ -15,13 +15,13 @@ findSyllables(envelope, timestep, threshold, shortestSyl, shortestPause,
 \item{threshold}{all continuous segments above this value are considered to
 be syllables}
 
-\item{shortestSyl}{minimum acceptable length of syllables (ms)}
+\item{shortestSyl}{minimum acceptable length of syllables, ms}
 
-\item{shortestPause}{minimum acceptable break between syllables (ms).
+\item{shortestPause}{minimum acceptable break between syllables, ms.
 Syllables separated by less time are merged. To avoid merging, specify
 \code{shortestPause = NA}}
 
-\item{merge_close_syl}{if TRUE, syllable separated by less than
+\item{mergeSyl}{if TRUE, syllable separated by less than
 \code{shortestPause} will be merged}
 }
 \value{

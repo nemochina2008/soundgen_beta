@@ -35,12 +35,12 @@ threshold are not analyzed at all. NB: this number is dynamically updated:
 the actual silence threshold may be higher depending on the quietest frame,
 but it will never be lower than this specified number.}
 
-\item{windowLength}{length of fft window, ms}
+\item{windowLength}{length of FFT window, ms}
 
 \item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
 blackman, flattop}
 
-\item{step}{fft step, ms}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms}
 
 \item{zp}{zero padding, points}
 

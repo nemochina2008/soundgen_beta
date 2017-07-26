@@ -5,7 +5,7 @@
 \title{Analyze sound}
 \usage{
 analyze(x, samplingRate = NULL, silence = 0.04, windowLength = 50,
-  wn = "gaussian", step = 25, zp = 0, cutFreq = 6000,
+  step = NULL, overlap = 50, wn = "gaussian", zp = 0, cutFreq = 6000,
   pitchMethods = c("autocor", "spec", "dom"), entropyThres = 0.6,
   pitchFloor = 75, pitchCeiling = 3500, priorMean = HzToSemitones(300),
   priorSD = 6, priorPlot = FALSE, nCands = 1, minVoicedCands = "autom",
@@ -35,12 +35,14 @@ threshold are not analyzed at all. NB: this number is dynamically updated:
 the actual silence threshold may be higher depending on the quietest frame,
 but it will never be lower than this specified number.}
 
-\item{windowLength}{length of fft window, ms}
+\item{windowLength}{length of FFT window, ms}
+
+\item{step}{you can override \code{overlap} by specifying FFT step, ms}
+
+\item{overlap}{overlap between successive FFT frames, \%}
 
 \item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
 blackman, flattop}
-
-\item{step}{fft step, ms}
 
 \item{zp}{zero padding, points}
 

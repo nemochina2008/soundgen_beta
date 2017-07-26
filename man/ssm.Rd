@@ -4,16 +4,16 @@
 \alias{ssm}
 \title{Self-similarity matrix}
 \usage{
-ssm(x, samplingRate = NULL, windowLength = 40, step = NULL,
-  maxFreq = NULL, nBands = NULL, MFCC = 2:13, input = c("cepstrum",
-  "audiogram")[1], norm = FALSE, simil = c("cosine", "correlation")[1],
-  returnSSM = TRUE, kernelLen = 200, kernelSD = 0.2, win = 3,
-  plot = TRUE, specPars = list(levels = seq(0, 1, length = 30),
-  color.palette = seewave::spectro.colors, xlab = "Time, ms", ylab = "kHz", ylim
-  = c(0, maxFreq/1000)), ssmPars = list(levels = seq(0, 1, length = 30),
-  color.palette = seewave::spectro.colors, xlab = "Time, ms", ylab = "Time, ms",
-  main = "Self-similarity matrix"), noveltyPars = list(type = "b", pch = 16,
-  col = "black", lwd = 3))
+ssm(x, samplingRate = NULL, windowLength = 40, overlap = 75,
+  step = NULL, ssmWin = 40, maxFreq = NULL, nBands = NULL,
+  MFCC = 2:13, input = c("mfcc", "audiogram", "spectrum")[1],
+  norm = FALSE, simil = c("cosine", "cor")[1], returnSSM = TRUE,
+  kernelLen = 200, kernelSD = 0.2, plot = TRUE, specPars = list(levels =
+  seq(0, 1, length = 30), color.palette = seewave::spectro.colors, xlab =
+  "Time, s", ylab = "kHz", ylim = c(0, maxFreq/1000)), ssmPars = list(levels =
+  seq(0, 1, length = 30), color.palette = seewave::spectro.colors, xlab =
+  "Time, s", ylab = "Time, s", main = "Self-similarity matrix"),
+  noveltyPars = list(type = "b", pch = 16, col = "black", lwd = 3))
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -22,26 +22,29 @@ samplingRate}
 \item{samplingRate}{sampling rate of \code{x} (only needed if \code{x} is a
 numeric vector, rather than a .wav file)}
 
-\item{windowLength}{length of fft window (ms)}
+\item{windowLength}{length of FFT window, ms}
 
-\item{step}{fft step (ms). Defaults to \code{windowLength / 4}}
+\item{overlap}{overlap between successive FFT frames, \%}
 
-\item{maxFreq}{highest band edge of mel filters (Hz). Defaults to
+\item{step}{you can override \code{overlap} by specifying FFT step, ms}
+
+\item{ssmWin}{window for averaging SSM, ms}
+
+\item{maxFreq}{highest band edge of mel filters, Hz. Defaults to
 \code{samplingRate / 2}. See \code{\link[tuneR]{melfcc}}}
 
 \item{nBands}{number of warped spectral bands to use. Defaults to \code{100 *
 windowLength / 20}. See \code{\link[tuneR]{melfcc}}}
 
-\item{MFCC}{if \code{input = 'audiogram'}, which mel-frequency cepstral
-coefficients to use. Ddefaults to \code{2:13})}
+\item{MFCC}{which mel-frequency cepstral coefficients to use; defaults to
+\code{2:13})}
 
 \item{input}{either MFCCs ("cepstrum") or mel-filtered spectrum ("audiogram")}
 
-\item{norm}{if TRUE, each fft frame is normalized by max power. NB:
-recommended if using cosine similarity with spectrum (audiogram)}
+\item{norm}{if TRUE, each FFT frame is normalized by max power}
 
-\item{simil}{method for comparing frames: either cosine similarity or
-Pearson's correlation}
+\item{simil}{method for comparing frames: "cosine" = cosine similarity, "cor"
+= Pearson's correlation}
 
 \item{returnSSM}{if TRUE, returns the SSM}
 
@@ -49,8 +52,6 @@ Pearson's correlation}
 larger, the more global vs. local the novelty)}
 
 \item{kernelSD}{SD of checkerboard kernel for calculating novelty}
-
-\item{win}{window for averaging SSM (reduces its size). Forced to de odd}
 
 \item{plot}{if TRUE, plots the SSM}
 
@@ -72,14 +73,16 @@ If \code{returnSSM} is TRUE, returns a list of two components: $ssm
 Calculates the self-similarity matrix and novelty vector for a sound.
 }
 \examples{
-sound = c(soundgen(), soundgen(nSyl = 4, sylLen = 200,
-  pauseLen = 140,  pitchAnchors = list(time = c(0, 0.65, 1),
-  value = c(977, 1540, 826)), formants = NA))
-s = ssm(sound, samplingRate = 16000,
-        input = 'cepstrum', win = 3, kernelLen = 350)  # detailed, local features
-s = ssm(sound, samplingRate = 16000,
-        input = 'cepstrum', win = 7, kernelLen = 800)  # more global
-plot(s$novelty, type='b')  # use for peak detection, etc
+sound = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,
+          formants = NA, pitchAnchors = list(time = c(0, 1),
+          value = c(500, 330))))
+m1 = ssm(sound, samplingRate = 16000,
+         input = 'audiogram', simil = 'cor', norm = FALSE,
+         ssmWin = 10, kernelLen = 150)  # detailed, local features
+m2 = ssm(sound, samplingRate = 16000,
+         input = 'mfcc', simil = 'cosine', norm = TRUE,
+         ssmWin = 50, kernelLen = 600)  # more global
+# plot(m2$novelty, type='b')  # use for peak detection, etc
 }
 \references{
 \itemize{

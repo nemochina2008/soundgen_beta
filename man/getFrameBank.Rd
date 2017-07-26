@@ -18,7 +18,7 @@ getFrameBank(sound, samplingRate, windowLength_points, wn, step, zp,
 \item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
 blackman, flattop}
 
-\item{step}{fft step, ms}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms}
 
 \item{zp}{zero padding, points}
 

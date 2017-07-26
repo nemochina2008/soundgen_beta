@@ -4,14 +4,13 @@
 \alias{spectrogram}
 \title{Spectrogram}
 \usage{
-spectrogram(x, samplingRate = NULL, windowLength = 50, step = 15,
-  wn = "gaussian", zp = 0, median_smoothing_freq = 0,
-  median_smoothing_time = 0, denoise_median_time = 0, percentNoise = 10,
-  noiseReduction = 0, contrast = 0.2, brightness = 0,
-  method = c("spectrum", "spectralDerivative")[1], output = c("none",
-  "original", "processed")[1], ylim = NULL, plot = TRUE, osc = FALSE,
-  colorTheme = c("bw", "seewave", "...")[1], xlab = "", frameBank = NULL,
-  duration = NULL, ...)
+spectrogram(x, samplingRate = NULL, windowLength = 50, step = NULL,
+  overlap = 70, wn = "gaussian", zp = 0, smoothFreq = 0,
+  smoothTime = 0, qTime = 0, percentNoise = 10, noiseReduction = 0,
+  contrast = 0.2, brightness = 0, method = c("spectrum",
+  "spectralDerivative")[1], output = c("none", "original", "processed")[1],
+  ylim = NULL, plot = TRUE, osc = FALSE, colorTheme = c("bw", "seewave",
+  "...")[1], xlab = "", frameBank = NULL, duration = NULL, ...)
 }
 \arguments{
 \item{x}{path to a .wav file or a vector of amplitudes with specified
@@ -20,25 +19,27 @@ samplingRate}
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than a .wav file)}
 
-\item{windowLength}{length of fft window, ms}
+\item{windowLength}{length of FFT window, ms}
 
-\item{step}{fft step, ms}
+\item{step}{you can override \code{overlap} by specifying FFT step, ms}
+
+\item{overlap}{overlap between successive FFT frames, \%}
 
 \item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
 blackman, flattop}
 
 \item{zp}{zero padding, points}
 
-\item{median_smoothing_freq, median_smoothing_time}{length of the window, in
-data points (0 to +inf), for calculating a rolling median. Applies median
-smoothing to spectrogram in frequency and time domains, respectively}
+\item{smoothFreq, smoothTime}{length of the window, in data points (0 to
++inf), for calculating a rolling median. Applies median smoothing to
+spectrogram in frequency and time domains, respectively}
 
-\item{denoise_median_time}{the quantile to be subtracted for each frequency
-bin. For ex., if denoise_median_time = 0.5, the median of each frequency
+\item{qTime}{the quantile to be subtracted for each frequency
+bin. For ex., if qTime = 0.5, the median of each frequency
 bin (over the entire sound duration) will be calculated and subtracted from
 each frame (see examples)}
 
-\item{percentNoise}{percentage of frames (0 to 100%) used for calculating noise
+\item{percentNoise}{percentage of frames (0 to 100\%) used for calculating noise
 spectrum}
 
 \item{noiseReduction}{how much noise to remove (0 to +inf, recommended 0 to
@@ -107,7 +108,7 @@ spectrogram(sound, samplingRate = 16000, windowLength = 5)
 spectrogram(sound, samplingRate = 16000, method = 'spectralDerivative')
 
 # focus only on values in the upper 5\% for each frequency bin
-spectrogram(sound, samplingRate = 16000, denoise_median_time = 0.95)
+spectrogram(sound, samplingRate = 16000, qTime = 0.95)
 
 # detect 10\% of the noisiest frames based on entropy and remove the pattern
 # found in those frames (in this cases, breathing)
@@ -115,8 +116,8 @@ spectrogram(sound, samplingRate = 16000,  noiseReduction = 1.1,
   brightness = -2)  # white noise almost gone
 
 # apply median smoothing in both time and frequency domains
-spectrogram(sound, samplingRate = 16000, median_smoothing_freq = 5,
-  median_smoothing_time = 5)
+spectrogram(sound, samplingRate = 16000, smoothFreq = 5,
+  smoothTime = 5)
 
 # increase contrast, reduce brightness
 spectrogram(sound, samplingRate = 16000, contrast = 1, brightness = -1)

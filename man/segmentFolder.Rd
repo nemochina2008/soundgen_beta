@@ -7,15 +7,15 @@
 segmentFolder(myfolder, shortestSyl = 40, shortestPause = 40,
   sylThres = 0.9, interburst = NULL, interburstMult = 1,
   burstThres = 0.075, peakToTrough = 3, troughLeft = TRUE,
-  troughRight = FALSE, smoothLen = 40, smoothOverlap = 80,
-  summary = TRUE, plot = FALSE, savePath = NA, verbose = TRUE, ...)
+  troughRight = FALSE, windowLength = 40, overlap = 80, summary = TRUE,
+  plot = FALSE, savePath = NA, verbose = TRUE, ...)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
 
-\item{shortestSyl}{minimum acceptable length of syllables (ms)}
+\item{shortestSyl}{minimum acceptable length of syllables, ms}
 
-\item{shortestPause}{minimum acceptable break between syllables (ms).
+\item{shortestPause}{minimum acceptable break between syllables, ms.
 Syllables separated by less time are merged. To avoid merging, specify
 \code{shortestPause = NA}}
 
@@ -23,7 +23,7 @@ Syllables separated by less time are merged. To avoid merging, specify
 proportion of global mean amplitude of smoothed envelope)}
 
 \item{interburst}{minimum time between two consecutive bursts (ms). If
-specified, it overrides \code{interburst_min_idx}}
+specified, it overrides \code{interburstMult}}
 
 \item{interburstMult}{multiplier of the default minimum interburst
 interval (median syllable length or, if no syllables are detected, the same
@@ -31,9 +31,9 @@ number as \code{shortestSyl}). Only used if \code{interburst} is
 not specified. Larger values improve detection of unusually broad shallow
 peaks, while smaller values improve the detection of sharp narrow peaks}
 
-\item{burstThres}{to qualify as a burst, a local maximum has to be at
-least \code{burstThres} time the height of the global maximum of
-the entire amplitude envelope}
+\item{burstThres}{to qualify as a burst, a local maximum has to be at least
+\code{burstThres} times the height of the global maximum of amplitude
+envelope}
 
 \item{peakToTrough}{to qualify as a burst, a local maximum has to be at
 least \code{peakToTrough} times the local minimum on the LEFT over
@@ -46,11 +46,13 @@ on the left and/or right of it? Default to TRUE and FALSE, respectively}
 \item{troughRight}{should local maxima be compared to the trough
 on the left and/or right of it? Default to TRUE and FALSE, respectively}
 
-\item{smoothLen}{length of smoothing window, ms. Capped at half the length
-of sound. Low values dramatically increase processing time}
+\item{windowLength}{length (ms) and overlap (%) of the smoothing
+window used to produce the amplitude envelope, see
+\code{\link[seewave]{env}}}
 
-\item{smoothOverlap}{overlap between smoothing windows (%): the higher, the
-more accurate, but also slower}
+\item{overlap}{length (ms) and overlap (%) of the smoothing
+window used to produce the amplitude envelope, see
+\code{\link[seewave]{env}}}
 
 \item{summary}{if TRUE, returns only a summary of the number and spacing of
 syllables and vocal bursts. If FALSE, returns a list containing full stats
@@ -88,7 +90,7 @@ myfolder = '~/Downloads/temp'  # 260 .wav files live here
 s = segmentFolder(myfolder, verbose = TRUE)
 
 # Check accuracy: import a manual count of syllables (our "key")
-key = segment_manual  # a vector of 260 integers
+key = segmentManual  # a vector of 260 integers
 trial = as.numeric(s$nBursts)
 cor(key, trial, use = 'pairwise.complete.obs')
 boxplot(trial ~ as.integer(key), xlab='key')

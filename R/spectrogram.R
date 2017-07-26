@@ -10,19 +10,20 @@
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if
 #'   \code{x} is a numeric vector, rather than a .wav file)
-#' @param windowLength length of fft window, ms
+#' @param windowLength length of FFT window, ms
+#' @param overlap overlap between successive FFT frames, \%
+#' @param step you can override \code{overlap} by specifying FFT step, ms
 #' @param wn window type: gaussian, hanning, hamming, bartlett, rectangular,
 #'   blackman, flattop
-#' @param step fft step, ms
 #' @param zp zero padding, points
-#' @param median_smoothing_freq,median_smoothing_time length of the window, in
-#'   data points (0 to +inf), for calculating a rolling median. Applies median
-#'   smoothing to spectrogram in frequency and time domains, respectively
-#' @param denoise_median_time the quantile to be subtracted for each frequency
-#'   bin. For ex., if denoise_median_time = 0.5, the median of each frequency
+#' @param smoothFreq,smoothTime length of the window, in data points (0 to
+#'   +inf), for calculating a rolling median. Applies median smoothing to
+#'   spectrogram in frequency and time domains, respectively
+#' @param qTime the quantile to be subtracted for each frequency
+#'   bin. For ex., if qTime = 0.5, the median of each frequency
 #'   bin (over the entire sound duration) will be calculated and subtracted from
 #'   each frame (see examples)
-#' @param percentNoise percentage of frames (0 to 100%) used for calculating noise
+#' @param percentNoise percentage of frames (0 to 100\%) used for calculating noise
 #'   spectrum
 #' @param noiseReduction how much noise to remove (0 to +inf, recommended 0 to
 #'   2). 0 = no noise reduction, 2 = strong noise reduction: \eqn{spectrum -
@@ -70,7 +71,7 @@
 #' spectrogram(sound, samplingRate = 16000, method = 'spectralDerivative')
 #'
 #' # focus only on values in the upper 5% for each frequency bin
-#' spectrogram(sound, samplingRate = 16000, denoise_median_time = 0.95)
+#' spectrogram(sound, samplingRate = 16000, qTime = 0.95)
 #'
 #' # detect 10% of the noisiest frames based on entropy and remove the pattern
 #' # found in those frames (in this cases, breathing)
@@ -78,8 +79,8 @@
 #'   brightness = -2)  # white noise almost gone
 #'
 #' # apply median smoothing in both time and frequency domains
-#' spectrogram(sound, samplingRate = 16000, median_smoothing_freq = 5,
-#'   median_smoothing_time = 5)
+#' spectrogram(sound, samplingRate = 16000, smoothFreq = 5,
+#'   smoothTime = 5)
 #'
 #' # increase contrast, reduce brightness
 #' spectrogram(sound, samplingRate = 16000, contrast = 1, brightness = -1)
@@ -91,12 +92,13 @@
 spectrogram = function(x,
                        samplingRate = NULL,
                        windowLength = 50,
-                       step = 15,
+                       step = NULL,
+                       overlap = 70,
                        wn = 'gaussian',
                        zp = 0,
-                       median_smoothing_freq = 0,
-                       median_smoothing_time = 0,
-                       denoise_median_time = 0,
+                       smoothFreq = 0,
+                       smoothTime = 0,
+                       qTime = 0,
                        percentNoise = 10,
                        noiseReduction = 0,
                        contrast = .2,
@@ -111,6 +113,7 @@ spectrogram = function(x,
                        frameBank = NULL,
                        duration = NULL,
                        ...) {
+  if (is.null(step)) step = windowLength * (1 - overlap / 100)
   # import audio
   if (class(x) == 'character') {
     sound_wav = tuneR::readWave(x)
@@ -184,19 +187,19 @@ spectrogram = function(x,
 
   # removing noise. NB: the order of these operations is crucial,
   # don't change it!
-  if (median_smoothing_time > 1) {
+  if (smoothTime > 1) {
     Z1 = t(apply(Z1, 1, function(x) {
-      zoo::rollmedian(x, k = median_smoothing_time, fill = 0)
+      zoo::rollmedian(x, k = smoothTime, fill = 0)
     }))  # time domain
   }
-  if (median_smoothing_freq > 1) {
+  if (smoothFreq > 1) {
     Z1 = apply(Z1, 2, function(x) {
-      zoo::rollmedian(x, k = median_smoothing_freq, fill = 0)
+      zoo::rollmedian(x, k = smoothFreq, fill = 0)
     }) # freq domain
   }
-  if (denoise_median_time > 0) {
+  if (qTime > 0) {
     Z1 = t(apply(Z1, 1, function(x) {
-      x - quantile(x, probs = denoise_median_time)
+      x - quantile(x, probs = qTime)
     }))  # for each freq bin, subtract median or another quantile
   }
 

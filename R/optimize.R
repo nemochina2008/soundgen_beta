@@ -31,7 +31,7 @@
 #'   and \code{smooth_overlap}, reasonable bounds might be list(low = c(5,
 #'   0), high = c(500, 95))
 #' @param fitnessPar the name of output variable that we are comparing with the
-#'   key, e.g. 'nBursts' or 'pitch_median'
+#'   key, e.g. 'nBursts' or 'pitchMedian'
 #' @param fitnessFun the function used to evaluate how well the output of
 #'   \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is
 #'   perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a
@@ -65,7 +65,7 @@
 #'
 #' # Optimization of SEGMENTATION
 #' # import manual counts of syllables in 260 sounds from Anikin & Persson (2017) (our "key")
-#' key = segment_manual  # a vector of 260 integers
+#' key = segmentManual  # a vector of 260 integers
 #' # run optimization loop several times with random initial values to check convergence
 #' # NB: with 260 sounds and default settings, this might take ~20 min per iteration!
 #' res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = key,
@@ -95,17 +95,17 @@
 #' # Optimization of PITCH TRACKING (takes several hours!)
 #' res = optimizePars(myfolder = myfolder,
 #'                    myfun = 'analyzeFolder',
-#'                    key = log(pitch_manual),  # log-scale better for pitch
+#'                    key = log(pitchManual),  # log-scale better for pitch
 #'                    pars = c('voiced_threshold_spec',
 #'                                         'specPitchThreshold_nullNA',
 #'                                         'pitchSpec_only_peak_weight',
 #'                                         'slope_spec'),
-#'                    fitnessPar = 'pitch_median',
+#'                    fitnessPar = 'pitchMedian',
 #'                    bounds = list(low = c(0, 0, 0, 0),
 #'                                       high = c(1, 1, 1, Inf)),
 #'                    nIter = 2,
 #'                    otherPars = list(plot = FALSE, verbose = FALSE, step = 50,
-#'                                     pitch_methods = c('autocor', 'spec', 'dom')),
+#'                                     pitchMethods = c('autocor', 'spec', 'dom')),
 #'                    fitnessFun = function(x) {
 #'                      1 - cor(log(x), key, use = 'pairwise.complete.obs') *
 #'                        (1 - mean(is.na(x) & !is.na(key)))  # penalize failing to detect F0
@@ -118,8 +118,8 @@
 #' for (i in 1:length(voiced_threshold_cep)) {
 #'   print(i)
 #'   out[[i]] = analyzeFolder(myfolder, plot = FALSE, verbose = FALSE, step = 50,
-#'                            pitch_methods = 'cep',
-#'                            voiced_threshold_cep = voiced_threshold_cep[i])$pitch_median
+#'                            pitchMethods = 'cep',
+#'                            voiced_threshold_cep = voiced_threshold_cep[i])$pitchMedian
 #'   print(cor(log(out[[i]]), key, use = 'pairwise.complete.obs'))
 #'   print(cor(log(out[[i]]), key, use = 'pairwise.complete.obs') *
 #'           (1 - mean(is.na(out[[i]]) & !is.na(key))))
@@ -133,7 +133,7 @@
 #'
 #' # checking combinations of pitch tracking methods
 #' myfolder = '/home/allgoodguys/Documents/Studying/Lund_PhD/sounds_corpora/00_ut_260_numbered'
-#' key = log(pitch_manual)
+#' key = log(pitchManual)
 #' p = c('autocor', 'cep', 'spec', 'dom')
 #' pp = c(list(p),
 #'        combn(p, 3, simplify = FALSE),
@@ -146,9 +146,9 @@
 #'
 #' for (i in 1:length(pp)) {
 #'   out[[i]] = analyzeFolder(myfolder, plot = FALSE, verbose = FALSE, step = 50,
-#'                            pitch_methods = pp[[i]])$pitch_median
-#'   res$cor1[i] = cor(log(out[[i]]), log(pitch_manual), use = 'pairwise.complete.obs')
-#'   res$cor2[i] = cor(log(out[[i]]), log(pitch_manual), use = 'pairwise.complete.obs') *
+#'                            pitchMethods = pp[[i]])$pitchMedian
+#'   res$cor1[i] = cor(log(out[[i]]), log(pitchManual), use = 'pairwise.complete.obs')
+#'   res$cor2[i] = cor(log(out[[i]]), log(pitchManual), use = 'pairwise.complete.obs') *
 #'     (1 - mean(is.na(out[[i]]) & !is.na(key)))
 #'   print(res[i, ])
 #' }
