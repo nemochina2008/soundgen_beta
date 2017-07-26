@@ -133,8 +133,11 @@ rnorm_bounded = function(n = 1,
                          low = NULL,
                          high = NULL,
                          roundToInteger = FALSE) {
-  if (sum(mean > high | mean < low) > 0) {
-    warning(paste('Some of the specified means are outside the low/high bounds! Mean =', mean))
+  if (any(mean > high | mean < low)) {
+    warning(paste('Some of the specified means are outside the low/high bounds!',
+            'Mean =', paste(mean, collapse = ', '),
+            'Low =', paste(low, collapse = ', '),
+            'High = ', paste(high, collapse = ', ')))
     mean[mean < low] = low
     mean[mean > high] = high
   }

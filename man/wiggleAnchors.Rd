@@ -33,9 +33,9 @@ Internal soundgen function.
 }
 \details{
 A helper function for introducing random variation into any anchors (for
-pitch / breathing / amplitude / ...). NB: if the lower and upper bounds are
-unreasonable given the scale of df$value, \code{wiggleAnchors} will keep
-running forever!
+pitch / breathing / amplitude / ...). At higher temperatures can also add or
+delete an anchor. NB: make sure the lower and upper bounds are reasonable
+given the scale of df$value!
 }
 \examples{
 soundgen:::wiggleAnchors(df = data.frame(

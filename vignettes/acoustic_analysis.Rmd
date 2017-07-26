@@ -455,7 +455,7 @@ The results of SSM analysis can vary dramatically, depending on how it is perfor
 
   1. SSM calculation starts with the spectrogram (or the audiogram, or the MFCCs matrix) produced at the previous stage. This input is divided into windows, each of which can be one or several FFT frames in length, and then each window is compared to each other window using either cosine similarity (`simil = 'cosine'`) or Pearson's correlation (`simil = 'cor'`). Prior to this the input matrix can be normalized column-wise, so as to level out the differences in sound intensity across frames (`norm = TRUE`). The size of analysis window is controlled by the argument `ssmWin`, ms. Note that as you increase `ssmWin`, the resulting SSM literally shrinks in size, reducing its resolution. This is a great feature if your sound is very long, but it is seldom needed for shorter sounds. As you decrease `ssmWin`, it ultimately reaches the size of a single FFT frame (`step`) and can't go down any further, unless you improve time resolution of the spectrogram itself by reducing `windowLength` and/or increasing `overlap`. 
 
-  1. Novelty calculation starts with the SSM computed at the previous step. Here the idea is to move along the diagonal and multiply the SSM by a Gaussian checkerboard matrix, so as to detect changes in the spectral structure (see Foote, 2001). The settings that control this algorithm are `kernelLen` and `kernelSD`. The crucial parameter is `kernelLen` (ms): a large kernel is good for detecting global changes in the sound, such as transitions between different vocalizations, whereas a small kernel is good for detecting rapid changes, such as individual bursts in a laugh. If you are curious about the kernel itself, take a look at `?soundgen:::getCheckerboardKernel`.
+  1. Novelty calculation starts with the SSM computed at the previous step. Here the idea is to move along the diagonal and multiply the SSM by a Gaussian checkerboard matrix, so as to detect changes in the spectral structure (see Foote, 2000). The settings that control this algorithm are `kernelLen` and `kernelSD`. The crucial parameter is `kernelLen` (ms): a large kernel is good for detecting global changes in the sound, such as transitions between different vocalizations, whereas a small kernel is good for detecting rapid changes, such as individual bursts in a laugh. If you are curious about the kernel itself, take a look at `?soundgen:::getCheckerboardKernel`.
 
 ```{r fig.show = "hold", fig.height = 6, fig.width = 7}
 par(mfrow = c(2, 1))
@@ -471,12 +471,85 @@ par(mfrow = c(1, 1))
 *TIP The output of `segment` can potentially be combined with novelty from `ssm` and perhaps also with pitch tracking to improve audio segmentation using all these sources of information. At present this integration has not been implemented*
 
 # Optimization
+The results of acoustic analysis are sensitive to the chosen settings: the size and overlap of Fourier windows, the method(s) of pitch tracking and their parameters, etc. The default settings of the two main functions presented in this vignette, `analyze` and `segment`, have been optimized for human non-linguistic vocalizations. If you analyze other types of sounds, such as human speech or whale songs, you can probably improve the accuracy by changing some settings. In many cases the required changes are obvious: for example, to analyze F0 in ultrasonic whistles of dolphins or rodents you will obviously want to record at a much higher sampling rate, use shorter FFT windows, raise `pitch_ceiling` and `prior_mean`, etc. Other settings are not so obvious or even downright opaque, inviting some form of automatic optimization. 
 
-```{r}
+All that you need to run optimization is a training sample - that is, a few hundred sounds for which you know the right answer (average pitch, the number of syllables, or whatever it is that you wish to measure). You can start by analyzing this training sample with some reasonable settings, and then you can check the measurements manually, correcting any mistakes This gives you a "key", and then you can fiddle with the settings trying to reproduce this key as closely as possible. Once you have found the optimal settings, you can use them to analyze future samples of acoustically similar material. More sophisticated methods of optimization involving cross-validation are also possible, but even the simplest check against manual measurements can cause a dramatic improvement in the quality of your measurements.
 
+R has excellent optimization tools, notably `stats::optim`. It can also be done manually; for example, you can specify a grid with combinations of several control parameters and repeat the analysis for each combination, each time comparing the result with your "key". Since I have gone through this process when optimizing the default settings in `analyze` and `segment`, I believe it may be helpful to share some code and tips specific to this particular optimization problem. 
+
+Soundgen package contains two vectors containing "keys" for the optimization of segmentation (`segmentManual`) and pitch tracking (`pitchManual`) of 260 sounds in the corpus of human vocalizations described in Anikin & Persson (2017). `segmentManual` contains manually verified syllable counts, and `pitchManual` the average pitch of these 260 sounds. These numbers are by no means intended to represent the absolute truth: in many cases it is very hard to objectively count the syllables or even determine the "true" pitch (if you doubt it, listen to the sounds, which can be downloaded <a href="http://cogsci.se/personal/results/01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/01_anikin-persson_2016_naturalistic-non-linguistic-vocalizations.html">here</a>). Nevertheless, these manual measurements should not be too far off the mark, so they are acceptable targets for the algorithm.
+
+The easiest, "out-of-the-box" solution is to use the provided function `optimizePars`, which is essentially a wrapper around `stats::optim` customized for this particular task. There are extensive examples in the documentation for this function: see `?optimizePars`. 
+
+*TIP The parameters of `segment` can be optimized within an hour or two with 260 sounds (total duration ~9 min), but pitch tracking is really too slow to be optimized head-on. Try a few parameters at a time and use grid optimization instead of `optim` whenever possible. Even so, this might take a few nights* 
+
+If you prefer to optimize manually, here are a couple of examples. 
+
+```{r eval = FALSE}
+# checking combinations of pitch tracking methods
+myfolder = 'path.to.260.wav.files'  
+# myfolder = "/home/allgoodguys/Documents/Studying/Lund_PhD/sounds_corpora/00_ut_260_numbered"
+key = log(pitchManual)
+p = c('autocor', 'cep', 'spec', 'dom')
+pp = c(list(p),
+       combn(p, 3, simplify = FALSE),
+       combn(p, 2, simplify = FALSE),
+       combn(p, 1, simplify = FALSE))
+out = list()
+res = data.frame('pars' = sapply(pp, function(x) paste(x, collapse = ',')),
+                 cor1 = rep(NA, length(pp)),
+                 cor2 = rep(NA, length(pp)))
+# repeating the analysis for each combination of methods in pp
+for (i in 1:length(pp)) {
+  out[[i]] = analyzeFolder(myfolder, plot = FALSE, verbose = FALSE, step = 50,
+                           pitchMethods = pp[[i]])$pitchMedian
+  res$cor1[i] = cor(log(out[[i]]), log(pitchManual), use = 'pairwise.complete.obs')
+  res$cor2[i] = cor(log(out[[i]]), log(pitchManual), use = 'pairwise.complete.obs') *
+    (1 - mean(is.na(out[[i]]) & !is.na(key)))
+  print(res[i, ])
+}
+res[order(res$cor1, decreasing = TRUE), ]  # max correlation regardless of NA
+res[order(res$cor2, decreasing = TRUE), ]  # max correlation penalized for NA
+```
+
+And another example, for a grid of two parameters of `analyze`:
+```{r eval = FALSE}
+myfolder = 'path.to.260.wav.files'
+key = log(pitchManual)
+out = list()
+pars = expand.grid(windowLength = c(17, 35, 50),
+                   smooth = c(0, 1, 2))
+for (i in 1:nrow(pars)) {
+  out[[i]] = suppressWarnings(analyzeFolder(myfolder, plot = FALSE, verbose = FALSE, step = 25,
+               pitchMethods = c('autocor','dom','spec'),
+               windowLength = pars$windowLength[i],
+               smooth = pars$smooth[i]))$pitch_median
+  print(cor(log(out[[i]]), key, use = 'pairwise.complete.obs'))
+  print(cor(log(out[[i]]), key, use = 'pairwise.complete.obs') *
+          (1 - mean(is.na(out[[i]]) & !is.na(key))))
+}
+pars$r1 = sapply(out, function(x) {
+  cor(log(x), key, use = 'pairwise.complete.obs')
+})
+pars$r2 = sapply(out, function(x) {
+  cor(log(x), key, use = 'pairwise.complete.obs') *
+    (1 - mean(is.na(x) & !is.na(key)))
+})
+pars
+
+v = 6  # pick some combination of par values to explore
+trial = log(out[[v]])  
+cor (key, trial, use = 'pairwise.complete.obs')
+cor (key, trial, use = 'pairwise.complete.obs') * (1 - mean(is.na(trial) & !is.na(key)))
+plot (key, trial)
+abline(a=0, b=1, col='red')
 ```
 
 # References
-Boersma, 1993
-Anikin & Persson, 2017
-Ba et al. 2012
+Anikin, A. & Persson, T. (2017). Non-linguistic vocalizations from online amateur videos for emotion research: a validated corpus. Behavior Research Methods, 49(2): 758-771. Text and sounds available <a href="http://cogsci.se/personal/results.html">here</a>
+
+Ba, H., Yang, N., Demirkol, I., & Heinzelman, W. (2012, August). BaNa: A hybrid approach for noise resilient pitch detection. In Statistical Signal Processing Workshop (SSP), 2012 IEEE (pp. 369-372). 
+
+Boersma, P. (1993). Accurate short-term analysis of the fundamental frequency and the harmonics-to-noise ratio of a sampled sound. In Proceedings of the institute of phonetic sciences (Vol. 17, No. 1193, pp. 97-110).
+
+Foote, J. (2000). "Automatic Audio Segmentation using a measure of audio novelty." In Proceedings of IEEE International Conference on Multimedia and Expo, vol. I, pp. 452-455.

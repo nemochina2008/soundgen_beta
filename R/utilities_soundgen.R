@@ -538,9 +538,9 @@ divideIntoSyllables = function (nSyl,
 #' Internal soundgen function.
 #'
 #' A helper function for introducing random variation into any anchors (for
-#' pitch / breathing / amplitude / ...). NB: if the lower and upper bounds are
-#' unreasonable given the scale of df$value, \code{wiggleAnchors} will keep
-#' running forever!
+#' pitch / breathing / amplitude / ...). At higher temperatures can also add or
+#' delete an anchor. NB: make sure the lower and upper bounds are reasonable
+#' given the scale of df$value!
 #' @param df dataframe of anchors, for ex. \code{data.frame(time = c(0, .1, .8,
 #'   1), value = c(100, 230, 180, 90))}
 #' @param temperature,temp_coef regulate the amount of stochasticity
@@ -571,7 +571,55 @@ wiggleAnchors = function(df,
                          low,
                          high,
                          wiggleAllRows = FALSE) {
-  if (sum(is.na(df)) > 0) return(NA)
+  if (any(is.na(df))) return(NA)
+
+  # should we add a new anchor or remove one?
+  action = sample(x = c('nothing', 'remove', 'add'),
+                  size = 1,
+                  prob = c(1 - temperature, temperature / 2, temperature / 2))
+  if (action == 'add') {  # add an anchor
+    # try max 10 times to create a new time stamp no closer than 10% of time range
+    # to any existing anchors
+    c = 1
+    tr = diff(range(df$time)) / 10
+    while(c < 10) {
+      temp = runif(n = 1,
+                   min = df$time[1],
+                   max = tail(df$time, 1))
+      d = min(abs(df$time - temp))
+      if (d <= tr) {
+        c = c + 1
+      } else {
+        t = temp
+        break
+      }
+    }
+    # if time stamp has been created, generate a value for it and add to df
+    if (is.numeric(t)) {
+      v = rnorm_bounded(n = 1,
+                        mean = mean(df$value),
+                        sd = max(1e-3, range(df$value) * temperature),
+                        low = low[2],
+                        high = high[2])
+      df[nrow(df) + 1, ] = c(t, v)
+      df = df[order(df$time), ]
+    }
+  } else if (action == 'remove') {
+    if (wiggleAllRows) {
+      # we can remove any anchor
+      idx = sample(1:nrow(df), 1)
+      df = df[-idx, ]
+    } else {
+      # we don't touch the first and last anchors
+      if (nrow(df) > 2) {
+        idx = sample(2:(nrow(df) - 1), 1)
+        df = df[-idx, ]
+      }
+    }
+  }
+  rownames(df) = 1:nrow(df)  # in case we added / removed an anchor
+
+  # wiggle anchors
   if (wiggleAllRows) {
     df[, 1] = rnorm_bounded(
       n = nrow(df),

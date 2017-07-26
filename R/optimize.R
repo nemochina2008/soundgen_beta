@@ -69,9 +69,9 @@
 #' # run optimization loop several times with random initial values to check convergence
 #' # NB: with 260 sounds and default settings, this might take ~20 min per iteration!
 #' res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = key,
-#'   pars = c('shortest_syl', 'shortest_pause', 'syl_to_global_mean'),
+#'   pars = c('shortestSyl', 'shortestPause', 'sylThres'),
 #'   fitnessPar = 'nBursts',
-#'   nIter = 2, control = list(maxit = 50, reltol = .01, trace = 0))
+#'   nIter = 3, control = list(maxit = 50, reltol = .01, trace = 0))
 #'
 #' # examine the results
 #' print(res)
@@ -86,74 +86,26 @@
 #'
 #' # Try a grid with particular parameter values instead of formal optimization
 #' res = optimizePars(myfolder = myfolder, myfun = 'segmentFolder', key = segment_manual,
-#'   pars = c('shortest_syl', 'shortest_pause'),
+#'   pars = c('shortestSyl', 'shortestPause'),
 #'   fitnessPar = 'nBursts',
-#'   mygrid = expand.grid(shortest_syl = c(30, 40),
-#'                        shortest_pause = c(30, 40, 50)))
+#'   mygrid = expand.grid(shortestSyl = c(30, 40),
+#'                        shortestPause = c(30, 40, 50)))
 #' 1 - res$fit  # correlations with key
 #'
 #' # Optimization of PITCH TRACKING (takes several hours!)
 #' res = optimizePars(myfolder = myfolder,
 #'                    myfun = 'analyzeFolder',
 #'                    key = log(pitchManual),  # log-scale better for pitch
-#'                    pars = c('voiced_threshold_spec',
-#'                                         'specPitchThreshold_nullNA',
-#'                                         'pitchSpec_only_peak_weight',
-#'                                         'slope_spec'),
+#'                    pars = c('specThres', 'specSmooth'),
+#'                    bounds = list(low = c(0, 0), high = c(1, Inf)),
 #'                    fitnessPar = 'pitchMedian',
-#'                    bounds = list(low = c(0, 0, 0, 0),
-#'                                       high = c(1, 1, 1, Inf)),
 #'                    nIter = 2,
 #'                    otherPars = list(plot = FALSE, verbose = FALSE, step = 50,
-#'                                     pitchMethods = c('autocor', 'spec', 'dom')),
+#'                                     pitchMethods = 'spec'),
 #'                    fitnessFun = function(x) {
 #'                      1 - cor(log(x), key, use = 'pairwise.complete.obs') *
 #'                        (1 - mean(is.na(x) & !is.na(key)))  # penalize failing to detect F0
 #'                      })
-#'
-#' # Manual coding of simple grid optimization for voiced_threshold_cep,
-#' # w/o calling optimizePars():
-#' out = list()
-#' voiced_threshold_cep = c(.3, .45, .6, .8)
-#' for (i in 1:length(voiced_threshold_cep)) {
-#'   print(i)
-#'   out[[i]] = analyzeFolder(myfolder, plot = FALSE, verbose = FALSE, step = 50,
-#'                            pitchMethods = 'cep',
-#'                            voiced_threshold_cep = voiced_threshold_cep[i])$pitchMedian
-#'   print(cor(log(out[[i]]), key, use = 'pairwise.complete.obs'))
-#'   print(cor(log(out[[i]]), key, use = 'pairwise.complete.obs') *
-#'           (1 - mean(is.na(out[[i]]) & !is.na(key))))
-#' }
-#'
-#' trial = log(out[[3]])  # pick the value to explore
-#' cor (key, trial, use = 'pairwise.complete.obs')
-#' cor (key, trial, use = 'pairwise.complete.obs') * (1 - mean(is.na(trial) & !is.na(key)))
-#' plot (key, trial)
-#' abline(a=0, b=1, col='red')
-#'
-#' # checking combinations of pitch tracking methods
-#' myfolder = '/home/allgoodguys/Documents/Studying/Lund_PhD/sounds_corpora/00_ut_260_numbered'
-#' key = log(pitchManual)
-#' p = c('autocor', 'cep', 'spec', 'dom')
-#' pp = c(list(p),
-#'        combn(p, 3, simplify = FALSE),
-#'        combn(p, 2, simplify = FALSE),
-#'        combn(p, 1, simplify = FALSE))
-#' out = list()
-#' res = data.frame('pars' = sapply(pp, function(x) paste(x, collapse = ',')),
-#'                  cor1 = rep(NA, length(pp)),
-#'                  cor2 = rep(NA, length(pp)))
-#'
-#' for (i in 1:length(pp)) {
-#'   out[[i]] = analyzeFolder(myfolder, plot = FALSE, verbose = FALSE, step = 50,
-#'                            pitchMethods = pp[[i]])$pitchMedian
-#'   res$cor1[i] = cor(log(out[[i]]), log(pitchManual), use = 'pairwise.complete.obs')
-#'   res$cor2[i] = cor(log(out[[i]]), log(pitchManual), use = 'pairwise.complete.obs') *
-#'     (1 - mean(is.na(out[[i]]) & !is.na(key)))
-#'   print(res[i, ])
-#' }
-#' res[order(res$cor1, decreasing = TRUE), ]  # max correlation regardless of NA
-#' res[order(res$cor2, decreasing = TRUE), ]  # max correlation penalized for NA
 #' }  # end of dontrun
 optimizePars = function(myfolder,
                         key,
