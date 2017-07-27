@@ -533,6 +533,17 @@ divideIntoSyllables = function (nSyl,
   return(out)
 }
 
+#' sampleModif
+#'
+#' Internal soundgen function.
+#'
+#' Same as \code{\link[base]{sample}}, but without defaulting to x = 1:x if length(x) = 1. See https://stackoverflow.com/questions/7547758/using-sample-with-sample-space-size-1
+#' @param x vector
+#' @param ... other arguments passed to \code{sample}
+#' @examples
+#' sampleModif(x = 3, n = 1)  # never returns 1 or 2: cf. sample(x = 3, n = 1)
+sampleModif = function(x, ...) x[sample.int(length(x), ...)]
+
 #' Randomly modify anchors
 #'
 #' Internal soundgen function.
@@ -583,9 +594,7 @@ wiggleAnchors = function(df,
     c = 1
     tr = diff(range(df$time)) / 10
     while(c < 10) {
-      temp = runif(n = 1,
-                   min = df$time[1],
-                   max = tail(df$time, 1))
+      temp = runif(n = 1, min = df$time[1], max = tail(df$time, 1))
       d = min(abs(df$time - temp))
       if (d <= tr) {
         c = c + 1
@@ -612,7 +621,8 @@ wiggleAnchors = function(df,
     } else {
       # we don't touch the first and last anchors
       if (nrow(df) > 2) {
-        idx = sample(2:(nrow(df) - 1), 1)
+        # NB: sample() may return 1 if nrow(df) = 2, hence sampleModif()
+        idx = sampleModif(x = (2:(nrow(df) - 1)), size = 1)
         df = df[-idx, ]
       }
     }
