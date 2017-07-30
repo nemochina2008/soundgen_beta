@@ -29,8 +29,10 @@ and jitter/shimmer.
 }
 \examples{
 rw = soundgen:::getRandomWalk(len = 100, rw_range = 100, rw_smoothing = .2)
-plot (rw, type = 'l')
-plot (soundgen:::getIntegerRandomWalk(rw, pitchEffectsAmount = 75, minLength = 10))
-plot (soundgen:::getIntegerRandomWalk(rw, pitchEffectsAmount = 5, minLength = 10))
+plot(rw, type = 'l')
+plot(soundgen:::getIntegerRandomWalk(rw, pitchEffectsAmount = 75,
+                                     minLength = 10))
+plot(soundgen:::getIntegerRandomWalk(rw, pitchEffectsAmount = 5,
+                                     minLength = 10))
 }
 \keyword{internal}

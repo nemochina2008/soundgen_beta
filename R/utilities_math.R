@@ -49,6 +49,48 @@ zeroOne = function(x) {
   x = x / max(x)
 }
 
+#' log01
+#'
+#' Internal soundgen function
+#'
+#' Normalizes, log-transforms, and re-normalizes an input vector, so it ranges
+#' from 0 to 1
+#' @examples
+#' v = exp(1:10)
+#' log01(v)
+log01 = function(v) {
+  # takes a numeric vector, returns its log ranging from 0 to 1
+  v = v - min(v) + 1
+  v = log(v)
+  v = zeroOne(v)
+  return (v)
+}
+
+
+#' Simple downsampling
+#'
+#' Internal soundgen function
+#'
+#' Takes a numeric vector and downsamples it to the required sampling rate by
+#' simply throwing away some of the original points. If the new sampling rate is
+#' higher than the original, does nothing.
+#' @param s a numeric vector
+#' @param srNew the new, required sampling rate
+#' @param srOld the original sampling rate
+#' @param minLen the minimum length of returned vector
+#' @examples
+#' s = sort(rnorm(20))
+#' downsample(s, srNew = 5, srOld = 18)
+#' downsample(s, srNew = 5, srOld = 40)
+downsample = function(s, srNew = 10, srOld = 120, minLen = 3){
+  if (!srNew < srOld){
+    return (s)
+  }
+  l = length(s)
+  dur = l / srOld
+  idx = seq(1, l, length.out = min(l, max(minLen, round(dur * srNew))))
+  return (s[idx])
+}
 
 
 #' Entropy
@@ -174,15 +216,23 @@ rnorm_bounded = function(n = 1,
 }
 
 
+#' Modified mode
+#'
+#' Internal soundgen function
+#'
+#' Internal helper function for spectral (~BaNa) pitch tracker. NOT quite the same as simply mode(x).
+#' @param x numeric vector
+#' @examples
+#' soundgen:::Mode(c(1, 2, 3))  # if every element is unique, return the smallest
+#' soundgen:::Mode(c(1, 2, 2, 3))
 Mode = function(x) {
-  # internal helper function for spectral (~BaNa) pitch tracker. NOT quite the same as simply mode(x)
   x = sort(x)
   ux = unique(x)
   if (length(ux) < length(x)) {
-    return (ux[which.max(tabulate(match(x, ux)))])
+    return(ux[which.max(tabulate(match(x, ux)))])
   } else {
     # if every element is unique, return the smallest
-    return (x[1])
+    return(x[1])
   }
 }
 
@@ -227,7 +277,8 @@ getRandomWalk = function(len,
   if (len < 2)
     return (rgamma(1, 1 / rw_range ^ 2, 1 / rw_range ^ 2))
 
-  # generate a random walk (rw) of length depending on rw_smoothing, then linear extrapolation to len
+  # generate a random walk (rw) of length depending on rw_smoothing,
+  # then linear extrapolation to len
   n = floor(max(2, 2 ^ (1 / rw_smoothing)))
   if (length(trend) > 1) {
     n = round(n / 2, 0) * 2 # force to be even
@@ -241,7 +292,8 @@ getRandomWalk = function(len,
   if (n > len) {
     rw_long = cumsum(rnorm(len, trend_short)) # just a rw of length /len/
   } else {
-    # get a shorter sequence and extrapolate, thus achieving more or less smoothing
+    # get a shorter sequence and extrapolate, thus achieving
+    # more or less smoothing
     rw_short = cumsum(rnorm(n, trend_short)) # plot(rw_short, type = 'l')
     if (method == 'linear') {
       rw_long = approx(rw_short, n = len)$y
@@ -274,9 +326,11 @@ getRandomWalk = function(len,
 #' @return Returns a vector of integers (0/1/2) of the same length as rw.
 #' @examples
 #' rw = soundgen:::getRandomWalk(len = 100, rw_range = 100, rw_smoothing = .2)
-#' plot (rw, type = 'l')
-#' plot (soundgen:::getIntegerRandomWalk(rw, pitchEffectsAmount = 75, minLength = 10))
-#' plot (soundgen:::getIntegerRandomWalk(rw, pitchEffectsAmount = 5, minLength = 10))
+#' plot(rw, type = 'l')
+#' plot(soundgen:::getIntegerRandomWalk(rw, pitchEffectsAmount = 75,
+#'                                      minLength = 10))
+#' plot(soundgen:::getIntegerRandomWalk(rw, pitchEffectsAmount = 5,
+#'                                      minLength = 10))
 getIntegerRandomWalk = function(rw,
                                 pitchEffectsAmount = 50,
                                 minLength = 50) {
@@ -354,6 +408,37 @@ matchLengths = function(myseq,
     }
   }
   return (myseq)
+}
+
+
+#' Match number of columns
+#'
+#' Internal soundgen function
+#'
+#' Adds columns of zeroes or NA to a matrix (attaching them both left and
+#' right), so that the new number of columns = \code{len}
+#' @param matrix_short input matrix
+#' @param nCol the required number of columns
+#' @param padWith the value to pad with, normally \code{0} or \code{NA}
+#' @examples
+#' a = matrix(1:9, nrow = 3)
+#' matchColumns(a, nCol = 6, padWith = NA)
+matchColumns = function (matrix_short, nCol, padWith = 0) {
+  col_short = 1:ncol(matrix_short)
+  # pads with zeros/NA etc right and left
+  col_long = matchLengths(col_short, nCol,
+                          padDir = 'central', padWith = padWith)
+  new = matrix(padWith,
+               nrow = nrow(matrix_short),
+               ncol = length(col_long))
+  colnames(new) = col_long
+  if (is.na(padWith)) {
+    new[, !is.na(colnames(new))] = matrix_short
+  } else {
+    new[, colnames(new) != padWith] = matrix_short
+    # paste the old matrix where it belongs, fill the rest with zeros, NA's etc
+  }
+  return (new)
 }
 
 

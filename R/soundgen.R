@@ -422,7 +422,7 @@ soundgen = function(repeatBout = 1,
     pitchAnchors$time = pitchAnchors$time / max(pitchAnchors$time)
   }
 
-  wigglenoise = temperature > 0 &&
+  wiggleNoise = temperature > 0 &&
     class(noiseAnchors) == 'data.frame' &&
     sum(noiseAnchors$value > throwaway) > 0
   wiggleAmpl_per_syl = temperature > 0 &&
@@ -518,7 +518,7 @@ soundgen = function(repeatBout = 1,
           high = c(1, permittedValues['pitch', 'high']),
           temp_coef = tempEffects$pitchAnchorsDep
         )
-        if (wigglenoise) {
+        if (wiggleNoise) {
           noiseAnchors_syl[[s]] = wiggleAnchors(
             df = noiseAnchors,
             temperature = temperature,

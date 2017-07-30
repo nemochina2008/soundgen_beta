@@ -537,7 +537,9 @@ divideIntoSyllables = function (nSyl,
 #'
 #' Internal soundgen function.
 #'
-#' Same as \code{\link[base]{sample}}, but without defaulting to x = 1:x if length(x) = 1. See https://stackoverflow.com/questions/7547758/using-sample-with-sample-space-size-1
+#' Same as \code{\link[base]{sample}}, but without defaulting to x = 1:x if
+#' length(x) = 1. See
+#' https://stackoverflow.com/questions/7547758/using-sample-with-sample-space-size-1
 #' @param x vector
 #' @param ... other arguments passed to \code{sample}
 #' @examples
@@ -572,10 +574,26 @@ sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 #'   time = c(0, .1, .8, 1), value = c(100, 230, 180, 90)),
 #'   temperature = .2, temp_coef = .1, low = c(0, 50), high = c(1, 1000),
 #'   wiggleAllRows = FALSE) # pitch
+#' soundgen:::wiggleAnchors(df = data.frame(time = 0, value = 240),
+#'   temperature = .2, temp_coef = .1, low = c(0, 50), high = c(1, 1000),
+#'   wiggleAllRows = FALSE) # pitch, sinle anchor
 #' soundgen:::wiggleAnchors(df = data.frame(
 #'   time = c(-100, 100, 600, 900), value = c(-120, -80, 0, -120)),
-#'   temperature = .1, temp_coef = .5, low = c(-Inf, -120), high = c(+Inf, 30),
-#'   wiggleAllRows = TRUE) # breathing
+#'   temperature = .4, temp_coef = .5, low = c(-Inf, -120), high = c(+Inf, 30),
+#'   wiggleAllRows = TRUE) # noise
+
+#' # formants
+#' formants = list(f1 = list(time = 0, freq = 860, amp = 30, width = 120),
+#'                 f2 = list(time = c(0,1), freq = 1280,
+#'                 amp = c(10,40), width = 120))
+#' for (f in 1:length(formants)) {
+#'   formants[[f]] = wiggleAnchors(df = formants[[f]],
+#'                                 temperature = .4, temp_coef = .5,
+#'                                 low = c(0, 50, 0, 1),
+#'                                 high = c(1, 8000, 120, 2000),
+#'                                 wiggleAllRows = FALSE)
+#' }
+#' formants
 wiggleAnchors = function(df,
                          temperature,
                          temp_coef,
@@ -583,35 +601,47 @@ wiggleAnchors = function(df,
                          high,
                          wiggleAllRows = FALSE) {
   if (any(is.na(df))) return(NA)
+  if (class(df) != 'data.frame') df = as.data.frame(df)
+
+  if (ncol(df) != length(low) |
+      ncol(df) != length(high) |
+      length(low) != length(high)) {
+    warning('Vectors "low" and "high" should be the same length as ncol(df)')
+  }
 
   # should we add a new anchor or remove one?
-  action = sample(x = c('nothing', 'remove', 'add'),
+  action = sample(c('nothing', 'remove', 'add'),
                   size = 1,
                   prob = c(1 - temperature, temperature / 2, temperature / 2))
   if (action == 'add') {  # add an anchor
-    # try max 10 times to create a new time stamp no closer than 10% of time range
-    # to any existing anchors
-    c = 1
-    tr = diff(range(df$time)) / 10
-    while(c < 10) {
-      temp = runif(n = 1, min = df$time[1], max = tail(df$time, 1))
-      d = min(abs(df$time - temp))
-      if (d <= tr) {
-        c = c + 1
+    if (nrow(df) == 1) {
+      # the first anchor is the original, the second random
+      idx = 2:ncol(df)
+      newAnchor = try(rnorm_bounded(
+        n = ncol(df) - 1,
+        mean = as.numeric(df[1, idx]),
+        sd = as.numeric(df[1, idx] * temperature * temp_coef),
+        low = low[idx],
+        high = high[idx]))
+      if (class(newAnchor) == 'try-error') {
+        stop(paste('Failed to add an anchor to df:', paste(df, collapse = ', ')))
       } else {
-        t = temp
-        break
+        df = rbind(df, c(1, newAnchor))
+        df[1, 1] = 0  # make time c(0, 1)
       }
-    }
-    # if time stamp has been created, generate a value for it and add to df
-    if (is.numeric(t)) {
-      v = rnorm_bounded(n = 1,
-                        mean = mean(df$value),
-                        sd = max(1e-3, range(df$value) * temperature),
-                        low = low[2],
-                        high = high[2])
-      df[nrow(df) + 1, ] = c(t, v)
-      df = df[order(df$time), ]
+    } else {
+      # insert between any two existing anchors
+      a1 = sample(1:nrow(df), size = 1)
+      direction = sample(c(-1, 1), size = 1)
+      a2 = ifelse(a1 + direction < 1 || a1 + direction > nrow(df),
+                  a1 - direction,
+                  a1 + direction)
+      i1 = min(a1, a2)
+      i2 = max(a1, a2)  # insert between rows i1 and i2
+      newAnchor = colMeans(df[i1:i2, ])
+      df = rbind(df[1:i1, ],
+                 newAnchor,
+                 df[i2:nrow(df), ])
     }
   } else if (action == 'remove') {
     if (wiggleAllRows) {
@@ -631,36 +661,38 @@ wiggleAnchors = function(df,
 
   # wiggle anchors
   if (wiggleAllRows) {
-    df[, 1] = rnorm_bounded(
-      n = nrow(df),
-      mean = df[, 1],
-      sd = temperature * max(abs(df[, 1])) * temp_coef,
-      low = low[1],
-      high = high[1],
-      roundToInteger = FALSE
-    )
+    orig = NULL
   } else {
-    # don't wiggle the first and last time values
-    idx1 = ifelse(nrow(df) < 3, NA, 2:(nrow(df) - 1))
-    if (!is.na(idx1)) {
-      temp = df[idx1, 1]
-      df[idx1, 1] =  rnorm_bounded(
-        n = length(temp),
-        mean = temp,
-        sd = temperature * max(abs(df[, 1])) * temp_coef,
-        low = low[1],
-        high = high[1],
-        roundToInteger = FALSE
-      )
+    # save the original time values and put them back in later (usually 0 and 1)
+    orig = c(df[1, 1], df[nrow(df), 1])
+  }
+  if (nrow(df) == 1) {
+    ranges = as.numeric(df)
+  } else {
+    ranges = as.numeric(apply(df, 2, function(x) diff(range(x))))
+    # if no variation in values, defaults to value
+    z = which(ranges == 0)
+    ranges[z] = as.numeric(df[1, z])
+  }
+  for (i in 1:ncol(df)) {
+    w = try(rnorm_bounded(
+      n = nrow(df),
+      mean = as.numeric(df[, i]),
+      sd = as.numeric(ranges[i] * temperature * temp_coef),
+      low = low[i],
+      high = high[i],
+      roundToInteger = FALSE
+    ))
+    if (class(w) == 'try-error') {
+      stop(paste('Failed to wiggle column', i, 'of df:',
+                 paste(df, collapse = ', ')))
+    } else {
+      df[, i] = w
     }
   }
-  df[, 2] = rnorm_bounded(
-    n = nrow(df),
-    mean = df[, 2],
-    sd = temperature * abs(high[2] - low[2]) * temp_coef,
-    low = low[2],
-    high = high[2],
-    roundToInteger = FALSE
-  )
+  if (is.numeric(orig)) {
+    df[c(1, nrow(df)), 1] = orig
+  }
+
   return(df)
 }

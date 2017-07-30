@@ -20,7 +20,8 @@ Imports: stats,
     shinyBS,
     reshape2,
     mvtnorm,
-    plyr
+    plyr,
+    dtw
 Depends: R (>= 2.10)
 RoxygenNote: 6.0.1
 Suggests: knitr,
