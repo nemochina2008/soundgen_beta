@@ -60,5 +60,5 @@ for (f in 1:length(formants)) {
                                 high = c(1, 8000, 120, 2000),
                                 wiggleAllRows = FALSE)
 }
-formants
+print(formants)
 }

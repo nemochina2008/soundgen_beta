@@ -101,4 +101,7 @@ s = segment(sound, samplingRate = 16000, plot = TRUE,
 s = segment(sound, samplingRate = 16000, plot = TRUE,
   shortestSyl = 25, shortestPause = 25, sylThres = .6,
   interburstMult = 1)
+
+# just a summary
+segment(sound, samplingRate = 16000, summary = TRUE)
 }

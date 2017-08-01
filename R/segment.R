@@ -73,6 +73,9 @@
 #' s = segment(sound, samplingRate = 16000, plot = TRUE,
 #'   shortestSyl = 25, shortestPause = 25, sylThres = .6,
 #'   interburstMult = 1)
+#'
+#' # just a summary
+#' segment(sound, samplingRate = 16000, summary = TRUE)
 segment = function(x,
                    samplingRate = NULL,
                    windowLength = 40,
@@ -153,7 +156,7 @@ segment = function(x,
   # syllables (if no syllables are detected, just use the specified shortest
   # acceptable syllable length)
   if (is.null(interburst)) {
-    median_scaled = median(syllables$dur) * interburstMult
+    median_scaled = median(syllables$sylLen) * interburstMult
     interburst = ifelse(!is.na(median_scaled),
                                median_scaled,
                                shortestSyl)
@@ -167,22 +170,6 @@ segment = function(x,
                       troughRight = troughRight
   )
 
-  ## prepare a dataframe containing descriptives for syllables and bursts
-  result = data.frame(
-    nSyl = nrow(syllables),
-    sylLen_mean = suppressWarnings(mean(syllables$dur)),
-    sylLen_median = ifelse(nrow(syllables) > 0,
-                                   median(syllables$dur),
-                                   NA),  # otherwise returns NULL
-    sylLen_sd = sd(syllables$dur),
-    nBursts = nrow(bursts),
-    interburst_mean = suppressWarnings(mean(bursts$interburstInt, na.rm = TRUE)),
-    interburst_median = ifelse(nrow(bursts) > 0,
-                               median(bursts$interburstInt, na.rm = TRUE),
-                               NA),  # otherwise returns NULL
-    interburst_sd = sd(bursts$interburstInt, na.rm = TRUE)
-  )
-
   ## plotting (optional)
   if (is.character(savePath)) plot = TRUE
   if (plot) {
@@ -193,8 +180,8 @@ segment = function(x,
          xlab = 'Time, ms', ylab = 'Amplitude', main = plotname, ...)
     points (bursts, col = 'red', cex = 3, pch = 8)
     for (s in 1:nrow(syllables)) {
-      segments( x0 = syllables$time_start[s], y0 = threshold,
-                x1 = syllables$time_end[s], y1 = threshold,
+      segments( x0 = syllables$start[s], y0 = threshold,
+                x1 = syllables$end[s], y1 = threshold,
                 lwd = 2, col = 'blue')
     }
     if (!is.na(savePath)){
@@ -203,10 +190,31 @@ segment = function(x,
   }
 
   if (summary) {
-    return(result)
+    ## prepare a dataframe containing descriptives for syllables and bursts
+    result = data.frame(
+      nSyl = nrow(syllables),
+      sylLen_mean = suppressWarnings(mean(syllables$sylLen)),
+      sylLen_median = ifelse(nrow(syllables) > 0,
+                             median(syllables$sylLen),
+                             NA),  # otherwise returns NULL
+      sylLen_sd = sd(syllables$sylLen),
+      pauseLen_mean = suppressWarnings(mean(syllables$pauseLen, na.rm = TRUE)),
+      pauseLen_median = ifelse(nrow(syllables) > 1,
+                               median(syllables$pauseLen, na.rm = TRUE),
+                               NA),  # otherwise returns NULL
+      pauseLen_sd = sd(syllables$pauseLen),
+      nBursts = nrow(bursts),
+      interburst_mean = suppressWarnings(mean(bursts$interburstInt, na.rm = TRUE)),
+      interburst_median = ifelse(nrow(bursts) > 0,
+                                 median(bursts$interburstInt, na.rm = TRUE),
+                                 NA),  # otherwise returns NULL
+      interburst_sd = sd(bursts$interburstInt, na.rm = TRUE)
+    )
   } else {
-    return(list(syllables = syllables, bursts = bursts))
+    result = list(syllables = syllables, bursts = bursts)
   }
+
+  return(result)
 }
 
 
@@ -221,7 +229,8 @@ segment = function(x,
 #'
 #' @param myfolder full path to target folder
 #' @inheritParams segment
-#' @param verbose if TRUE, reports progress and estimated time left
+#' @param verbose,reportEvery if TRUE, reports progress every \code{reportEvery}
+#'   files and estimated time left
 #' @return If \code{summary} is TRUE, returns a dataframe with one row per audio
 #'   file. If \code{summary} is FALSE, returns a list of detailed descriptives.
 #' @export
@@ -257,6 +266,7 @@ segmentFolder = function (myfolder,
                           plot = FALSE,
                           savePath = NA,
                           verbose = TRUE,
+                          reportEvery = 10,
                           ...) {
   time_start = proc.time()  # timing
   # open all .wav files in folder
@@ -284,7 +294,7 @@ segmentFolder = function (myfolder,
       )
 
     if (verbose) {
-      if (i %% 10 == 0) {
+      if (i %% reportEvery == 0) {
         reportTime(i = i, nIter = length(filenames),
                    time_start = time_start, jobs = filesizes)
       }

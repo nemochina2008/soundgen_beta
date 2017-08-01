@@ -7,7 +7,7 @@
 mergeSyllables(syllables, shortestPause)
 }
 \arguments{
-\item{syllables}{a dataframe listing syllables with time_start and time_end}
+\item{syllables}{a dataframe listing syllables with start and end}
 
 \item{shortestPause}{minimum acceptable break between syllables, ms.
 Syllables separated by less time are merged. To avoid merging, specify

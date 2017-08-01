@@ -1,4 +1,5 @@
-## TODO: # check that numeric arguments are valid: make sure we don't expect NULL, add overlap etc to permittedValues before any lists, etc - check everything!!!
+## TODO: # document matchPars, try to add findFormants to analyze() (per frame)
+# check that numeric arguments are valid: make sure we don't expect NULL, add overlap etc to permittedValues before any lists, etc - check everything!!!
 # consider reducing formant width with increasing vocalTract in stochastic formants (to avoid formants merging - check if this is theoretically meaningful!)
 # mouth opening: see if abrupt transitions can be avoided as mouth opening goes from 0 to positive (some kind of smooth fun approaching 0?)
 # write vignettes

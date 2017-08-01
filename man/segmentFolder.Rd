@@ -8,7 +8,7 @@ segmentFolder(myfolder, shortestSyl = 40, shortestPause = 40,
   sylThres = 0.9, interburst = NULL, interburstMult = 1,
   burstThres = 0.075, peakToTrough = 3, troughLeft = TRUE,
   troughRight = FALSE, windowLength = 40, overlap = 80, summary = TRUE,
-  plot = FALSE, savePath = NA, verbose = TRUE, ...)
+  plot = FALSE, savePath = NA, verbose = TRUE, reportEvery = 10, ...)
 }
 \arguments{
 \item{myfolder}{full path to target folder}
@@ -63,7 +63,8 @@ on each syllable and bursts (location, duration, amplitude, ...)}
 \item{savePath}{full path to the folder in which to save the plots. Defaults
 to NA}
 
-\item{verbose}{if TRUE, reports progress and estimated time left}
+\item{verbose, reportEvery}{if TRUE, reports progress every \code{reportEvery}
+files and estimated time left}
 
 \item{...}{other graphical parameters passed to \code{\link[graphics]{plot}}}
 }

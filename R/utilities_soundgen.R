@@ -593,7 +593,7 @@ sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 #'                                 high = c(1, 8000, 120, 2000),
 #'                                 wiggleAllRows = FALSE)
 #' }
-#' formants
+#' print(formants)
 wiggleAnchors = function(df,
                          temperature,
                          temp_coef,

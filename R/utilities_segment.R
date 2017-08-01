@@ -28,37 +28,42 @@ findSyllables = function(envelope,
   # the time stamp in the output of rle
   # exclude segments of length < shortestSyl or below threshold
   env_short = na.omit(env_above_thres[env_above_thres$value == 1 &
-                                        env_above_thres$count > ceiling(shortestSyl / timestep), ])
+                env_above_thres$count > ceiling(shortestSyl / timestep), ])
   nSyllables = nrow(env_short)
 
   # save the time of each syllable for plotting
-  if (nSyllables == 0){
+  if (nSyllables == 0) {
     syllables = data.frame(syllable = 0,
-                           time_start = NA,
-                           time_end = NA,
+                           start = NA,
+                           end = NA,
                            dur = NA)
   } else {
     syllables = data.frame(
       syllable = 1:nSyllables,
-      time_start = apply(matrix(1:nSyllables), 1, function(x) {
+      start = apply(matrix(1:nSyllables), 1, function(x) {
         sum(env_above_thres$count[1:(env_short$idx[x] - 1)]) * timestep
       }),
-      time_end = NA
+      end = NA
     )
     if (env_above_thres$value[1] == 1) {   # if the sounds begins with a syllable
-      syllables$time_start[1] = 0  # the first syllable begins at zero
+      syllables$start[1] = 0  # the first syllable begins at zero
     }
-    syllables$time_end = syllables$time_start + env_short$count * timestep
+    syllables$end = syllables$start + env_short$count * timestep
 
     # Optional: merge syllables with very short intervals in between them
     if (mergeSyl) {
       syllables = mergeSyllables(syllables, shortestPause)
       syllables$syllable = 1:nrow(syllables)
     }
-    syllables$dur = syllables$time_end - syllables$time_start
+    syllables$sylLen = syllables$end - syllables$start
+    syllables$pauseLen = NA
+    if (nrow(syllables) > 1) {
+      for (i in 1:(nrow(syllables) - 1)) {
+        syllables$pauseLen[i] = syllables$start[i + 1] -
+                                syllables$end[i]
+      }
+    }
   }
-
-
   return (syllables)
 }
 
@@ -68,14 +73,14 @@ findSyllables = function(envelope,
 #' Internal soundgen function.
 #'
 #' Merges syllables if they are separated by less than \code{shortestPause ms}. Called by \code{\link{findSyllables}}.
-#' @param syllables a dataframe listing syllables with time_start and time_end
+#' @param syllables a dataframe listing syllables with start and end
 #' @inheritParams segment
 mergeSyllables = function (syllables, shortestPause) {
   i = 1
   while (i < nrow(syllables)) {
-    while (syllables$time_start[i + 1] - syllables$time_end[i] < shortestPause &
+    while (syllables$start[i + 1] - syllables$end[i] < shortestPause &
            i < nrow(syllables)) {
-      syllables$time_end[i] = syllables$time_end[i + 1]
+      syllables$end[i] = syllables$end[i + 1]
       syllables = syllables[-(i + 1), ]
     }
     i = i + 1

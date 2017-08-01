@@ -37,6 +37,14 @@ to_dB = function(x) {
   return(10 * log10(x / (1 - x)))
 }
 
+#' List depth
+#'
+#' Internal soundgen function
+#'
+#' Returns the depth of list structure. See https://stackoverflow.com/questions/13432863/determine-level-of-nesting-in-r
+#' @param x any R object
+listDepth = function(x) ifelse(is.list(x), 1L + max(sapply(x, listDepth)), 0L)
+
 
 #' Normalize 0 to 1
 #'
