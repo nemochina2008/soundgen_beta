@@ -350,17 +350,17 @@ getFrameBank = function(sound,
   zpExtra = floor((zp - windowLength_points) / 2) * 2 # how many extra zeroes
   # we pad with. Made even
   if (zpExtra > 0) {
-    frameBank = apply (as.matrix(myseq), 1, function(x) {
+    frameBank = apply(as.matrix(myseq), 1, function(x) {
       c(rep(0, zpExtra / 2),
         sound[x:(windowLength_points + x - 1)] * filter,
         rep(0, zpExtra / 2))
     })
   } else {
-    frameBank = apply (as.matrix(myseq), 1, function(x) {
+    frameBank = apply(as.matrix(myseq), 1, function(x) {
       sound[x:(windowLength_points + x - 1)] * filter
     })
   }
-  return (frameBank)
+  return(frameBank)
 }
 
 

@@ -307,7 +307,7 @@ segmentFolder = function (myfolder,
     output$sound = apply(matrix(1:length(filenames)), 1, function(x) {
       tail(unlist(strsplit(filenames[x], '/')), 1)
     })
-    output = output[, c(9, 1:8)]
+    output = output[, c('sound', colnames(output)[1:(ncol(output) - 1)])]
   } else {
     output = result
     names(output) = filenames

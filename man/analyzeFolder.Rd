@@ -4,28 +4,30 @@
 \alias{analyzeFolder}
 \title{Analyze sound}
 \usage{
-analyzeFolder(myfolder, samplingRate = NULL, silence = 0.04,
-  windowLength = 50, wn = "gaussian", step = 25, zp = 0,
-  cutFreq = 6000, pitchMethods = c("autocor", "spec", "dom"),
-  entropyThres = 0.6, pitchFloor = 75, pitchCeiling = 3500,
-  priorMean = HzToSemitones(300), priorSD = 6, priorPlot = FALSE,
-  nCands = 1, minVoicedCands = "autom", domThres = 0.1, domSmooth = 220,
-  autocorThres = 0.7, autocorSmooth = NULL, cepThres = 0.3,
-  cepSmooth = NULL, cepZp = 0, specThres = 0.3, specPeak = 0.35,
-  specSinglePeakCert = 0.4, specHNRslope = 0.8, specSmooth = 150,
-  specMerge = 1, shortestSyl = 20, shortestPause = 60, interpolWin = 3,
-  interpolTol = 0.3, interpolCert = 0.3, pathfinding = c("none", "fast",
-  "slow")[2], annealPars = list(maxit = 5000, temp = 1000),
-  certWeight = 0.5, snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
-  smoothVars = c("pitch", "dom"), plot = TRUE, savePath = NA,
-  specPlot = list(contrast = 0.2, brightness = 0, ylim = c(0, 5)),
-  pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
-  candPlot = list(levels = c("autocor", "cep", "spec", "dom"), col =
-  c("green", "violet", "red", "orange"), pch = c(16, 7, 2, 3), cex = 2),
-  summary = TRUE, verbose = TRUE)
+analyzeFolder(myfolder, verbose = TRUE, samplingRate = NULL,
+  silence = 0.04, windowLength = 50, step = NULL, overlap = 50,
+  wn = "gaussian", zp = 0, cutFreq = 6000, nFormants = 3,
+  pitchMethods = c("autocor", "spec", "dom"), entropyThres = 0.6,
+  pitchFloor = 75, pitchCeiling = 3500, priorMean = HzToSemitones(300),
+  priorSD = 6, priorPlot = FALSE, nCands = 1, minVoicedCands = "autom",
+  domThres = 0.1, domSmooth = 220, autocorThres = 0.7,
+  autocorSmooth = NULL, cepThres = 0.3, cepSmooth = NULL, cepZp = 0,
+  specThres = 0.3, specPeak = 0.35, specSinglePeakCert = 0.4,
+  specHNRslope = 0.8, specSmooth = 150, specMerge = 1, shortestSyl = 20,
+  shortestPause = 60, interpolWin = 3, interpolTol = 0.3,
+  interpolCert = 0.3, pathfinding = c("none", "fast", "slow")[2],
+  annealPars = list(maxit = 5000, temp = 1000), certWeight = 0.5,
+  snakeStep = 0.05, snakePlot = FALSE, smooth = 1,
+  smoothVars = c("pitch", "dom"), summary = TRUE, plot = FALSE,
+  savePath = NA, specPlot = list(contrast = 0.2, brightness = 0, ylim = c(0,
+  5)), pitchPlot = list(col = rgb(0, 0, 1, 0.75), lwd = 3),
+  candPlot = list(levels = c("autocor", "spec", "dom", "cep"), col =
+  c("green", "red", "orange", "violet"), pch = c(16, 2, 3, 7), cex = 2))
 }
 \arguments{
 \item{myfolder}{full path to target folder}
+
+\item{verbose}{if TRUE, reports progress and estimated time left}
 
 \item{samplingRate}{sampling rate of \code{x} (only needed if
 \code{x} is a numeric vector, rather than a .wav file)}
@@ -37,10 +39,12 @@ but it will never be lower than this specified number.}
 
 \item{windowLength}{length of FFT window, ms}
 
+\item{step}{you can override \code{overlap} by specifying FFT step, ms}
+
+\item{overlap}{overlap between successive FFT frames, \%}
+
 \item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
 blackman, flattop}
-
-\item{step}{you can override \code{overlap} by specifying FFT step, ms}
 
 \item{zp}{zero padding, points}
 
@@ -48,6 +52,9 @@ blackman, flattop}
 descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
 audio files}
+
+\item{nFormants}{the number of formants to extract per FFT frame. Calls
+\code{\link[phonTools]{findformants}} with default settings}
 
 \item{pitchMethods}{methods of pitch estimation to consider for determining
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
@@ -183,6 +190,10 @@ the variables in \code{smoothVars} are adjusted with median smoothing.
 \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
 deviation of ~4 semitones. To disable, set \code{smooth} to NULL}
 
+\item{summary}{if TRUE, returns only a summary of the measured acoustic
+variables (mean, median and SD). If FALSE, returns a list containing
+frame-by-frame values}
+
 \item{plot}{if TRUE, produces a spectrogram with pitch contour overlaid}
 
 \item{savePath}{if a valid path is specified, a plot is saved in this
@@ -196,10 +207,6 @@ final pitch contour. Set to \code{NULL} or \code{NA} to suppress}
 
 \item{candPlot}{a list of graphical parameters for displaying
 individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress}
-
-\item{summary}{if TRUE, summarizes acoustics per file}
-
-\item{verbose}{if TRUE, reports progress and estimated time left}
 }
 \value{
 If \code{summary} is TRUE, returns a dataframe with one row per audio
@@ -215,7 +222,7 @@ Acoustic analysis of all .wav files in a folder.
 # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp'  # 260 .wav files live here
-s = analyzeFolder(myfolder, pathfinding = 'slow', verbose = TRUE)
+s = analyzeFolder(myfolder, verbose = TRUE)
 
 # Check accuracy: import manually verified pitch values (our "key")
 key = pitch_manual  # a vector of 260 floats

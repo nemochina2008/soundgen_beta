@@ -15,6 +15,8 @@
 #'   descriptives after discarding all info above \code{cutFreq}.
 #'   Recommended if the original sampling rate varies across different analyzed
 #'   audio files
+#' @param nFormants the number of formants to extract per FFT frame. Calls
+#'   \code{\link[phonTools]{findformants}} with default settings
 #' @param pitchMethods methods of pitch estimation to consider for determining
 #'   pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 #'   'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band
@@ -86,6 +88,9 @@
 #'   the variables in \code{smoothVars} are adjusted with median smoothing.
 #'   \code{smooth} of 1 corresponds to a window of ~100 ms and tolerated
 #'   deviation of ~4 semitones. To disable, set \code{smooth} to NULL
+#' @param summary if TRUE, returns only a summary of the measured acoustic
+#'   variables (mean, median and SD). If FALSE, returns a list containing
+#'   frame-by-frame values
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
 #' @param savePath if a valid path is specified, a plot is saved in this
 #'   folder (defaults to NA)
@@ -95,11 +100,15 @@
 #'   individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress
 #' @param pitchPlot a list of graphical parameters for displaying the
 #'   final pitch contour. Set to \code{NULL} or \code{NA} to suppress
-#' @return Returns a dataframe with one row per FFT frame and one column per
+#' @return If \code{summary = TRUE}, returns a dataframe with one row and three
+#'   column per acoustic variable (mean / median / SD). If \code{summary =
+#'   FALSE}, returns a dataframe with one row per FFT frame and one column per
 #'   acoustic variable. The best guess at the pitch contour considering all
 #'   available information is stored in the variable called "pitch". In
 #'   addition, the output contains a number of other acoustic descriptors and
-#'   pitch estimates by separate algorithms included in \code{pitchMethods}.
+#'   pitch estimates by separate algorithms included in \code{pitchMethods}. See
+#'   the vignette on acoustic analysis for a full explanation of returned
+#'   measures.
 #' @export
 #' @examples
 #' sound1 = soundgen(sylLen = 900, pitchAnchors = list(
@@ -145,6 +154,7 @@ analyze = function(x,
                    wn = 'gaussian',
                    zp = 0,
                    cutFreq = 6000,
+                   nFormants = 3,
                    pitchMethods = c('autocor', 'spec', 'dom'),
                    entropyThres = 0.6,
                    pitchFloor = 75,
@@ -179,6 +189,7 @@ analyze = function(x,
                    snakePlot = FALSE,
                    smooth = 1,
                    smoothVars = c('pitch', 'dom'),
+                   summary = FALSE,
                    plot = TRUE,
                    savePath = NA,
                    specPlot = list(
@@ -467,12 +478,30 @@ analyze = function(x,
   # plot(autocorBank[, 13], type = 'l')
   rownames(autocorBank) = samplingRate / (1:nrow(autocorBank))
 
-  ## spectral analysis of each frame from fft
+  ## FORMANTS
+  framesToAnalyze = which(cond_silence)
+  formants = matrix(NA, nrow = ncol(frameBank), ncol = nFormants * 2)
+  colnames(formants) = paste0('f', rep(1:nFormants, each = 2),
+                              rep(c('_freq', '_width'), nFormants))
+  for (i in framesToAnalyze) {
+    ff = try(phonTools::findformants(frameBank[, i],
+                                     fs = samplingRate,
+                                     verify = FALSE),
+             silent = TRUE)
+    if (class(ff) != 'try-error' && is.list(ff)) {
+      temp = matrix(NA, nrow = nFormants, ncol = 2)
+      availableRows = 1:min(nFormants, nrow(ff))
+      temp[availableRows, ] = as.matrix(ff[availableRows, ])
+      formants[i, ] = matrix(t(temp), nrow = 1)
+    }
+  }
+
+  ## PITCH and other spectral analysis of each frame from fft
   # set up an empty nested list to save values in - this enables us to analyze
   # only the non-silent and not-too-noisy frames but still have a consistently
   # formatted output
   frameInfo = rep(list(list(
-    'pitch_array' = data.frame (
+    'pitch_array' = data.frame(
       'pitchCand' = NA,
       'pitchAmpl' = NA,
       'source' = NA,
@@ -483,7 +512,7 @@ analyze = function(x,
       'HNR' = NA,
       'dom' = NA,
       'peakFreq' = NA,
-      'peakFreq_cut' = NA,
+      'peakFreqCut' = NA,
       'meanFreq' = NA,
       'quartile25' = NA,
       'quartile50' = NA,
@@ -492,7 +521,7 @@ analyze = function(x,
     )
   )), ncol(s))
 
-  for (i in which(cond_silence)) {
+  for (i in framesToAnalyze) {
     # for each frame that satisfies our condition, do spectral analysis (NB: we
     # do NOT analyze frames that are too quiet, so we only get NA's for those
     # frames, no meanFreq, dom etc!)
@@ -526,11 +555,9 @@ analyze = function(x,
   result = lapply(frameInfo, function(y) y[['summaries']])
   result = data.frame(matrix(unlist(result), nrow=length(frameInfo), byrow=TRUE))
   colnames(result) = names(frameInfo[[1]]$summaries)
-  # NB: sapply allows to do this in 1 line, but then result$HNR returns a list
-  # instead of a vector! Annoying...
-  # result = matrix(t(sapply(frameInfo, function(y) y[['summaries']])))
-  result$ampl = ampl
+  result = cbind(result, formants)
   result$entropy = entropy
+  result$ampl = ampl
   result$time = round(seq(
     step / 2,  # windowLength_points / 2 / samplingRate,
     duration * 1000 - step / 2,
@@ -538,6 +565,8 @@ analyze = function(x,
   ),
   0)
   result$duration = duration
+  c = ncol(result)
+  result = result[, c(rev((c-3):c), 1:(c-4))]  # change the order of columns
 
   ## postprocessing
   # extract and prepare pitch candidates for the pathfinder algorithm
@@ -668,6 +697,10 @@ analyze = function(x,
   result$HNR = to_dB(result$HNR)
   result$harmonics = to_dB(result$harmonics)
 
+  # Arrange columns in alphabetical order (except the first two)
+  result = result[, c(colnames(result)[1:2],
+                      sort(colnames(result)[3:ncol(result)]))]
+
   ## Add pitch contours to the spectrogram
   if (plot) {
     # if plot_spec is FALSE, we first have to set up an empty plot
@@ -729,12 +762,38 @@ analyze = function(x,
          ylab = 'Multiplier of certainty', main = 'Prior beliefs in pitch values')
   }
 
-  result = result[c('duration', 'time', 'voiced', 'ampl', 'ampl_voiced',
-                    'entropy', 'HNR', 'dom', 'meanFreq', 'peakFreq', 'peakFreq_cut',
-                    'pitch', 'pitchAutocor', 'pitchCep', 'pitchSpec',
-                    'quartile25', 'quartile50', 'quartile75', 'specSlope', 'harmonics'
-  )]
-  return (result)
+  if (summary) {
+    vars = colnames(result)[3:ncol(result)]
+    vars = vars[vars != 'voiced']  # except dur, time and voiced
+    out = as.data.frame(matrix(
+      ncol = 2 + 3 * length(vars),
+      nrow = 1
+    ))
+    colnames(out)[c(1:2)] = c('duration', 'voiced')
+    for (c in 1:length(vars)) {
+      # specify how to summarize pitch etc values for each frame within each file
+      # - save mean, median, sd, ... "2+2*c-1": "2" because of dur/voiced above,
+      # "+3*c" because for each acoustic variable, we save mean, median and sd
+      colnames(out)[2 + 3 * c - 2] = paste0(vars[c], '_', 'mean')
+      colnames(out)[2 + 3 * c - 1] = paste0(vars[c], '_', 'median')
+      colnames(out)[2 + 3 * c] = paste0(vars[c], '_', 'sd')
+    }
+    # which columns in the output of pitch_per_sound to save as median + sd
+    myseq = (1:length(vars)) + 2
+    out$duration = result$duration[1]  # duration, ms
+    out$voiced = mean(result$voiced)  # proportion of voiced frames
+
+    for (v in 1:length(myseq)) {
+      myvar = colnames(result)[myseq[v]]
+      out[1, 3 * v] = mean(result[, myvar], na.rm = TRUE)
+      out[1, 3 * v + 1] = median(result[, myvar], na.rm = TRUE)
+      out[1, 3 * v + 2] = sd(result[, myvar], na.rm = TRUE)
+    }
+  } else {
+    out = result
+  }
+
+  return(out)
 }
 
 
@@ -742,10 +801,9 @@ analyze = function(x,
 #'
 #' Acoustic analysis of all .wav files in a folder.
 #' @param myfolder full path to target folder
+#' @param verbose if TRUE, reports progress and estimated time left
 #' @inheritParams analyze
 #' @inheritParams spectrogram
-#' @param summary if TRUE, summarizes acoustics per file
-#' @param verbose if TRUE, reports progress and estimated time left
 #' @return If \code{summary} is TRUE, returns a dataframe with one row per audio
 #'   file. If \code{summary} is FALSE, returns a list of detailed descriptives.
 #' @export
@@ -756,7 +814,7 @@ analyze = function(x,
 #' # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
-#' s = analyzeFolder(myfolder, pathfinding = 'slow', verbose = TRUE)
+#' s = analyzeFolder(myfolder, verbose = TRUE)
 #'
 #' # Check accuracy: import manually verified pitch values (our "key")
 #' key = pitch_manual  # a vector of 260 floats
@@ -766,13 +824,16 @@ analyze = function(x,
 #' abline(a=0, b=1, col='red')
 #' }
 analyzeFolder = function(myfolder,
+                         verbose = TRUE,
                          samplingRate = NULL,
                          silence = 0.04,
                          windowLength = 50,
+                         step = NULL,
+                         overlap = 50,
                          wn = 'gaussian',
-                         step = 25,
                          zp = 0,
                          cutFreq = 6000,
+                         nFormants = 3,
                          pitchMethods = c('autocor', 'spec', 'dom'),
                          entropyThres = 0.6,
                          pitchFloor = 75,
@@ -807,7 +868,8 @@ analyzeFolder = function(myfolder,
                          snakePlot = FALSE,
                          smooth = 1,
                          smoothVars = c('pitch', 'dom'),
-                         plot = TRUE,
+                         summary = TRUE,
+                         plot = FALSE,
                          savePath = NA,
                          specPlot = list(
                            contrast = .2,
@@ -819,113 +881,39 @@ analyzeFolder = function(myfolder,
                            lwd = 3
                          ),
                          candPlot = list(
-                           levels = c('autocor', 'cep', 'spec', 'dom'),
-                           col = c('green', 'violet', 'red', 'orange'),
-                           pch = c(16, 7, 2, 3),
+                           levels = c('autocor', 'spec', 'dom', 'cep'),
+                           col = c('green', 'red', 'orange', 'violet'),
+                           pch = c(16, 2, 3, 7),
                            cex = 2
-                         ),
-                         summary = TRUE,
-                         verbose = TRUE) {
+                         )) {
   time_start = proc.time()  # timing
   filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
   # in order to provide more accurate estimates of time to completion,
   # check the size of all files in the target folder
   filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
-  myPars = list(
-    samplingRate = samplingRate,
-    silence = silence,
-    windowLength = windowLength,
-    wn = wn,
-    step = step,
-    zp = zp,
-    cutFreq = cutFreq,
-    pitchMethods = pitchMethods,
-    entropyThres = entropyThres,
-    pitchFloor = pitchFloor,
-    pitchCeiling = pitchCeiling,
-    priorMean = priorMean,
-    priorSD = priorSD,
-    priorPlot = priorPlot,
-    nCands = nCands,
-    minVoicedCands = minVoicedCands,
-    domThres = domThres,
-    domSmooth = domSmooth,
-    autocorThres = autocorThres,
-    autocorSmooth = autocorSmooth,
-    cepThres = cepThres,
-    cepSmooth = cepSmooth,
-    cepZp = cepZp,
-    specThres = specThres,
-    specPeak = specPeak,
-    specSinglePeakCert = specSinglePeakCert,
-    specHNRslope = specHNRslope,
-    specSmooth = specSmooth,
-    specMerge = specMerge,
-    shortestSyl = shortestSyl,
-    shortestPause = shortestPause,
-    interpolWin = interpolWin,
-    interpolTol = interpolTol,
-    interpolCert = interpolCert,
-    pathfinding = pathfinding,
-    annealPars = annealPars,
-    certWeight = certWeight,
-    snakeStep = snakeStep,
-    snakePlot = snakePlot,
-    smooth = smooth,
-    smoothVars = smoothVars,
-    plot = plot,
-    savePath = savePath,
-    specPlot = specPlot,
-    pitchPlot = pitchPlot,
-    candPlot = candPlot
-  )
-
-  if (summary == FALSE) {
-    out = list()
-    for (i in 1:length(filenames)) {
-      out[[i]] = do.call(analyze, c(filenames[i], myPars))
-      if (verbose) {
-        reportTime(i = i, nIter = length(filenames),
-                   time_start = time_start, jobs = filesizes)
-      }
-    }
-  } else if (summary == TRUE) {
-    vars = c('ampl', 'ampl_voiced', 'entropy', 'HNR', 'dom', 'meanFreq', 'peakFreq',
-             'peakFreq_cut', 'pitch', 'pitchAutocor', 'pitchCep', 'pitchSpec',
-             'quartile25', 'quartile50', 'quartile75', 'specSlope', 'harmonics')
-    out = as.data.frame(matrix(
-      ncol = 3 + 2 * length(vars),
-      nrow = length(filenames)
-    ))
-    colnames(out)[c(1:3)] = c('file', 'duration', 'voiced')
-    for (c in 1:length(vars)) {
-      # specify how to summarize pitch etc values for each frame within each file
-      # - save median, sd, ... "3+2*c-1": "3" because of file/dur/voiced above,
-      # "+2*c" because for each acoustic variable, we save median and sd
-      colnames(out)[3 + 2 * c - 1] = paste0(vars[c], '_', 'median')
-      colnames(out)[3 + 2 * c] = paste0(vars[c], '_', 'sd')
-    }
-    # which columns in the output of pitch_per_sound to save as median + sd
-    myseq = (1:length(vars)) + 3
-
-    for (i in 1:length(filenames)) {
-      temp = do.call(analyze, c(filenames[i], myPars))
-      out[i, 1] = tail (unlist (strsplit(filenames[i], '/')), n = 1)
-      out[i, 2] = temp[1, 'duration']  # duration, ms
-      out[i, 3] = mean(temp[, 'voiced'])  # proportion of voiced frames
-
-      for (v in 1:length(myseq)) {
-        myvar = colnames(temp)[myseq[v]]
-        out[i, 2 * v + 2] = median(temp[, myvar], na.rm = TRUE)
-        out[i, 2 * v + 3] = sd(temp[, myvar], na.rm = TRUE)
-      }
-
-      if (verbose) {
-        reportTime(i = i, nIter = length(filenames),
-                   time_start = time_start, jobs = filesizes)
-      }
+  myPars = as.list(match.call())
+  myPars = myPars[names(myPars) != 'myfolder' &
+                  names(myPars) != 'verbose']
+  result = list()
+  for (i in 1:length(filenames)) {
+    result[[i]] = do.call(analyze, c(filenames[i], myPars))
+    if (verbose) {
+      reportTime(i = i, nIter = length(filenames),
+                 time_start = time_start, jobs = filesizes)
     }
   }
 
-  return (out)
+  # prepare output
+  if (summary == TRUE) {
+    output = as.data.frame(t(sapply(result, rbind)))
+    output$sound = apply(matrix(1:length(filenames)), 1, function(x) {
+      tail(unlist(strsplit(filenames[x], '/')), 1)
+    })
+    output = output[, c('sound', colnames(output)[1:(ncol(output) - 1)])]
+  } else {
+    output = result
+    names(output) = filenames
+  }
+
+  return (output)
 }

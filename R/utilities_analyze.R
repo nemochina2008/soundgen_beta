@@ -40,7 +40,7 @@ analyzeFrame = function(frame,
                         pitchFloor = 75,
                         pitchCeiling = 3500,
                         nCands = 1) {
-  ### DESCRIPTIVES
+  ## DESCRIPTIVES
   meanSpec = data.frame('freq' = 1000 * as.numeric(names(frame)),
                         'amp' = frame)
   amplitude = sum(frame)
@@ -54,7 +54,7 @@ analyzeFrame = function(frame,
   # Besides, those frequencies are not super relevant to human vocalizations in
   # any case. So we cut away all info above 5 kHz before we calculate quartiles
   # of spectral energy
-  peakFreq_cut = meanSpec_cut$freq[which.max(frame)] # peakFreq under cutFreq
+  peakFreqCut = meanSpec_cut$freq[which.max(frame)] # peakFreq under cutFreq
   amplitude_cut = sum(meanSpec_cut$amp)
   # first quartile of spectral energy distribution in the band from pitchFloor
   # to cutFreq kHz
@@ -163,7 +163,7 @@ analyzeFrame = function(frame,
       HNR = HNR,
       dom = dom,
       peakFreq = peakFreq,
-      peakFreq_cut = peakFreq_cut,
+      peakFreqCut = peakFreqCut,
       meanFreq = meanFreq,
       quartile25 = quartile25,
       quartile50 = quartile50,
