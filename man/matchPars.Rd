@@ -95,7 +95,7 @@ cand1 = do.call(soundgen, c(m1$pars, list(play = TRUE, temperature = 0)))
 
 # Try to improve the match by optimizing rolloff
 # (this may take a few minutes to run, and the results may vary)
-/dontrun{
+\dontrun{
 m2 = matchPars(target = target,
                samplingRate = 16000,
                pars = 'rolloff',

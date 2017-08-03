@@ -215,6 +215,7 @@ ssm = function(x,
 #' Called by \code{\link{ssm}}.
 #' @param m input matrix such as a spectrogram
 #' @inheritParams ssm
+#' @param win the length of window for averaging self-similarity, frames
 #' @return Returns a square self-similarity matrix.
 selfsim = function(m,
                    norm = FALSE,
@@ -264,7 +265,7 @@ selfsim = function(m,
 #'
 #' Internal soundgen function.
 #'
-#' Prepares a square matrix \code{size x size} specifying a gaussian kernel for measuring novelty of self-similarity matrices. Called by \code{\link{soundgen:::getNovelty}}
+#' Prepares a square matrix \code{size x size} specifying a gaussian kernel for measuring novelty of self-similarity matrices. Called by \code{\link{getNovelty}}
 #' @param size kernel size (points), preferably an even number
 #' @param kernel_mean,kernelSD mean and SD of the gaussian kernel
 #' @param plot if TRUE, shows a perspective plot of the kernel
@@ -323,7 +324,7 @@ getCheckerboardKernel = function(size,
 #' Internal soundgen function.
 #'
 #' Calculates novelty in a self-similarity matrix. Called by \code{\link{ssm}}.
-#' @param ssm self-similarity matrix, as produced by \code{\link{soundgen:::selfsim}}
+#' @param ssm self-similarity matrix, as produced by \code{\link{selfsim}}
 #' @param kernelSize the size of gaussian kernel (points)
 #' @param kernelSD the SD of gaussian kernel
 #' @return Returns a numeric vector of length \code{nrow(ssm)}

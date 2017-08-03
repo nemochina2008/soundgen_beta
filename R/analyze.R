@@ -617,7 +617,7 @@ analyze = function(x,
       minVoicedCands = 1
     }
   }
-  analFrames = findVoicedSegments(
+  voicedSegments = findVoicedSegments(
     pitchCands,
     shortestSyl = shortestSyl,
     shortestPause = shortestPause,
@@ -628,10 +628,10 @@ analyze = function(x,
 
   # for each syllable, impute NA's and find a nice path through pitch candidates
   pitchFinal = rep(NA, ncol(pitchCands))
-  if (nrow(analFrames) > 0) {
+  if (nrow(voicedSegments) > 0) {
     # if we have found at least one putatively voiced syllable
-    for (syl in 1:nrow(analFrames)) {
-      myseq = analFrames$segmentStart[syl]:analFrames$segmentEnd[syl]
+    for (syl in 1:nrow(voicedSegments)) {
+      myseq = voicedSegments$segmentStart[syl]:voicedSegments$segmentEnd[syl]
       # compute the optimal path through pitch candidates
       pitchFinal[myseq] = pathfinder(
         pitchCands = pitchCands[, myseq, drop = FALSE],
@@ -891,9 +891,15 @@ analyzeFolder = function(myfolder,
   # in order to provide more accurate estimates of time to completion,
   # check the size of all files in the target folder
   filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
-  myPars = as.list(match.call())
-  myPars = myPars[names(myPars) != 'myfolder' &
+
+  # as.list(match.call()) also works, but we want to get default args as well,
+  # since plot should default to TRUE for analyze() and FALSE for analyzeFolder(),
+  # and summary vice versa.
+  # See https://stackoverflow.com/questions/14397364/match-call-with-default-arguments
+  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  myPars = myPars[names(myPars) != 'myfolder' &  # exclude these two args
                   names(myPars) != 'verbose']
+
   result = list()
   for (i in 1:length(filenames)) {
     result[[i]] = do.call(analyze, c(filenames[i], myPars))

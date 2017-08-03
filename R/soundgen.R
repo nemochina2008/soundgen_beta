@@ -1,5 +1,4 @@
-## TODO: # In pitchFinal[myseq] <- pathfinder(pitchCands = pitchCands[, myseq,  : number of items to replace is not a multiple of replacement length  (analyze Downloads/temp)
-# check that numeric arguments are valid: make sure we don't expect NULL, add overlap etc to permittedValues before any lists, etc - check everything!!!
+## TODO: # check that numeric arguments are valid: make sure we don't expect NULL, add overlap etc to permittedValues before any lists, etc - check everything!!!
 # consider reducing formant width with increasing vocalTract in stochastic formants (to avoid formants merging - check if this is theoretically meaningful!)
 # mouth opening: see if abrupt transitions can be avoided as mouth opening goes from 0 to positive (some kind of smooth fun approaching 0?)
 # write vignettes
@@ -224,7 +223,7 @@ soundgen = function(repeatBout = 1,
                     shortestEpoch = 300,
                     trillDep = 0,
                     trillFreq = 30,
-                    noiseAnchors = data.frame(time = c(0, 1),
+                    noiseAnchors = data.frame(time = c(0, 300),
                                               value = c(-120, -120)),
                     formantsNoise = NA,
                     rolloffNoise = -14,
@@ -299,10 +298,8 @@ soundgen = function(repeatBout = 1,
     subDep = subDep * 2 ^ (-creakyBreathy)
   } else if (creakyBreathy > 0) {
     # for breathy voice, add breathing
-    if(class(noiseAnchors) != "data.frame") {
-      noiseAnchors = data.frame(time = c(0, sylLen),
-                                value = c(-120, -120))
-    }
+    noiseAnchors = data.frame(time = c(0, sylLen + 100),
+                              value = c(-120, -120))
     noiseAnchors$value = noiseAnchors$value + creakyBreathy * 160
     noiseAnchors$value[noiseAnchors$value >
                          permittedValues['noiseAmpl', 'high']] =

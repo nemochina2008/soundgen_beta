@@ -24,9 +24,13 @@ parameters for \code{\link{soundgen}} and introduces some random variation in
 their values.
 }
 \examples{
-wigglePars(parList = list(sylLen = 250,
-                          pitchAnchors = data.frame(time = c(0, 1),
-                                                    value = c(200, 300))),
-           parsToWiggle = c('sylLen', 'pitchAnchors'),
-           probMutation = .75, stepVariance = .5)
+soundgen:::wigglePars(
+  parList = list(
+    sylLen = 250,
+    pitchAnchors = data.frame(time = c(0, 1), value = c(200, 300))
+  ),
+  parsToWiggle = c('sylLen', 'pitchAnchors'),
+  probMutation = .75,
+  stepVariance = .5
+)
 }

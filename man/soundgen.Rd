@@ -19,7 +19,7 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   list(time = 0, freq = 2900, amp = 25, width = 200)), formantDep = 1,
   formantDepStoch = 30, vocalTract = 15.5, subFreq = 100, subDep = 100,
   shortestEpoch = 300, trillDep = 0, trillFreq = 30,
-  noiseAnchors = data.frame(time = c(0, 1), value = c(-120, -120)),
+  noiseAnchors = data.frame(time = c(0, 300), value = c(-120, -120)),
   formantsNoise = NA, rolloffNoise = -14, mouthAnchors = data.frame(time =
   c(0, 1), value = c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
   samplingRate = 16000, windowLength = 50, overlap = 75,

@@ -7,7 +7,7 @@
 getNovelty(ssm, kernelSize, kernelSD)
 }
 \arguments{
-\item{ssm}{self-similarity matrix, as produced by \code{\link{soundgen:::selfsim}}}
+\item{ssm}{self-similarity matrix, as produced by \code{\link{selfsim}}}
 
 \item{kernelSize}{the size of gaussian kernel (points)}
 

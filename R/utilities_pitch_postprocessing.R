@@ -78,17 +78,18 @@ pathfinder = function(pitchCands,
   }
 
   # remove rows with all NA's
-  pitchCands = pitchCands[rowSums(!is.na(pitchCands)) != 0, ]
-  pitchCert = pitchCert[rowSums(!is.na(pitchCert)) != 0, ]
+  pitchCands = pitchCands[rowSums(!is.na(pitchCands)) != 0, , drop = FALSE]
+  pitchCert = pitchCert[rowSums(!is.na(pitchCert)) != 0, , drop = FALSE]
 
   # special case: only a single pitch candidate for all frames in a syllable
   # (no paths to chose among)
-  if (class(pitchCands) == 'numeric') {
+  if (nrow(pitchCands) == 1) {
     return(2 ^ pitchCands)
   }
 
   ## PATH-FINDING
   # find the best path through frame-by-frame pitch candidates
+  if (ncol(pitchCands) < 2) pathfinding = 'none'
   if (pathfinding == 'fast') {
     bestPath = pathfinding_fast(
       pitchCands = pitchCands,
@@ -212,22 +213,25 @@ pathfinding_fast = function(pitchCands = pitchCands,
 
   for (i in 2:ncol(pitchCands)) {
     cands = na.omit(pitchCands[, i])
-    cost_cert = abs(cands - pitchCenterGravity[i])
-    # get the cost of transition from the current point to each of the pitch
-    # candidates in the next frame
-    cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
-      costJumps(point_current, cands[x])
-    })
-    # get a weighted average of transition costs associated with the certainty
-    # of each estimate vs. the magnitude of pitch jumps
-    costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
-    path = c(path, pitchCands[which.min(costs), i])
-    costPathForward = costPathForward + min(costs)
+    if (length(cands) > 0) { # in case of an NA in the contour
+      cost_cert = abs(cands - pitchCenterGravity[i])
+      # get the cost of transition from the current point to each of the pitch
+      # candidates in the next frame
+      cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
+        costJumps(point_current, cands[x])
+      })
+      if (length(cost_pitchJump) == 0) cost_pitchJump = 0
+      # get a weighted average of transition costs associated with the certainty
+      # of each estimate vs. the magnitude of pitch jumps
+      costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
+      path = c(path, pitchCands[which.min(costs), i])
+      costPathForward = costPathForward + min(costs)
+    }
   }
 
   # run backwards
-  pitchCands_rev = pitchCands[, rev(1:ncol(pitchCands))]
-  pitchCert_rev = pitchCert[, rev(1:ncol(pitchCert))]
+  pitchCands_rev = pitchCands[, rev(1:ncol(pitchCands)), drop = FALSE]
+  pitchCert_rev = pitchCert[, rev(1:ncol(pitchCert)), drop = FALSE]
   pitchCenterGravity_rev = rev(pitchCenterGravity)
 
   p = median (pitchCenterGravity_rev[1:min(5, length(pitchCenterGravity_rev))])
@@ -239,13 +243,16 @@ pathfinding_fast = function(pitchCands = pitchCands,
 
   for (i in 2:ncol(pitchCands_rev)) {
     cands = na.omit(pitchCands_rev[, i])
-    cost_cert = abs(cands - pitchCenterGravity_rev[i])
-    cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
-      costJumps(point_current, cands[x])
-    })
-    costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
-    path_rev = c(path_rev, pitchCands_rev[which.min(costs), i])
-    costPathBackward = costPathBackward + min(costs)
+    if (length(cands) > 0) { # in case of an NA in the contour
+      cost_cert = abs(cands - pitchCenterGravity_rev[i])
+      cost_pitchJump = apply(as.matrix(1:length(cands), nrow = 1), 1, function(x) {
+        costJumps(point_current, cands[x])
+      })
+      if (length(cost_pitchJump) == 0) cost_pitchJump = 0
+      costs = certWeight * cost_cert + (1 - certWeight) * cost_pitchJump
+      path_rev = c(path_rev, pitchCands_rev[which.min(costs), i])
+      costPathBackward = costPathBackward + min(costs)
+    }
   }
 
   if (costPathForward < costPathBackward) {
@@ -253,7 +260,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
   } else {
     bestPath = rev(path_rev)
   }
-  return (bestPath)
+  return(bestPath)
 }
 
 

@@ -8,6 +8,8 @@ getMelSpec(s, samplingRate = NULL, windowLength = 40, overlap = 50,
   step = NULL, throwaway = -120, maxFreq = NULL, plot = FALSE)
 }
 \arguments{
+\item{s}{input sound (path to a .wav file or numeric vector)}
+
 \item{samplingRate}{sampling rate of \code{target} (only needed if target is
 a numeric vector, rather than a .wav file)}
 

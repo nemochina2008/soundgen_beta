@@ -22,7 +22,8 @@ Imports: stats,
     mvtnorm,
     plyr,
     dtw,
-    grid
+    grid,
+    phonTools
 Depends: R (>= 2.10)
 RoxygenNote: 6.0.1
 Suggests: knitr,

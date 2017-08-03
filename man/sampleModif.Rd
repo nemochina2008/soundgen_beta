@@ -12,7 +12,7 @@ sampleModif(x, ...)
 \item{...}{other arguments passed to \code{sample}}
 }
 \description{
-Internal soundgen function.
+Internal soundgen function
 }
 \details{
 Same as \code{\link[base]{sample}}, but without defaulting to x = 1:x if
@@ -20,5 +20,6 @@ length(x) = 1. See
 https://stackoverflow.com/questions/7547758/using-sample-with-sample-space-size-1
 }
 \examples{
-sampleModif(x = 3, n = 1)  # never returns 1 or 2: cf. sample(x = 3, n = 1)
+soundgen:::sampleModif(x = 3, n = 1)
+# never returns 1 or 2: cf. sample(x = 3, n = 1)
 }

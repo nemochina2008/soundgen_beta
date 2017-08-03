@@ -16,6 +16,8 @@ file or numeric vector}
 \item{targetSpec}{if already calculated, the target auditory spectrum can be
 provided to speed things up}
 
+\item{cand}{the sound to be compared to \code{target}}
+
 \item{samplingRate}{sampling rate of \code{target} (only needed if target is
 a numeric vector, rather than a .wav file)}
 
@@ -60,7 +62,7 @@ target = soundgen(sylLen = 500, formants = 'a',
                   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
                                             value = c(100, 150, 135, 100)),
                   temperature = 0)
-targetSpec = getMelSpec(target, samplingRate = 16000)
+targetSpec = soundgen:::getMelSpec(target, samplingRate = 16000)
 parsToTry = list(
   list(formants = 'i',                                            # wrong
        pitchAnchors = data.frame(time = c(0, 1),                  # wrong
@@ -82,19 +84,21 @@ for (s in 1:length(parsToTry)) {
     c(parsToTry[[s]], list(temperature = 0, sylLen = 500)))
 }
 
-fitness = c('cor', 'cosine', 'pixel', 'dtw')
-df = matrix(NA, nrow = length(parsToTry), ncol = length(fitness))
-colnames(df) = fitness
+method = c('cor', 'cosine', 'pixel', 'dtw')
+df = matrix(NA, nrow = length(parsToTry), ncol = length(method))
+colnames(df) = method
 df = as.data.frame(df)
 for (i in 1:nrow(df)) {
-  df[i, ] = compareSounds(target = NULL,
-                          targetSpec = targetSpec,
-                          cand = sounds[[i]],
-                          samplingRate = 16000,
-                          padWith = NA,
-                          penalizeLengthDif = TRUE,
-                          method = method,
-                          summary = FALSE)
+  df[i, ] = compareSounds(
+    target = NULL,            # can use target instead of targetSpec...
+    targetSpec = targetSpec,  # ...but faster to calculate targetSpec once
+    cand = sounds[[i]],
+    samplingRate = 16000,
+    padWith = NA,
+    penalizeLengthDif = TRUE,
+    method = method,
+    summary = FALSE
+  )
 }
 df$av = rowMeans(df, na.rm = TRUE)
 df  # row 1 = wrong pitch & formants, ..., row 4 = right pitch & formants

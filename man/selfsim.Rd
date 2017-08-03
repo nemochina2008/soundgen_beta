@@ -13,6 +13,8 @@ selfsim(m, norm = FALSE, simil = c("cosine", "cor")[1], win = 1)
 
 \item{simil}{method for comparing frames: "cosine" = cosine similarity, "cor"
 = Pearson's correlation}
+
+\item{win}{the length of window for averaging self-similarity, frames}
 }
 \value{
 Returns a square self-similarity matrix.

@@ -25,6 +25,6 @@ higher than the original, does nothing.
 }
 \examples{
 s = sort(rnorm(20))
-downsample(s, srNew = 5, srOld = 18)
-downsample(s, srNew = 5, srOld = 40)
+soundgen:::downsample(s, srNew = 5, srOld = 18)
+soundgen:::downsample(s, srNew = 5, srOld = 40)
 }

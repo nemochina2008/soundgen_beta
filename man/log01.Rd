@@ -6,6 +6,9 @@
 \usage{
 log01(v)
 }
+\arguments{
+\item{v}{numeric vector}
+}
 \description{
 Internal soundgen function
 }
@@ -15,5 +18,5 @@ from 0 to 1
 }
 \examples{
 v = exp(1:10)
-log01(v)
+soundgen:::log01(v)
 }

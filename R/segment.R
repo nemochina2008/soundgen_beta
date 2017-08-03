@@ -156,8 +156,8 @@ segment = function(x,
   # syllables (if no syllables are detected, just use the specified shortest
   # acceptable syllable length)
   if (is.null(interburst)) {
-    median_scaled = median(syllables$sylLen) * interburstMult
-    interburst = ifelse(!is.na(median_scaled),
+    median_scaled = suppressWarnings(median(syllables$sylLen) * interburstMult)
+    interburst = ifelse(is.numeric(median_scaled) && length(median_scaled) > 0,
                                median_scaled,
                                shortestSyl)
   }
@@ -210,6 +210,7 @@ segment = function(x,
                                  NA),  # otherwise returns NULL
       interburst_sd = sd(bursts$interburstInt, na.rm = TRUE)
     )
+    result[apply(result, c(1, 2), is.nan)] = NA
   } else {
     result = list(syllables = syllables, bursts = bursts)
   }
@@ -272,27 +273,13 @@ segmentFolder = function (myfolder,
   # open all .wav files in folder
   filenames = list.files(myfolder, pattern = "*.wav", full.names = TRUE)
   filesizes = apply(as.matrix(filenames), 1, function(x) file.info(x)$size)
+  myPars = mget(names(formals()), sys.frame(sys.nframe()))
+  myPars = myPars[names(myPars) != 'myfolder' &  # exclude these two args
+                    names(myPars) != 'verbose']
   result = list()
 
   for (i in 1:length(filenames)) {
-    result[[i]] = segment(
-        filenames[i],
-        shortestSyl = shortestSyl,
-        shortestPause = shortestPause,
-        sylThres = sylThres,
-        interburst = interburst,
-        interburstMult = interburstMult,
-        burstThres = burstThres,
-        peakToTrough = peakToTrough,
-        troughLeft = troughLeft,
-        troughRight = troughRight,
-        windowLength = windowLength,
-        overlap = overlap,
-        plot = plot,
-        savePath = savePath,
-        summary = summary
-      )
-
+    result[[i]] = result[[i]] = do.call(segment, c(filenames[i], myPars))
     if (verbose) {
       if (i %% reportEvery == 0) {
         reportTime(i = i, nIter = length(filenames),

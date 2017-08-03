@@ -49,6 +49,7 @@
 #' @param throwaway parts of the spectra quieter than \code{throwaway} dB are
 #'   not compared
 #' @param maxFreq parts of the spectra above \code{maxFreq} Hz are not compared
+#' @export
 #' @examples
 #' target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
 #'   pitchAnchors = data.frame(time = c(0, 1), value = c(300, 200)),
@@ -63,7 +64,7 @@
 #'
 #' # Try to improve the match by optimizing rolloff
 #' # (this may take a few minutes to run, and the results may vary)
-#' /dontrun{
+#' \dontrun{
 #' m2 = matchPars(target = target,
 #'                samplingRate = 16000,
 #'                pars = 'rolloff',
@@ -252,14 +253,16 @@ matchPars = function(target,
 #' @inheritParams matchPars
 #' @param targetSpec if already calculated, the target auditory spectrum can be
 #'   provided to speed things up
+#' @param cand the sound to be compared to \code{target}
 #' @param summary if TRUE, returns the mean of similarity values calculated by
 #'   all methods in \code{method}
+#' @export
 #' @examples
 #' target = soundgen(sylLen = 500, formants = 'a',
 #'                   pitchAnchors = data.frame(time = c(0, 0.1, 0.9, 1),
 #'                                             value = c(100, 150, 135, 100)),
 #'                   temperature = 0)
-#' targetSpec = getMelSpec(target, samplingRate = 16000)
+#' targetSpec = soundgen:::getMelSpec(target, samplingRate = 16000)
 
 #' parsToTry = list(
 #'   list(formants = 'i',                                            # wrong
@@ -282,19 +285,21 @@ matchPars = function(target,
 #'     c(parsToTry[[s]], list(temperature = 0, sylLen = 500)))
 #' }
 #'
-#' fitness = c('cor', 'cosine', 'pixel', 'dtw')
-#' df = matrix(NA, nrow = length(parsToTry), ncol = length(fitness))
-#' colnames(df) = fitness
+#' method = c('cor', 'cosine', 'pixel', 'dtw')
+#' df = matrix(NA, nrow = length(parsToTry), ncol = length(method))
+#' colnames(df) = method
 #' df = as.data.frame(df)
 #' for (i in 1:nrow(df)) {
-#'   df[i, ] = compareSounds(target = NULL,
-#'                           targetSpec = targetSpec,
-#'                           cand = sounds[[i]],
-#'                           samplingRate = 16000,
-#'                           padWith = NA,
-#'                           penalizeLengthDif = TRUE,
-#'                           method = method,
-#'                           summary = FALSE)
+#'   df[i, ] = compareSounds(
+#'     target = NULL,            # can use target instead of targetSpec...
+#'     targetSpec = targetSpec,  # ...but faster to calculate targetSpec once
+#'     cand = sounds[[i]],
+#'     samplingRate = 16000,
+#'     padWith = NA,
+#'     penalizeLengthDif = TRUE,
+#'     method = method,
+#'     summary = FALSE
+#'   )
 #' }
 #' df$av = rowMeans(df, na.rm = TRUE)
 #' df  # row 1 = wrong pitch & formants, ..., row 4 = right pitch & formants
@@ -393,11 +398,15 @@ compareSounds = function(target,
 #' @param parsToWiggle a list of the names of pars that might be mutated
 #' @inheritParams matchPars
 #' @examples
-#' wigglePars(parList = list(sylLen = 250,
-#'                           pitchAnchors = data.frame(time = c(0, 1),
-#'                                                     value = c(200, 300))),
-#'            parsToWiggle = c('sylLen', 'pitchAnchors'),
-#'            probMutation = .75, stepVariance = .5)
+#' soundgen:::wigglePars(
+#'   parList = list(
+#'     sylLen = 250,
+#'     pitchAnchors = data.frame(time = c(0, 1), value = c(200, 300))
+#'   ),
+#'   parsToWiggle = c('sylLen', 'pitchAnchors'),
+#'   probMutation = .75,
+#'   stepVariance = .5
+#' )
 wigglePars = function(parList,
                       parsToWiggle,
                       probMutation,
@@ -486,6 +495,7 @@ wigglePars = function(parList,
 #' Takes a .wav file or a waveform as numeric vector + samplingRate and returns
 #' mel-transformed spectrum (auditory spectrum). Calls
 #' \code{\link[tuneR]{melfcc}}. See \code{\link{matchPars}}.
+#' @param s input sound (path to a .wav file or numeric vector)
 #' @inheritParams matchPars
 #' @param plot if TRUE, plots the spectrum
 getMelSpec = function(s,

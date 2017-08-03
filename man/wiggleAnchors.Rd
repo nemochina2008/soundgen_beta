@@ -54,11 +54,13 @@ formants = list(f1 = list(time = 0, freq = 860, amp = 30, width = 120),
                 f2 = list(time = c(0,1), freq = 1280,
                 amp = c(10,40), width = 120))
 for (f in 1:length(formants)) {
-  formants[[f]] = wiggleAnchors(df = formants[[f]],
-                                temperature = .4, temp_coef = .5,
-                                low = c(0, 50, 0, 1),
-                                high = c(1, 8000, 120, 2000),
-                                wiggleAllRows = FALSE)
+  formants[[f]] = soundgen:::wiggleAnchors(
+    df = formants[[f]],
+    temperature = .4, temp_coef = .5,
+    low = c(0, 50, 0, 1),
+    high = c(1, 8000, 120, 2000),
+    wiggleAllRows = FALSE
+  )
 }
 print(formants)
 }

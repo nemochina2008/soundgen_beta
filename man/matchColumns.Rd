@@ -22,5 +22,5 @@ right), so that the new number of columns = \code{len}
 }
 \examples{
 a = matrix(1:9, nrow = 3)
-matchColumns(a, nCol = 6, padWith = NA)
+soundgen:::matchColumns(a, nCol = 6, padWith = NA)
 }

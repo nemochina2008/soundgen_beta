@@ -63,15 +63,15 @@ zeroOne = function(x) {
 #'
 #' Normalizes, log-transforms, and re-normalizes an input vector, so it ranges
 #' from 0 to 1
+#' @param v numeric vector
 #' @examples
 #' v = exp(1:10)
-#' log01(v)
+#' soundgen:::log01(v)
 log01 = function(v) {
-  # takes a numeric vector, returns its log ranging from 0 to 1
   v = v - min(v) + 1
   v = log(v)
   v = zeroOne(v)
-  return (v)
+  return(v)
 }
 
 
@@ -88,8 +88,8 @@ log01 = function(v) {
 #' @param minLen the minimum length of returned vector
 #' @examples
 #' s = sort(rnorm(20))
-#' downsample(s, srNew = 5, srOld = 18)
-#' downsample(s, srNew = 5, srOld = 40)
+#' soundgen:::downsample(s, srNew = 5, srOld = 18)
+#' soundgen:::downsample(s, srNew = 5, srOld = 40)
 downsample = function(s, srNew = 10, srOld = 120, minLen = 3){
   if (!srNew < srOld){
     return (s)
@@ -430,7 +430,7 @@ matchLengths = function(myseq,
 #' @param padWith the value to pad with, normally \code{0} or \code{NA}
 #' @examples
 #' a = matrix(1:9, nrow = 3)
-#' matchColumns(a, nCol = 6, padWith = NA)
+#' soundgen:::matchColumns(a, nCol = 6, padWith = NA)
 matchColumns = function (matrix_short, nCol, padWith = 0) {
   col_short = 1:ncol(matrix_short)
   # pads with zeros/NA etc right and left

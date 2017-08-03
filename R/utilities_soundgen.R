@@ -535,7 +535,7 @@ divideIntoSyllables = function (nSyl,
 
 #' sampleModif
 #'
-#' Internal soundgen function.
+#' Internal soundgen function
 #'
 #' Same as \code{\link[base]{sample}}, but without defaulting to x = 1:x if
 #' length(x) = 1. See
@@ -543,7 +543,8 @@ divideIntoSyllables = function (nSyl,
 #' @param x vector
 #' @param ... other arguments passed to \code{sample}
 #' @examples
-#' sampleModif(x = 3, n = 1)  # never returns 1 or 2: cf. sample(x = 3, n = 1)
+#' soundgen:::sampleModif(x = 3, n = 1)
+#' # never returns 1 or 2: cf. sample(x = 3, n = 1)
 sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 
 #' Randomly modify anchors
@@ -587,11 +588,13 @@ sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 #'                 f2 = list(time = c(0,1), freq = 1280,
 #'                 amp = c(10,40), width = 120))
 #' for (f in 1:length(formants)) {
-#'   formants[[f]] = wiggleAnchors(df = formants[[f]],
-#'                                 temperature = .4, temp_coef = .5,
-#'                                 low = c(0, 50, 0, 1),
-#'                                 high = c(1, 8000, 120, 2000),
-#'                                 wiggleAllRows = FALSE)
+#'   formants[[f]] = soundgen:::wiggleAnchors(
+#'     df = formants[[f]],
+#'     temperature = .4, temp_coef = .5,
+#'     low = c(0, 50, 0, 1),
+#'     high = c(1, 8000, 120, 2000),
+#'     wiggleAllRows = FALSE
+#'   )
 #' }
 #' print(formants)
 wiggleAnchors = function(df,
@@ -669,10 +672,10 @@ wiggleAnchors = function(df,
   if (nrow(df) == 1) {
     ranges = as.numeric(df)
   } else {
-    ranges = as.numeric(apply(df, 2, function(x) diff(range(x))))
+    ranges = as.numeric(apply(df, 2, function(x) abs(diff(range(x)))))
     # if no variation in values, defaults to value
     z = which(ranges == 0)
-    ranges[z] = as.numeric(df[1, z])
+    ranges[z] = abs(as.numeric(df[1, z]))
   }
   for (i in 1:ncol(df)) {
     w = try(rnorm_bounded(
