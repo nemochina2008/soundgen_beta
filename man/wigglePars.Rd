@@ -34,3 +34,4 @@ soundgen:::wigglePars(
   stepVariance = .5
 )
 }
+\keyword{internal}

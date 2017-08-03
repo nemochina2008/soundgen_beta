@@ -39,3 +39,4 @@ Internal helper function for postprocessing of pitch contours. Merges voiced
 segments at least \code{shortestSyl} ms long and separated by less than
 \code{shortestPause} ms.
 }
+\keyword{internal}

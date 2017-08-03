@@ -18,3 +18,4 @@ Internal soundgen function
 Generates different Fourier Transform windows. Just like
 \code{\link[seewave]{ftwindow}}, but with the addition of a gaussian window.
 }
+\keyword{internal}

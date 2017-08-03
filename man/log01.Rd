@@ -20,3 +20,4 @@ from 0 to 1
 v = exp(1:10)
 soundgen:::log01(v)
 }
+\keyword{internal}

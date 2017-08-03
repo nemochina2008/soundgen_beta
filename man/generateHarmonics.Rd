@@ -121,7 +121,7 @@ amplitude anchors}
 \item{pitchCeiling}{lower & upper bounds of f0}
 
 \item{pitchSamplingRate}{sampling frequency of the pitch contour only, Hz. Low
-values can decrease processing time. A rule of thumb is to set this to
+values reduce processing time. A rule of thumb is to set this to
 the same value as \code{pitchCeiling}}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
@@ -141,3 +141,4 @@ plot(pitch)
 sound = soundgen:::generateHarmonics(pitch, samplingRate = 16000)
 # playme(sound, samplingRate = 16000) # no formants yet
 }
+\keyword{internal}

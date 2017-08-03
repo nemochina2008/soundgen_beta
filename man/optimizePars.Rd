@@ -23,18 +23,18 @@ to reproduce}
 optimized}
 
 \item{bounds}{a list setting the lower and upper boundaries for possible
-values of optimized parameters. For ex., if we optimize \code{smooth_ms}
-and \code{smooth_overlap}, reasonable bounds might be list(low = c(5,
+values of optimized parameters. For ex., if we optimize \code{smooth}
+and \code{smoothOverlap}, reasonable bounds might be list(low = c(5,
 0), high = c(500, 95))}
 
 \item{fitnessPar}{the name of output variable that we are comparing with the
-key, e.g. 'nBursts' or 'pitchMedian'}
+key, e.g. 'nBursts' or 'pitch_median'}
 
 \item{fitnessFun}{the function used to evaluate how well the output of
 \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is
 perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a
-good fitness criterion is \code{function(x) 1 - cor(log(x), key, use =
-'pairwise.complete.obs')}, where \code{key} is already log-transformed.}
+good fitness criterion is \code{function(x) 1 - cor(log(x), log(key), use =
+'pairwise.complete.obs')}}
 
 \item{nIter}{repeat the optimization several times to check convergence}
 
@@ -52,15 +52,15 @@ random deviation of initial values from the defaults}
 
 \item{mygrid}{a dataframe with one column per parameter to optimize, with
 each row specifying the values to try. If not NULL, \code{optimizePars}
-simply evaluates each combination of parameter values (see examples).}
+simply evaluates each combination of parameter values, without calling
+\code{\link[stats]{optim}} (see examples)}
 
 \item{verbose}{if TRUE, reports the values of parameters evaluated and fitness}
 }
 \value{
-Returns a matrix with one row per iteration, containing Pearson's
-  correlation between the key and \code{fitnessPar} in the first column
-  and the best values of each of the optimized parameters in the remaining
-  columns.
+Returns a matrix with one row per iteration with fitness in the first
+  column and the best values of each of the optimized parameters in the
+  remaining columns.
 }
 \description{
 This customized wrapper for \code{\link[stats]{optim}} attemps to optimize the
@@ -79,7 +79,7 @@ vocalizations.
 \details{
 If your sounds are very different from human non-linguistic vocalizations,
 you may want to change the default values of other arguments to speed up
-convergence. Again, adapt the code to enforce suitable constraints, depending
+convergence. Adapt the code to enforce suitable constraints, depending
 on your data.
 }
 \examples{
@@ -125,7 +125,7 @@ res = optimizePars(myfolder = myfolder,
                    key = log(pitchManual),  # log-scale better for pitch
                    pars = c('specThres', 'specSmooth'),
                    bounds = list(low = c(0, 0), high = c(1, Inf)),
-                   fitnessPar = 'pitchMedian',
+                   fitnessPar = 'pitch_median',
                    nIter = 2,
                    otherPars = list(plot = FALSE, verbose = FALSE, step = 50,
                                     pitchMethods = 'spec'),

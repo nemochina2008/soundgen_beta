@@ -45,3 +45,4 @@ soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
 soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
   pauseLen = 55, temperature = 0, plot = TRUE)
 }
+\keyword{internal}

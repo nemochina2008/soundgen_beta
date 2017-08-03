@@ -24,3 +24,4 @@ Sys.sleep(1)
 time_diff = as.numeric((proc.time() - time_start)[3])
 soundgen:::convert_sec_to_hms(time_diff)
 }
+\keyword{internal}

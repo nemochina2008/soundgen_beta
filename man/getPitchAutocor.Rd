@@ -43,3 +43,4 @@ function (time domain analysis). Modified PRAAT's algorithm. See Boersma, P.
 harmonics-to-noise ratio of a sampled sound. In Proceedings of the institute
 of phonetic sciences (Vol. 17, No. 1193, pp. 97-110).
 }
+\keyword{internal}

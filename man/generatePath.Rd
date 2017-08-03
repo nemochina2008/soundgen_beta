@@ -23,3 +23,4 @@ Internal helper function for postprocessing of pitch contours called by
 pitch candidates. It gives up and returns NA after 100 attempts, which stops
 annealing - so the adaptation of pitch contour doesn't happen if
 }
+\keyword{internal}

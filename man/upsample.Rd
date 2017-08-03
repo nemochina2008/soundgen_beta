@@ -26,3 +26,4 @@ between successive glottal cycles.
 \examples{
 soundgen:::upsample(pitch_per_gc = c(100, 150, 130), samplingRate = 16000)
 }
+\keyword{internal}

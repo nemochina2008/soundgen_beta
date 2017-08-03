@@ -21,8 +21,8 @@ a numeric vector, rather than a .wav file)}
 \item{pars}{arguments to \code{\link{soundgen}} that we are attempting to
 optimize}
 
-\item{init}{values of other arguments to soundgen that are fixed at
-non-default values}
+\item{init}{a lsit of the values of other arguments to soundgen that are
+fixed at non-default values}
 
 \item{method}{method of comparing mel-transformed spectra of two sounds:
 "cor" = average Pearson's correlation of mel-transformed spectra of
@@ -68,9 +68,9 @@ not compared}
 }
 \value{
 Returns a list of length 2: \code{$history} contains the tried
-  parameter values together with their fit to target \code{$sim}, and
-  \code{$pars} contains a list of the final - hopefully the best - parameter
-  settings.
+  parameter values together with their fit to target (\code{$history$sim}),
+  and \code{$pars} contains a list of the final - hopefully the best -
+  parameter settings.
 }
 \description{
 Attempts to find settings for \code{\link{soundgen}} that will reproduce an
@@ -78,7 +78,7 @@ existing sound. The principle is to mutate control parameters, trying to
 improve fit to target. The currently implemented optimization algorithm is
 simple hill climbing. Disclaimer: this function is experimental and may or
 may not work for particular tasks. It is intended as a supplement to - not
-replacement of - manual optimization. See the vignette on sound production
+replacement of - manual optimization. See the vignette on sound generation
 for more information.
 }
 \examples{

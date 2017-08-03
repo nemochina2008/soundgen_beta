@@ -28,3 +28,4 @@ s = sort(rnorm(20))
 soundgen:::downsample(s, srNew = 5, srOld = 18)
 soundgen:::downsample(s, srNew = 5, srOld = 40)
 }
+\keyword{internal}

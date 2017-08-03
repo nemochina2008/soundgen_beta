@@ -21,3 +21,4 @@ Internal soundgen function.
 Internal helper function for postprocessing of pitch contour. Returns
 the elastic force acting on a snake. See \code{\link{snake}}.
 }
+\keyword{internal}

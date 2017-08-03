@@ -6,7 +6,7 @@
 \usage{
 getRolloff(pitch_per_gc = c(440), nHarmonics = 100, rolloff = -12,
   rolloffOct = -2, rolloffParab = 0, rolloffParabHarm = 2,
-  rolloff_quadraticCeiling = NULL, rolloffKHz = -6, baseline_Hz = 200,
+  rolloffParabCeiling = NULL, rolloffKHz = -6, baseline = 200,
   throwaway = -120, samplingRate = 16000, plot = FALSE)
 }
 \arguments{
@@ -31,15 +31,15 @@ exponential decay.}
 \item{rolloffParabHarm}{the number of harmonics affected by
 \code{rolloffParab}}
 
-\item{rolloff_quadraticCeiling}{quadratic adjustment is applied only up to
-\code{rolloff_quadraticCeiling}, Hz. If not NULL, it overrides
+\item{rolloffParabCeiling}{quadratic adjustment is applied only up to
+\code{rolloffParabCeiling}, Hz. If not NULL, it overrides
 \code{rolloffParabHarm}}
 
 \item{rolloffKHz}{rolloff changes linearly with f0 by
 \code{rolloffKHz} dB/kHz. For ex., -6 dB/kHz gives a 6 dB
 steeper basic rolloff as f0 goes up by 1000 Hz}
 
-\item{baseline_Hz}{The "neutral" frequency, at which no adjustment of rolloff
+\item{baseline}{The "neutral" frequency, at which no adjustment of rolloff
 takes place regardless of \code{rolloffKHz}}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
@@ -105,6 +105,6 @@ rolloff = getRolloff(pitch_per_gc = 150, rolloffParab = -20,
   rolloffParabHarm = 7, plot = TRUE)
 # only harmonics below 2000 Hz are affected
 rolloff = getRolloff(pitch_per_gc = c(150, 600),
-  rolloffParab = -20, rolloff_quadraticCeiling = 2000,
+  rolloffParab = -20, rolloffParabCeiling = 2000,
   plot = TRUE)
 }

@@ -25,6 +25,7 @@
 #'   we can provide the exact filter - a vector of length windowLength_points/2
 #'   or, if we want moving formants, a matrix with windowLength_points/2 rows
 #'   and an arbitrary number of columns
+#' @keywords internal
 #' @examples
 #' # 1 s of white noise
 #' samplingRate = 16000
@@ -162,6 +163,7 @@ generateNoise = function(len,
 #'   \code{throwaway}, \code{rolloff} increases by \code{rolloff_perAmpl}
 #'   dB/octave. The effect is to make loud parts brighter by increasing energy
 #'   in higher frequencies
+#' @keywords internal
 #' @examples
 #' pitch=soundgen:::getSmoothContour(len = 3500,
 #'   anchors = data.frame('time' = c(0, 1), 'value' = c(200, 300)))
@@ -417,8 +419,8 @@ generateHarmonics = function(pitch,
     }
     waveform = crossFade(waveform,
                          waveform_epoch,
-                         length_ms = 15,
-                         samplingRate = samplingRate) # longer length_ms
+                         samplingRate = samplingRate,
+                         crossLen = 15) # longer crossLen
     # provides for smoother transitions, but it shortens the resulting sound.
     # Short transitions preserve sound duration but may create a click
     # where two epochs are joined

@@ -33,3 +33,4 @@ Internal soundgen function.
 \details{
 Called by \code{\link{segment}}.
 }
+\keyword{internal}

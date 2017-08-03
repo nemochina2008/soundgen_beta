@@ -2,10 +2,10 @@
 
 #' Spectrogram
 #'
-#' Produces a spectrogram of a sound using short-term Fourier transform. This is
-#' a simplified version of \code{\link[seewave]{spectro}} with fewer
-#' plotting options, but with added routines for noise reduction, smoothing in
-#' time and frequency domains, and controlling contrast and brightness.
+#' Produces the spectrogram of a sound using short-term Fourier transform. This
+#' is a simplified version of \code{\link[seewave]{spectro}} with fewer plotting
+#' options, but with added routines for noise reduction, smoothing in time and
+#' frequency domains, and controlling contrast and brightness.
 #' @param x path to a .wav file or a vector of amplitudes with specified
 #'   samplingRate
 #' @param samplingRate sampling rate of \code{x} (only needed if
@@ -15,7 +15,7 @@
 #' @param step you can override \code{overlap} by specifying FFT step, ms
 #' @param wn window type: gaussian, hanning, hamming, bartlett, rectangular,
 #'   blackman, flattop
-#' @param zp zero padding, points
+#' @param zp window length after zero padding, points
 #' @param smoothFreq,smoothTime length of the window, in data points (0 to
 #'   +inf), for calculating a rolling median. Applies median smoothing to
 #'   spectrogram in frequency and time domains, respectively
@@ -282,6 +282,7 @@ spectrogram = function(x,
 #' \code{\link[seewave]{ftwindow}}, but with the addition of a gaussian window.
 #' @param wl window length, in points
 #' @param wn window type (defaults to gaussian)
+#' @keywords internal
 ftwindow_modif = function (wl, wn = "gaussian") {
   if (wn == "bartlett")
     w = seewave::bartlett.w(wl)
@@ -306,6 +307,7 @@ ftwindow_modif = function (wl, wn = "gaussian") {
 #'
 #' Generates a gaussian window of length n. Based on the formula by P. Boersma (PRAAT)
 #' @param n window length, in points
+#' @keywords internal
 gaussian.w = function(n) {
   if (n == 0)
     stop("'n' must be a positive integer")
@@ -327,6 +329,7 @@ gaussian.w = function(n) {
 #' @param filter fft window filter (defaults to NULL)
 #' @return A matrix with \code{nrow = windowLength_points/2} and \code{ncol}
 #'   depending on \code{length(sound)} and \code{step}
+#' @keywords internal
 #' @examples
 #' a = soundgen:::getFrameBank(sin(1:1000), 16000, 512, 'gaussian', 15, 0)
 getFrameBank = function(sound,
@@ -362,5 +365,3 @@ getFrameBank = function(sound,
   }
   return(frameBank)
 }
-
-

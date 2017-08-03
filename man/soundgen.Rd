@@ -62,7 +62,7 @@ fluctuations of user-specified pitch / noise / amplitude anchors}
 
 \item{maleFemale}{hyperparameter for shifting f0 contour, formants, and
 vocalTract to make the speaker appear more male (-1...0) or more female
-(0...+1).}
+(0...+1)}
 
 \item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality
 from creaky (-1) to breathy (+1)}
@@ -120,8 +120,7 @@ open)}
 presets for speaker "M1" or a list of formant times, frequencies,
 amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
 to schwa. Time stamps for formants and mouthOpening can be specified in ms
-or an any other arbitarary scale, since duration is determined by
-length(ampl). See \code{\link{getSpectralEnvelope}} for more details}
+or an any other arbitarary scale. See \code{\link{getSpectralEnvelope}} for more details}
 
 \item{formantDep}{scale factor of formant amplitude (1 = no change relative
 to amplitudes in \code{formants})}
@@ -172,7 +171,7 @@ amplitude anchors}
 
 \item{samplingRate}{sampling frequency, Hz}
 
-\item{windowLength}{length of fft window, ms}
+\item{windowLength}{length of FFT window, ms}
 
 \item{overlap}{FFT window overlap, \%}
 
@@ -181,7 +180,7 @@ amplitude anchors}
 \item{pitchFloor, pitchCeiling}{lower & upper bounds of f0}
 
 \item{pitchSamplingRate}{sampling frequency of the pitch contour only, Hz. Low
-values can decrease processing time. A rule of thumb is to set this to
+values reduce processing time. A rule of thumb is to set this to
 the same value as \code{pitchCeiling}}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
@@ -198,7 +197,7 @@ range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
 \item{savePath}{full path for saving the output, e.g. '~/Downloads/temp.wav'.
 If NA (default), doesn't save anything}
 
-\item{...}{other plotting parameters passed to \code{\link{spec}}}
+\item{...}{other plotting parameters passed to \code{\link{spectrogram}}}
 }
 \value{
 Returns the synthesized waveform as a numeric vector.
@@ -211,10 +210,7 @@ noise component. Both components can be filtered with independently specified
 formants. Intonation and amplitude contours can be applied both within each
 syllable and across multiple syllables. Suggested application: synthesis of
 animal or human non-linguistic vocalizations. For more information, see
-\url{http://cogsci.se/soundgen.html}
-}
-\details{
-Details: put some parts of the manual here.
+\url{http://cogsci.se/soundgen.html} and the vignette on sound generation.
 }
 \examples{
 sound = soundgen(play = TRUE)

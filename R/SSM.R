@@ -1,6 +1,6 @@
 #' Self-similarity matrix
 #'
-#' Calculates the self-similarity matrix and novelty vector for a sound.
+#' Calculates the self-similarity matrix and novelty vector of a sound.
 #' @references \itemize{
 #'   \item El Badawy, D., Marmaroli, P., & Lissek, H. (2013). Audio
 #'   Novelty-Based Segmentation of Music Concerts. In Acoustics 2013 (No.
@@ -217,6 +217,7 @@ ssm = function(x,
 #' @inheritParams ssm
 #' @param win the length of window for averaging self-similarity, frames
 #' @return Returns a square self-similarity matrix.
+#' @keywords internal
 selfsim = function(m,
                    norm = FALSE,
                    simil = c('cosine', 'cor')[1],
@@ -270,6 +271,7 @@ selfsim = function(m,
 #' @param kernel_mean,kernelSD mean and SD of the gaussian kernel
 #' @param plot if TRUE, shows a perspective plot of the kernel
 #' @return Returns a square matrix with \code{size} rows and columns.
+#' @keywords internal
 #' @examples
 #' kernel = soundgen:::getCheckerboardKernel(size = 64, kernelSD = 0.2, plot = TRUE)
 #' dim(kernel)
@@ -328,6 +330,7 @@ getCheckerboardKernel = function(size,
 #' @param kernelSize the size of gaussian kernel (points)
 #' @param kernelSD the SD of gaussian kernel
 #' @return Returns a numeric vector of length \code{nrow(ssm)}
+#' @keywords internal
 getNovelty = function(ssm, kernelSize, kernelSD) {
   kernel = getCheckerboardKernel(size = kernelSize, kernelSD = kernelSD)
   ## pad matrix with size / 2 zeros, so that we can correlate it with the

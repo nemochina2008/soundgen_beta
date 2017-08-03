@@ -22,3 +22,4 @@ Internal soundgen function.
 \details{
 Calculates novelty in a self-similarity matrix. Called by \code{\link{ssm}}.
 }
+\keyword{internal}

@@ -44,9 +44,9 @@ but it will never be lower than this specified number.}
 \item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
 blackman, flattop}
 
-\item{zp}{zero padding, points}
+\item{zp}{window length after zero padding, points}
 
-\item{cutFreq}{(>0 to Nyquist Hz) repeat the calculation of spectral
+\item{cutFreq}{(>0 to Nyquist, Hz) repeat the calculation of spectral
 descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
 audio files}
@@ -129,8 +129,7 @@ interpolation, set \code{interpolWin} to NULL. See
 
 \item{pathfinding}{method of finding the optimal path through pitch
 candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
-'slow' = annealing. See \code{soundgen:::pathfinder} and the
-vignette on acoustic analysis}
+'slow' = annealing. See \code{soundgen:::pathfinder}}
 
 \item{annealPars}{a list of control parameters for postprocessing of
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
@@ -160,8 +159,9 @@ frame-by-frame values}
 \item{savePath}{if a valid path is specified, a plot is saved in this
 folder (defaults to NA)}
 
-\item{specPlot}{a list of graphical parameters passed to \code{\link{spec}}.
-Set to \code{NULL} to suppress plotting just the spectrogram}
+\item{specPlot}{a list of graphical parameters passed to
+\code{\link{spectrogram}}. Set to \code{NULL} to suppress plotting just the
+spectrogram}
 
 \item{pitchPlot}{a list of graphical parameters for displaying the
 final pitch contour. Set to \code{NULL} or \code{NA} to suppress}
@@ -183,7 +183,8 @@ If \code{summary = TRUE}, returns a dataframe with one row and three
 \description{
 Acoustic analysis of a single sound file: pitch tracking and basic spectral
 characteristics. The default values of arguments are optimized for human
-non-linguistic vocalizations. See the vignette for details.
+non-linguistic vocalizations. See the vignette on acoustic analysis for
+details.
 }
 \examples{
 sound1 = soundgen(sylLen = 900, pitchAnchors = list(
@@ -200,17 +201,19 @@ median(a1$pitch, na.rm = TRUE)  # 614 Hz
 median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
   value = c(300, 900, 400, 2300)), len = 1000))
 
-# the same pitch contour, but harder to analyze b/c of subharmonics and jitter
+# the same pitch contour, but harder b/c of subharmonics and jitter
+sound2 = soundgen(sylLen = 900, temperature = 0,
+                  pitchAnchors = list(time = c(0, .3, .8, 1),
+                                      value = c(300, 900, 400, 2300)),
+                  noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
+                  subDep = 100, jitterDep = 0.5, pitchEffectsAmount = 100)
 sound2 = soundgen(sylLen = 900, pitchAnchors = list(
   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
   noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
   subDep = 100, jitterDep = 0.5, pitchEffects_amount = 100, temperature = 0)
 playme(sound2, 16000)
 a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
-# many pitch candidates are off, but the overall contour and estimate of
-# median pitch should be pretty accurate:
-median(a2$pitch, na.rm = TRUE)  # 622 Hz (can vary, since postprocessing is stochastic)
-median(a2$HNR, na.rm = TRUE)  # HNR of 3-4 dB
+# many candidates are off, but the overall contour should be mostly accurate
 
 # Fancy plotting options:
 a = analyze(sound2, samplingRate = 16000, plot = TRUE,

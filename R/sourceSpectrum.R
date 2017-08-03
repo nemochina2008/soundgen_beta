@@ -17,10 +17,10 @@
 #' @param nHarmonics maximum number of harmonics to generate (very weak
 #'   harmonics with amplitude < \code{throwaway} will be discarded)
 #' @inheritParams soundgen
-#' @param rolloff_quadraticCeiling quadratic adjustment is applied only up to
-#'   \code{rolloff_quadraticCeiling}, Hz. If not NULL, it overrides
+#' @param rolloffParabCeiling quadratic adjustment is applied only up to
+#'   \code{rolloffParabCeiling}, Hz. If not NULL, it overrides
 #'   \code{rolloffParabHarm}
-#' @param baseline_Hz The "neutral" frequency, at which no adjustment of rolloff
+#' @param baseline The "neutral" frequency, at which no adjustment of rolloff
 #'   takes place regardless of \code{rolloffKHz}
 #' @param samplingRate sampling rate (needed to stop at Nyquist frequency and
 #'   for plotting purposes)
@@ -66,7 +66,7 @@
 #'   rolloffParabHarm = 7, plot = TRUE)
 #' # only harmonics below 2000 Hz are affected
 #' rolloff = getRolloff(pitch_per_gc = c(150, 600),
-#'   rolloffParab = -20, rolloff_quadraticCeiling = 2000,
+#'   rolloffParab = -20, rolloffParabCeiling = 2000,
 #'   plot = TRUE)
 getRolloff = function(pitch_per_gc = c(440),
                       nHarmonics = 100,
@@ -74,9 +74,9 @@ getRolloff = function(pitch_per_gc = c(440),
                       rolloffOct = -2,
                       rolloffParab = 0,
                       rolloffParabHarm = 2,
-                      rolloff_quadraticCeiling = NULL,
+                      rolloffParabCeiling = NULL,
                       rolloffKHz = -6,
-                      baseline_Hz = 200,
+                      baseline = 200,
                       throwaway = -120,
                       samplingRate = 16000,
                       plot = FALSE) {
@@ -84,7 +84,7 @@ getRolloff = function(pitch_per_gc = c(440),
   deltas = matrix(0, nrow = nHarmonics, ncol = length(pitch_per_gc))
   if (sum(rolloffOct != 0) > 0) {
     for (h in 2:nHarmonics) {
-      deltas[h, ] = rolloffOct * (pitch_per_gc * h - baseline_Hz) / 1000
+      deltas[h, ] = rolloffOct * (pitch_per_gc * h - baseline) / 1000
       # rolloff changes by rolloffOct per octave for each octave above H2
     }
   }
@@ -93,17 +93,17 @@ getRolloff = function(pitch_per_gc = c(440),
   r = matrix(0, nrow = nHarmonics, ncol = length(pitch_per_gc))
   for (h in 1:nHarmonics) {
     r[h,] = ((rolloff + rolloffKHz *
-                (pitch_per_gc - baseline_Hz) / 1000) * log2(h)) + deltas[h,]
+                (pitch_per_gc - baseline) / 1000) * log2(h)) + deltas[h,]
     # note that rolloff is here adjusted as a linear function of
-    #   the difference between current f0 and baseline_Hz
+    #   the difference between current f0 and baseline
     r[h, which(h * pitch_per_gc >= samplingRate / 2)] = -Inf # to avoid
     # aliasing, we discard all harmonics above Nyquist frequency
   }
 
   ## QUADRATIC term affecting the first rolloffParabHarm harmonics only
   if (rolloffParab != 0) {
-    if (!is.null(rolloff_quadraticCeiling)) {
-      rolloffParabHarm = round(rolloff_quadraticCeiling / pitch_per_gc)  # vector of
+    if (!is.null(rolloffParabCeiling)) {
+      rolloffParabHarm = round(rolloffParabCeiling / pitch_per_gc)  # vector of
       # length pitch_per_gc specifying the number of harmonics whose amplitude
       # is to be adjusted
     } else {
@@ -188,11 +188,9 @@ getRolloff = function(pitch_per_gc = c(440),
 
 #' Spectral envelope
 #'
-#' Internal soundgen function.
-#'
 #' Prepares a spectral envelope for filtering a sound to add formants, lip
 #' radiation, and some stochastic component regulated by temperature.
-#' formants is specified as a list containing time, frequency, amplitude,
+#' Formants are specified as a list containing time, frequency, amplitude,
 #' and width values for each formant (see examples). NB: each formant is
 #' generated as a gamma distribution with mean = freq and SD = width. Formant
 #' bandwidths in soundgen are therefore NOT compatible with formant bandwidths
@@ -202,23 +200,29 @@ getRolloff = function(pitch_per_gc = c(440),
 #'   windowLength_points is the size of window for Fourier transform
 #' @param nc the number of time steps for Fourier transform
 #' @inheritParams soundgen
-#' @param formDrift scale factor regulating the effect of temperature on the depth of random drift of all formants (user-defined and stochastic): the higher, the more formants drift at a given temperature
-#' @param formDisp scale factor regulating the effect of temperature on the irregularity of the dispersion of stochastic formants: the higher, the more unevenly stochastic formants are spaced at a given temperature
-#' @param speedSound speed of sound in warm air, cm/s. Stevens (2000) "Acoustic phonetics", p. 138
-#' @param amplBoost_openMouth_dB amplify the voice when the mouth is open by
-#'   \code{amplBoost_openMouth_dB} dB
-#' @param mouthOpening_threshold the mouth is considered to be open when its
-#'   opening is greater than \code{mouthOpening_threshold}. Defaults to 0
+#' @param formants either a character string like "aaui" referring to default presets for speaker "M1" or a list of formant times, frequencies, amplitudes, and bandwidths. \code{formants = NA} defaults to schwa. Time stamps for formants and mouthOpening can be specified in ms or an any other arbitarary scale.
+#' @param formDrift scale factor regulating the effect of temperature on the
+#'   depth of random drift of all formants (user-defined and stochastic): the
+#'   higher, the more formants drift at a given temperature
+#' @param formDisp scale factor regulating the effect of temperature on the
+#'   irregularity of the dispersion of stochastic formants: the higher, the more
+#'   unevenly stochastic formants are spaced at a given temperature
+#' @param speedSound speed of sound in warm air, cm/s. Stevens (2000) "Acoustic
+#'   phonetics", p. 138
+#' @param openMouthBoost amplify the voice when the mouth is open by
+#'   \code{openMouthBoost} dB
+#' @param mouthOpenThres the mouth is considered to be open when its
+#'   opening is greater than \code{mouthOpenThres}. Defaults to 0
 #' @param formantDepStoch the amplitude of additional formants added above
 #'   the highest specified formant (only if temperature > 0)
-#' @param smoothLinear_factor regulates smoothing of formant anchors (0 to +Inf)
+#' @param smoothLinearFactor regulates smoothing of formant anchors (0 to +Inf)
 #'   as they are upsampled to the number of fft steps \code{nc}. This is
 #'   necessary because the input \code{formants} normally contains fewer
 #'   sets of formant values than the number of fft steps.
-#'   \code{smoothLinear_factor} = 0: close to default spline; >3: approaches
+#'   \code{smoothLinearFactor} = 0: close to default spline; >3: approaches
 #'   linear extrapolation
 #' @param plot if TRUE, produces a plot of the spectral envelope
-#' @param dur_ms duration of the sound, ms (for plotting purposes only)
+#' @param duration duration of the sound, ms (for plotting purposes only)
 #' @param colorTheme black and white ('bw'), as in seewave package ('seewave'),
 #'   or another color theme (e.g. 'heat.colors')
 #' @param nCols number of colors in the palette
@@ -228,7 +232,7 @@ getRolloff = function(pitch_per_gc = c(440),
 #' @return Returns a spectral filter (matrix nr x nc, where nr is the number of
 #'   frequency bins = windowLength_points/2 and nc is the number of time steps)
 #' @examples
-#' # [a] with F1-F4 visible
+#' # [a] with F1-F3 visible
 #' image(t(getSpectralEnvelope(nr = 512, nc = 50,
 #'   formants = soundgen:::convertStringToFormants('a'),
 #'   temperature = 0)))
@@ -256,18 +260,18 @@ getSpectralEnvelope = function(nr,
                                formantDep = 1,
                                rolloffLip = 6,
                                mouthAnchors = NA,
-                               mouthOpening_threshold = 0,
-                               amplBoost_openMouth_dB = 0,
+                               mouthOpenThres = 0,
+                               openMouthBoost = 0,
                                vocalTract = NULL,
                                temperature = 0,
                                formDrift = .3,
                                formDisp = .2,
                                formantDepStoch = 30,
-                               smoothLinear_factor = 1,
+                               smoothLinearFactor = 1,
                                samplingRate = 16000,
                                speedSound = 35400,
                                plot = FALSE,
-                               dur_ms = NULL,
+                               duration = NULL,
                                colorTheme = c('bw', 'seewave', '...')[1],
                                nCols = 100,
                                xlab = 'Time',
@@ -315,7 +319,7 @@ getSpectralEnvelope = function(nr,
         # too slow for this. So we apply linear extrapolation to formant values
         # first, to get a fairly straight line between anchors, and THEN smooth
         # it out with spline
-        out = spline(approx(y, n = nPoints + 2 ^ smoothLinear_factor,
+        out = spline(approx(y, n = nPoints + 2 ^ smoothLinearFactor,
                             x = f$time)$y, n = nc)$y
       } else {
         out = rep(y, nc)
@@ -427,7 +431,7 @@ getSpectralEnvelope = function(nr,
       valueCeiling = permittedValues['mouthOpening', 'high'],
       plot = FALSE
     )
-    mouthOpening_upsampled[mouthOpening_upsampled < mouthOpening_threshold] = 0
+    mouthOpening_upsampled[mouthOpening_upsampled < mouthOpenThres] = 0
     mouthOpen_binary = ifelse(mouthOpening_upsampled > 0, 1, 0)
   }
   # plot(mouthOpening_upsampled, type = 'l')
@@ -516,15 +520,15 @@ getSpectralEnvelope = function(nr,
   for (c in 1:nc) {
     spectralEnvelope[, c] = (spectralEnvelope[, c] +
                                lip_dB * mouthOpen_binary[c]) *
-      2 ^ (mouthOpening_upsampled[c] * amplBoost_openMouth_dB / 10)
+      2 ^ (mouthOpening_upsampled[c] * openMouthBoost / 10)
   }
 
   # convert from dB to linear multiplier
   spectralEnvelope = 2 ^ (spectralEnvelope / 10)
 
   if (plot) {
-    if (is.numeric(dur_ms)) {
-      x = seq(0, dur_ms, length.out = nc)
+    if (is.numeric(duration)) {
+      x = seq(0, duration, length.out = nc)
     } else {
       x = seq(0, 1, length.out = nc)
     }

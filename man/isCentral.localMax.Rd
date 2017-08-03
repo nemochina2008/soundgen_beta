@@ -21,3 +21,4 @@ faster than \code{\link[seewave]{fpeaks}}.
 \examples{
 soundgen:::isCentral.localMax(c(1,1,3,2,1), 2.5)
 }
+\keyword{internal}

@@ -33,3 +33,4 @@ Internal helper function for postprocessing of pitch contours called by
 through pitch candidates based on pitch jumps and distance from
 high-certainty candidates.
 }
+\keyword{internal}

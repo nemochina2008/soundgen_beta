@@ -33,3 +33,4 @@ v3 = rep(100, 15)
 soundgen:::addVectors(v1, v3, insertionPoint = -4)
 soundgen:::addVectors(v2, v3, insertionPoint = 7)
 }
+\keyword{internal}

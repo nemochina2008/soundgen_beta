@@ -32,3 +32,4 @@ df1 = soundgen:::medianSmoother(df, smoothing_ww = 5, smoothingThres = 1)
 plot(df[, 2], type='b')
 lines(df1[, 2], type='b', col='blue', pch=3)
 }
+\keyword{internal}

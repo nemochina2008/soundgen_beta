@@ -15,3 +15,4 @@ Internal soundgen function
 \details{
 Returns the depth of list structure. See https://stackoverflow.com/questions/13432863/determine-level-of-nesting-in-r
 }
+\keyword{internal}

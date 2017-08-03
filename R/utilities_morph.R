@@ -16,6 +16,7 @@
 #' @param plot if TRUE, plots the morphing sequence of anchors
 #' @param ... other graphical pars passed on to \code{plot}
 #' @return A list of length nMorphs containing anchor dataframes for morphing
+#' @keywords internal
 #' @examples
 #' a = data.frame(time=c(0, .2, .9, 1), value=c(100, 110, 180, 110))
 #' b = data.frame(time=c(0, .3, .5, .8, 1), value=c(300, 220, 190, 400, 350))
@@ -188,6 +189,7 @@ morphDF = function(a,
 #' @param f1,f2 dataframes specifying one formant of the two target sounds
 #'   (different numbers of rows are ok)
 #' @param nMorphs length of morphing sequence
+#' @keywords internal
 morphFormants = function(f1, f2, nMorphs = 5) {
   if (is.list(f1)) f1 = as.data.frame(f1)
   if (is.list(f2)) f2 = as.data.frame(f2)
@@ -216,6 +218,7 @@ morphFormants = function(f1, f2, nMorphs = 5) {
 #' @param l1,l2 lists of formants (various lengths are ok)
 #' @param nMorphs length of morphing sequence
 #' @return A list of length nMorphs.
+#' @keywords internal
 #' @examples
 #' l1 = list(f1 = data.frame(time = c(0, .5, 1),
 #'                           freq = c(700, 900, 1200),

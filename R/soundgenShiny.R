@@ -2,7 +2,9 @@
 
 #' Soundgen shiny app
 #'
-#' Starts a shiny app, which provides an interactive wrapper to \code{\link{soundgen}}
+#' Starts a shiny app, which provides an interactive wrapper to
+#' \code{\link{soundgen}}
+#' @export
 soundgen_app = function() {
   appDir = system.file("shiny", "soundgen_main", package = "soundgen")
   if (appDir == "") {

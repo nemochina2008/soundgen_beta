@@ -19,3 +19,4 @@ Internal helper function for spectral (~BaNa) pitch tracker. NOT quite the same 
 soundgen:::Mode(c(1, 2, 3))  # if every element is unique, return the smallest
 soundgen:::Mode(c(1, 2, 2, 3))
 }
+\keyword{internal}

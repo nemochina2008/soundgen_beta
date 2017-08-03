@@ -9,7 +9,8 @@ getDiscreteContour(len, anchors = data.frame(time = c(0, 1), value = c(1, 1)),
   valueCeiling = NULL, ylim = NULL, plot = FALSE, ...)
 }
 \arguments{
-\item{len}{the number of syllables (equivalently, the length of generated contour)}
+\item{len}{the number of syllables (equivalently, the length of generated
+contour)}
 
 \item{anchors}{a dataframe of anchors with specified time and amplitude.
 \code{achors$time} can be in ms (with len=NULL) or in arbitrary units, eg 0
@@ -30,7 +31,7 @@ only a few anchors}
 
 \item{plot}{(boolean) produce a plot?}
 
-\item{...}{other plotting options passed on to \code{plot()}}
+\item{...}{other plotting options passed to \code{plot()}}
 }
 \value{
 Numeric vector.
@@ -39,11 +40,13 @@ Numeric vector.
 Internal soundgen function.
 }
 \details{
-A discrete version of \code{\link{getSmoothContour}} with modified plotting. Intended for plotting variation in parameters across syllables.
+A discrete version of \code{\link{getSmoothContour}} with modified plotting.
+Intended for plotting variation in parameters across syllables.
 }
 \examples{
 # for a bout consisting of 10 syllables
-soundgen:::getDiscreteContour (len = 10, method = 'spline', plot = TRUE,
+soundgen:::getDiscreteContour(len = 10, method = 'spline', plot = TRUE,
   ylab = 'Semitones', anchors = data.frame(time = c(0, .2, .6, 1),
   value = c(0, -3, 1, 0)))
 }
+\keyword{internal}

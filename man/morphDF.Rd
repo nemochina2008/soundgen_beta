@@ -54,3 +54,4 @@ m = soundgen:::morphDF(a = data.frame(time = c(-50, 1214), value = c(-50, -70)),
                        b = data.frame(time = c(0, 49, 256), value = c(-120, 10, -120)),
                        nMorphs = 8, method = 'perAnchor', plot = TRUE)
 }
+\keyword{internal}

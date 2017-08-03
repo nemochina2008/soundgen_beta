@@ -31,6 +31,7 @@ semitonesToHz = function(s) {
 #'
 #' Internal soundgen function.
 #' @param x a vector of floats between 0 and 1 (exclusive, i.e. these are ratios)
+#' @keywords internal
 #' @examples
 #' soundgen:::to_dB(c(.1, .5, .75, .9, .95, .99, .999, .9999))
 to_dB = function(x) {
@@ -43,6 +44,7 @@ to_dB = function(x) {
 #'
 #' Returns the depth of list structure. See https://stackoverflow.com/questions/13432863/determine-level-of-nesting-in-r
 #' @param x any R object
+#' @keywords internal
 listDepth = function(x) ifelse(is.list(x), 1L + max(sapply(x, listDepth)), 0L)
 
 
@@ -52,6 +54,7 @@ listDepth = function(x) ifelse(is.list(x), 1L + max(sapply(x, listDepth)), 0L)
 #'
 #' Normalized input vector to range from 0 to 1
 #' @param x numeric vector or matrix
+#' @keywords internal
 zeroOne = function(x) {
   x = x - min(x)
   x = x / max(x)
@@ -64,6 +67,7 @@ zeroOne = function(x) {
 #' Normalizes, log-transforms, and re-normalizes an input vector, so it ranges
 #' from 0 to 1
 #' @param v numeric vector
+#' @keywords internal
 #' @examples
 #' v = exp(1:10)
 #' soundgen:::log01(v)
@@ -86,6 +90,7 @@ log01 = function(v) {
 #' @param srNew the new, required sampling rate
 #' @param srOld the original sampling rate
 #' @param minLen the minimum length of returned vector
+#' @keywords internal
 #' @examples
 #' s = sort(rnorm(20))
 #' soundgen:::downsample(s, srNew = 5, srOld = 18)
@@ -115,6 +120,7 @@ downsample = function(s, srNew = 10, srOld = 120, minLen = 3){
 #' @param normalize if TRUE, Shannon entropy is normalized by the length of
 #'   input vector to range from 0 to 1. It has no affect on Weiner entropy.
 #' @return Float between 0 and 1 or NA
+#' @keywords internal
 #' @examples
 #' # Here are four simplified power spectra, each with 9 frequency bins:
 #' s = list(
@@ -172,6 +178,7 @@ getEntropy = function(x, type = c('weiner', 'shannon')[1], normalize = FALSE) {
 #' @param roundToInteger boolean vector of length 1 or n. If TRUE, the
 #'   corresponding value is rounded to the nearest integer.
 #' @return A vector of length n.
+#' @keywords internal
 #' @examples
 #' soundgen:::rnorm_bounded(n = 3, mean = 10, sd = 5, low = 7, high = NULL,
 #'   roundToInteger = c(TRUE, FALSE, FALSE))
@@ -230,6 +237,7 @@ rnorm_bounded = function(n = 1,
 #'
 #' Internal helper function for spectral (~BaNa) pitch tracker. NOT quite the same as simply mode(x).
 #' @param x numeric vector
+#' @keywords internal
 #' @examples
 #' soundgen:::Mode(c(1, 2, 3))  # if every element is unique, return the smallest
 #' soundgen:::Mode(c(1, 2, 2, 3))
@@ -270,6 +278,7 @@ Mode = function(x) {
 #'   with an upward and a downward curve. Larger absolute values of trend
 #'   produce less and less random behavior
 #' @return Returns a numeric vector of length len and range from 0 to rw_range.
+#' @keywords internal
 #' @examples
 #' plot(soundgen:::getRandomWalk(len = 1000, rw_range = 5,
 #'   rw_smoothing = .2))
@@ -332,6 +341,7 @@ getRandomWalk = function(len,
 #'   100 = returns all twos
 #' @param minLength the mimimum length of each epoch
 #' @return Returns a vector of integers (0/1/2) of the same length as rw.
+#' @keywords internal
 #' @examples
 #' rw = soundgen:::getRandomWalk(len = 100, rw_range = 100, rw_smoothing = .2)
 #' plot(rw, type = 'l')
@@ -378,6 +388,7 @@ getIntegerRandomWalk = function(rw,
 #' @param padWith if the vector needs to be padded to match the required length,
 #'   what should it be padded with? Defaults to 0
 #' @return Returns the modified vector of the required length.
+#' @keywords internal
 #' @examples
 #' soundgen:::matchLengths(c(1, 2, 3), len = 5)
 #' soundgen:::matchLengths(3:7, len = 3)
@@ -428,6 +439,7 @@ matchLengths = function(myseq,
 #' @param matrix_short input matrix
 #' @param nCol the required number of columns
 #' @param padWith the value to pad with, normally \code{0} or \code{NA}
+#' @keywords internal
 #' @examples
 #' a = matrix(1:9, nrow = 3)
 #' soundgen:::matchColumns(a, nCol = 6, padWith = NA)
@@ -461,6 +473,7 @@ matchColumns = function (matrix_short, nCol, padWith = 0) {
 #' @param v1,v2 numeric vectors
 #' @param insertionPoint the index of element in vector 1 at which vector 2 will
 #'   be insterted (any integer, can also be negative)
+#' @keywords internal
 #' @examples
 #' v1 = 1:6
 #' v2 = rep(100, 3)
@@ -520,6 +533,7 @@ addVectors = function(v1, v2, insertionPoint) {
 #'   processing pitch_per_gc values)
 #' @return Returns the original sequence s transformed to homogeneous segments
 #'   of required length.
+#' @keywords internal
 #' @examples
 #' s = c(1,3,2,2,2,0,0,4,4,1,1,1,1,1,3,3)
 #' soundgen:::clumper(s, 2)
@@ -582,6 +596,7 @@ clumper = function(s, minLength) {
 #' faster than \code{\link[seewave]{fpeaks}}.
 #' @param x input vector
 #' @param threshold threshold for peak detection
+#' @keywords internal
 #' @examples
 #' soundgen:::isCentral.localMax(c(1,1,3,2,1), 2.5)
 isCentral.localMax = function(x, threshold) {

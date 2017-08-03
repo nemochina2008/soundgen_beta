@@ -7,13 +7,13 @@
 #' improve fit to target. The currently implemented optimization algorithm is
 #' simple hill climbing. Disclaimer: this function is experimental and may or
 #' may not work for particular tasks. It is intended as a supplement to - not
-#' replacement of - manual optimization. See the vignette on sound production
+#' replacement of - manual optimization. See the vignette on sound generation
 #' for more information.
 #'
 #' @return Returns a list of length 2: \code{$history} contains the tried
-#'   parameter values together with their fit to target \code{$sim}, and
-#'   \code{$pars} contains a list of the final - hopefully the best - parameter
-#'   settings.
+#'   parameter values together with their fit to target (\code{$history$sim}),
+#'   and \code{$pars} contains a list of the final - hopefully the best -
+#'   parameter settings.
 #' @param target the sound we want to reproduce using soundgen: path to a .wav
 #'   file or numeric vector
 #' @param samplingRate sampling rate of \code{target} (only needed if target is
@@ -21,8 +21,8 @@
 #' @inheritParams spectrogram
 #' @param pars arguments to \code{\link{soundgen}} that we are attempting to
 #'   optimize
-#' @param init values of other arguments to soundgen that are fixed at
-#'   non-default values
+#' @param init a lsit of the values of other arguments to soundgen that are
+#'   fixed at non-default values
 #' @param method method of comparing mel-transformed spectra of two sounds:
 #'   "cor" = average Pearson's correlation of mel-transformed spectra of
 #'   individual FFT frames; "cosine" = same as "cor" but with cosine similarity
@@ -397,6 +397,7 @@ compareSounds = function(target,
 #' @param parList full list of considered parameters
 #' @param parsToWiggle a list of the names of pars that might be mutated
 #' @inheritParams matchPars
+#' @keywords internal
 #' @examples
 #' soundgen:::wigglePars(
 #'   parList = list(
@@ -498,6 +499,7 @@ wigglePars = function(parList,
 #' @param s input sound (path to a .wav file or numeric vector)
 #' @inheritParams matchPars
 #' @param plot if TRUE, plots the spectrum
+#' @keywords internal
 getMelSpec = function(s,
                       samplingRate = NULL,
                       windowLength = 40,

@@ -4,14 +4,15 @@
 #'
 #' Acoustic analysis of a single sound file: pitch tracking and basic spectral
 #' characteristics. The default values of arguments are optimized for human
-#' non-linguistic vocalizations. See the vignette for details.
+#' non-linguistic vocalizations. See the vignette on acoustic analysis for
+#' details.
 #'
 #' @inheritParams spectrogram
 #' @param silence (0 to 1) frames with mean abs amplitude below silence
 #'   threshold are not analyzed at all. NB: this number is dynamically updated:
 #'   the actual silence threshold may be higher depending on the quietest frame,
 #'   but it will never be lower than this specified number.
-#' @param cutFreq (>0 to Nyquist Hz) repeat the calculation of spectral
+#' @param cutFreq (>0 to Nyquist, Hz) repeat the calculation of spectral
 #'   descriptives after discarding all info above \code{cutFreq}.
 #'   Recommended if the original sampling rate varies across different analyzed
 #'   audio files
@@ -72,8 +73,7 @@
 #'   \code{soundgen:::pathfinder} for details.
 #' @param pathfinding method of finding the optimal path through pitch
 #'   candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
-#'   'slow' = annealing. See \code{soundgen:::pathfinder} and the
-#'   vignette on acoustic analysis
+#'   'slow' = annealing. See \code{soundgen:::pathfinder}
 #' @param annealPars a list of control parameters for postprocessing of
 #'   pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
 #'   only relevant if \code{pathfinding = 'slow'}
@@ -94,8 +94,9 @@
 #' @param plot if TRUE, produces a spectrogram with pitch contour overlaid
 #' @param savePath if a valid path is specified, a plot is saved in this
 #'   folder (defaults to NA)
-#' @param specPlot a list of graphical parameters passed to \code{\link{spec}}.
-#'   Set to \code{NULL} to suppress plotting just the spectrogram
+#' @param specPlot a list of graphical parameters passed to
+#'   \code{\link{spectrogram}}. Set to \code{NULL} to suppress plotting just the
+#'   spectrogram
 #' @param candPlot a list of graphical parameters for displaying
 #'   individual pitch candidates. Set to \code{NULL} or \code{NA} to suppress
 #' @param pitchPlot a list of graphical parameters for displaying the
@@ -125,17 +126,19 @@
 #' median(getSmoothContour(anchors = list(time = c(0, .3, .8, 1),
 #'   value = c(300, 900, 400, 2300)), len = 1000))
 #'
-#' # the same pitch contour, but harder to analyze b/c of subharmonics and jitter
+#' # the same pitch contour, but harder b/c of subharmonics and jitter
+#' sound2 = soundgen(sylLen = 900, temperature = 0,
+#'                   pitchAnchors = list(time = c(0, .3, .8, 1),
+#'                                       value = c(300, 900, 400, 2300)),
+#'                   noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
+#'                   subDep = 100, jitterDep = 0.5, pitchEffectsAmount = 100)
 #' sound2 = soundgen(sylLen = 900, pitchAnchors = list(
 #'   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
 #'   noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
 #'   subDep = 100, jitterDep = 0.5, pitchEffects_amount = 100, temperature = 0)
 #' playme(sound2, 16000)
 #' a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
-#' # many pitch candidates are off, but the overall contour and estimate of
-#' # median pitch should be pretty accurate:
-#' median(a2$pitch, na.rm = TRUE)  # 622 Hz (can vary, since postprocessing is stochastic)
-#' median(a2$HNR, na.rm = TRUE)  # HNR of 3-4 dB
+#' # many candidates are off, but the overall contour should be mostly accurate
 #'
 #' # Fancy plotting options:
 #' a = analyze(sound2, samplingRate = 16000, plot = TRUE,
@@ -679,8 +682,8 @@ analyze = function(x,
   # only for voiced frames (with non-NA pitch)
   voiced_idx = which(!is.na(result$pitch))
   unvoiced_idx = which(is.na(result$pitch))
-  result$ampl_voiced = NA
-  result$ampl_voiced[voiced_idx] = result$ampl[voiced_idx]
+  result$amplVoiced = NA
+  result$amplVoiced[voiced_idx] = result$ampl[voiced_idx]
   result[unvoiced_idx, c('quartile25', 'quartile50', 'quartile75')] = NA
   result$voiced = FALSE
   result$voiced[voiced_idx] = TRUE
@@ -759,7 +762,7 @@ analyze = function(x,
     freqs = seq(1, HzToSemitones(samplingRate / 2), length.out = 1000)
     prior = dgamma(freqs, shape = shape, rate = rate) / prior_normalizer
     plot(semitonesToHz(freqs), prior, type = 'l', xlab = 'Frequency, Hz',
-         ylab = 'Multiplier of certainty', main = 'Prior beliefs in pitch values')
+         ylab = 'Multiplier of certainty', main = 'Prior belief in pitch values')
   }
 
   if (summary) {
@@ -814,10 +817,10 @@ analyze = function(x,
 #' # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
 #' # unzip them into a folder, say '~/Downloads/temp'
 #' myfolder = '~/Downloads/temp'  # 260 .wav files live here
-#' s = analyzeFolder(myfolder, verbose = TRUE)
+#' s = analyzeFolder(myfolder, verbose = TRUE)  # ~ 15-30 minutes!
 #'
 #' # Check accuracy: import manually verified pitch values (our "key")
-#' key = pitch_manual  # a vector of 260 floats
+#' key = pitchManual  # a vector of 260 floats
 #' trial = s$pitch_median
 #' cor(key, trial, use = 'pairwise.complete.obs')
 #' plot(log(key), log(trial))

@@ -2,14 +2,13 @@
 
 #' Smooth contour from anchors
 #'
-#' Internal soundgen function.
-#'
-#' Returns a smooth contour based on an arbitrary number of anchors. Used for
-#' breathing and mouth opening. Note that pitch contours are treated as a
-#' special case: values are log-transformed prior to smoothing, so that with 2
-#' anchors we get a linear transition on a log scale (as if we were operating
-#' with musical notes rather than frequencies in Hz). Pitch plots have two Y
-#' axes: one showing Hz and the other showing musical notation.
+#' Returns a smooth contour based on an arbitrary number of anchors. Used by
+#' \code{\link{soundgen}} for generating intonation contour, mouth opening, etc.
+#' Note that pitch contours are treated as a special case: values are
+#' log-transformed prior to smoothing, so that with 2 anchors we get a linear
+#' transition on a log scale (as if we were operating with musical notes rather
+#' than frequencies in Hz). Pitch plots have two Y axes: one showing Hz and the
+#' other showing musical notation.
 #' @param anchors a dataframe of anchors with specified time and amplitude.
 #'   \code{achors$time} can be in ms (with len=NULL) or in arbitrary units, eg 0
 #'   to 1 (with duration determined by len, which must then be provided in ms).
@@ -29,7 +28,7 @@
 #' @param voiced,contourLabel graphical pars for plotting breathing contours
 #'   (see examples below)
 #' @param main,xlim,ylim plotting options
-#' @param ... other plotting options passed on to \code{plot()}
+#' @param ... other plotting options passed to \code{plot()}
 #' @export
 #' @return Returns a numeric vector.
 #' @examples
@@ -223,14 +222,17 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
 #'
 #' Internal soundgen function.
 #'
-#' A discrete version of \code{\link{getSmoothContour}} with modified plotting. Intended for plotting variation in parameters across syllables.
-#' @param len the number of syllables (equivalently, the length of generated contour)
+#' A discrete version of \code{\link{getSmoothContour}} with modified plotting.
+#' Intended for plotting variation in parameters across syllables.
+#' @param len the number of syllables (equivalently, the length of generated
+#'   contour)
 #' @inheritParams getSmoothContour
 #' @param ylim ylim for plotting
 #' @return Numeric vector.
+#' @keywords internal
 #' @examples
 #' # for a bout consisting of 10 syllables
-#' soundgen:::getDiscreteContour (len = 10, method = 'spline', plot = TRUE,
+#' soundgen:::getDiscreteContour(len = 10, method = 'spline', plot = TRUE,
 #'   ylab = 'Semitones', anchors = data.frame(time = c(0, .2, .6, 1),
 #'   value = c(0, -3, 1, 0)))
 getDiscreteContour = function(len,

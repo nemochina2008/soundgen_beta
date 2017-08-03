@@ -34,3 +34,4 @@ plot(soundgen:::fadeInOut(ampl, length_fade = 300,
 # fade-in/out regions overlap
 plot(soundgen:::fadeInOut(ampl, length_fade = 700), type = 'l')
 }
+\keyword{internal}

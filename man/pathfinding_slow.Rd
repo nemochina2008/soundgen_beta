@@ -35,3 +35,4 @@ Optimizes the path through pitch candidates using simulated annealing with
 \code{\link[stats]{optim}}. This can be really slow, depending on control
 parameters.
 }
+\keyword{internal}

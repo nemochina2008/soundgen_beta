@@ -14,6 +14,7 @@
 #'   of each iteration. If not NULL, estimated time left takes into account
 #'   whether the jobs ahead will take more or less time than the jobs already
 #'   completed
+#' @keywords internal
 #' @examples
 #' \dontrun{
 #' time_start = proc.time()
@@ -49,6 +50,7 @@ reportTime = function(i, nIter, time_start, jobs = NULL) {
 #' Converts time in seconds to time in hh:mm:ss for pretty printing.
 #' @param time_s time (s)
 #' @return Returns a character string like "1 h 20 min 3 s"
+#' @keywords internal
 #' @examples
 #' time_start = proc.time()
 #' Sys.sleep(1)
@@ -114,6 +116,7 @@ playme = function(sound, samplingRate = 16000) {
 #' @param speaker name of the preset dictionary to use
 #' @return Returns a list of formant values, which can be fed directly into
 #'   \code{\link{getSpectralEnvelope}}
+#' @keywords internal
 #' @examples
 #' formants = soundgen:::convertStringToFormants(
 #'   phonemeString = 'aaeuiiiii', speaker = 'M1')
@@ -136,7 +139,8 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
   formantNames = sort(unique(formantNames))
   names(vowels) = unique_phonemes
 
-  # make sure we have filled in info on all formants from the entire sequence of vowels for each individual vowel
+  # make sure we have filled in info on all formants from the entire
+  # sequence of vowels for each individual vowel
   for (v in 1:length(vowels)) {
     absentFormants = formantNames[!formantNames %in% names(vowels[[v]])]
     for (f in absentFormants) {
@@ -215,6 +219,7 @@ convertStringToFormants = function(phonemeString, speaker = 'M1') {
 #' @param location the index indicating the desired location of a zero crossing
 #' @return Returns the index of the last negative value before zero crossing
 #'   closest to specified location.
+#' @keywords internal
 #' @examples
 #' ampl = sin(1:100/2)
 #' plot(ampl, type = 'b')
@@ -276,39 +281,44 @@ findZeroCrossing = function(ampl, location) {
 #'
 #' \code{crossFade} joins two input vectors (waveforms) by cross-fading. It
 #' truncates both input vectors, so that ampl1 ends with a zero crossing and
-#' ampl2 starts with a zero crossing. Then it cross-fades both vectors linearly
-#' with an overlap of length_ms or length_points. If the input vectors are too
-#' short for the specified length of cross-faded region, the two vectors are
-#' concatenated at zero crossings instead of cross-fading. Soundgen uses
-#' \code{crossFade} for gluing together epochs in generateSyllable()
-#'
+#' ampl2 starts with a zero crossing, both on an upward portion of the
+#' soundwave. Then it cross-fades both vectors linearly with an overlap of
+#' crossLen or crossLenPoints. If the input vectors are too short for the
+#' specified length of cross-faded region, the two vectors are concatenated at
+#' zero crossings instead of cross-fading. Soundgen uses \code{crossFade} for
+#' gluing together epochs with different regimes of pitch effects (see the
+#' vignette on sound generation), but it can also be useful for joining two
+#' separately generated sounds without audible artifacts.
 #' @param ampl1,ampl2 two numeric vectors (waveforms) to be joined
-#' @param length_ms the length of overlap, in ms (doesn't need to be specified
-#'   if length_points is not NULL)
-#' @param length_points (optional) the length of overlap, in points (defaults to
+#' @param samplingRate the sampling rate of input vectors, Hz
+#' @param crossLen the length of overlap, in ms (doesn't need to be specified
+#'   if crossLenPoints is not NULL)
+#' @param crossLenPoints (optional) the length of overlap, in points (defaults to
 #'   NULL)
-#' @param samplingRate the sampling rate of input vectors, in Hz
 #' @export
-#' @return Returns the index of the last negative value before zero crossing
-#'   closest to specified location.
+#' @return Returns a numeric vector.
 #' @examples
 #' sound1 = sin(1:100 / 9)
 #' sound2 = sin(7:107 / 3)
-#' plot(c(sound1, sound2), type = 'b') # an ugly discontinuity
-#' #  at 100 that will make an audible click
-#' sound = crossFade(sound1, sound2, length_points = 5)
+#' plot(c(sound1, sound2), type = 'b')
+#' # an ugly discontinuity at 100 that will make an audible click
+#'
+#' sound = crossFade(sound1, sound2, crossLenPoints = 5)
 #' plot(sound, type = 'b') # a nice, smooth transition
 #' length(sound) # but note that cross-fading costs us ~60 points
 #' #  because of trimming to zero crossings
 crossFade = function (ampl1,
                       ampl2,
-                      length_ms = 15,
-                      samplingRate = 44100,
-                      length_points = NULL) {
+                      samplingRate,
+                      crossLen = 15,
+                      crossLenPoints = NULL) {
   # cut to the nearest zero crossings
   zc1 = findZeroCrossing(ampl1, location = length(ampl1))
   if (!is.na(zc1)) {
-    ampl1 = c (ampl1[1:zc1], 0) # up to the last point before the last zero-crossing in sound 1 on the upward curve + one extra zero (to have a nice, smooth transition line: last negative in s1 - zero - first positive in s2)
+    # up to the last point before the last zero-crossing in sound 1 on the
+    # upward curve + one extra zero (to have a nice, smooth transition line:
+    # last negative in s1 - zero - first positive in s2)
+    ampl1 = c(ampl1[1:zc1], 0)
   }
   zc2 = findZeroCrossing(ampl2, location = 1)
   if (!is.na(zc2)) {
@@ -318,32 +328,32 @@ crossFade = function (ampl1,
   }
 
   # check whether there is enough data to cross-fade. Note that ampl1 or ampl2
-  # may even become shorter than length_points after we shortened them to the
+  # may even become shorter than crossLenPoints after we shortened them to the
   # nearest zero crossing
-  if (is.null(length_points)) {
-    length_points = min(floor(length_ms * samplingRate / 1000),
+  if (is.null(crossLenPoints)) {
+    crossLenPoints = min(floor(crossLen * samplingRate / 1000),
                         length(ampl1) - 1,
                         length(ampl2) - 1)
   } else {
-    length_points = min(length_points, length(ampl1) - 1, length(ampl2) - 1)
+    crossLenPoints = min(crossLenPoints, length(ampl1) - 1, length(ampl2) - 1)
   }
 
   # concatenate or cross-fade
-  if (length_points < 2) {
+  if (crossLenPoints < 2) {
     # for segments that are too short,
     # just concatenate from zero crossing to zero crossing
     ampl = c(ampl1, ampl2)
   } else {
     # for segments that are long enough, cross-fade properly
-    multipl = seq(0, 1, length.out = length_points)
-    idx1 = length(ampl1) - length_points
+    multipl = seq(0, 1, length.out = crossLenPoints)
+    idx1 = length(ampl1) - crossLenPoints
     cross = rev(multipl) * ampl1[(idx1 + 1):length(ampl1)] +
-      multipl * ampl2[1:length_points]
+      multipl * ampl2[1:crossLenPoints]
     ampl = c(ampl1[1:idx1],
              cross,
-             ampl2[(length_points + 1):length(ampl2)])
+             ampl2[(crossLenPoints + 1):length(ampl2)])
   }
-  return (ampl)
+  return(ampl)
 }
 
 
@@ -358,25 +368,26 @@ crossFade = function (ampl1,
 #' @return Returns a list of two vectors: pitch_upsampled (the upsampled version
 #'   of the input) and gc_upsampled (new indices of glottal cycles on an
 #'   upsampled scale)
+#' @keywords internal
 #' @examples
 #' soundgen:::upsample(pitch_per_gc = c(100, 150, 130), samplingRate = 16000)
 upsample = function(pitch_per_gc, samplingRate = 16000) {
   l = length(pitch_per_gc)
-  gcLength_points = round(samplingRate / pitch_per_gc)
-  c = cumsum(gcLength_points)
+  gccrossLenPoints = round(samplingRate / pitch_per_gc)
+  c = cumsum(gccrossLenPoints)
   gc_upsampled = c(1, c)
 
   if (l == 1) {
-    pitch_upsampled = rep(pitch_per_gc, gcLength_points)
+    pitch_upsampled = rep(pitch_per_gc, gccrossLenPoints)
   } else if (l == 2) {
-    pitch_upsampled = seq(pitch_per_gc[1], pitch_per_gc[2], length.out = sum(gcLength_points))
+    pitch_upsampled = seq(pitch_per_gc[1], pitch_per_gc[2], length.out = sum(gccrossLenPoints))
   } else {
     # find time stamps (in gc) corresponding to centers of each pitch value
     t = rep(1, l)
     t[1] = 1  # start at 1
-    t[l] = sum(gcLength_points)  # end at total number of gc
+    t[l] = sum(gccrossLenPoints)  # end at total number of gc
     for (i in 2:(l - 1)) {
-      t[i] = c[i - 1] + round(gcLength_points[i] / 2)
+      t[i] = c[i - 1] + round(gccrossLenPoints[i] / 2)
     }
     pitch_upsampled = spline(x = t,
                              y = pitch_per_gc,
@@ -399,6 +410,7 @@ upsample = function(pitch_per_gc, samplingRate = 16000) {
 #'   integer > 1, otherwise just returns the original vector with no
 #'   modifications)
 #' @return Returns a numeric vector of the same length as input
+#' @keywords internal
 #' @examples
 #' ampl = sin(1:1000)
 #' plot(soundgen:::fadeInOut(ampl, length_fade = 100), type = 'l')
@@ -439,6 +451,7 @@ fadeInOut = function(ampl,
 #' The first index is always 1.
 #' @param pitch a vector of fundamental frequency values
 #' @param samplingRate sampling rate at which f0 values are provided
+#' @keywords internal
 #' @examples
 #' # 100 ms of audio with f0 steadily increasing from 150 to 200 Hz
 #' soundgen:::getGlottalCycles (seq(150, 200, length.out = 350),
@@ -475,6 +488,7 @@ getGlottalCycles = function (pitch, samplingRate = 44100) {
 #'   to sylLen (very strong stochasticity)
 #' @param plot produce a plot of syllable structure?
 #' @return Returns a matrix with a list of start-end points for syllables
+#' @keywords internal
 #' @examples
 #' soundgen:::divideIntoSyllables (nSyl = 5, sylLen = 180,
 #'   pauseLen = 55, temperature = 0.2, plot = TRUE)
@@ -542,6 +556,7 @@ divideIntoSyllables = function (nSyl,
 #' https://stackoverflow.com/questions/7547758/using-sample-with-sample-space-size-1
 #' @param x vector
 #' @param ... other arguments passed to \code{sample}
+#' @keywords internal
 #' @examples
 #' soundgen:::sampleModif(x = 3, n = 1)
 #' # never returns 1 or 2: cf. sample(x = 3, n = 1)
@@ -570,6 +585,7 @@ sampleModif = function(x, ...) x[sample.int(length(x), ...)]
 #' @param wiggleAllRows should the firts and last time anchors be wiggled? (TRUE
 #'   for breathing, FALSE for other anchors)
 #' @return Modified original dataframe.
+#' @keywords internal
 #' @examples
 #' soundgen:::wiggleAnchors(df = data.frame(
 #'   time = c(0, .1, .8, 1), value = c(100, 230, 180, 90)),

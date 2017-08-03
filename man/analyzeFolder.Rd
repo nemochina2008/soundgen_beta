@@ -46,9 +46,9 @@ but it will never be lower than this specified number.}
 \item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
 blackman, flattop}
 
-\item{zp}{zero padding, points}
+\item{zp}{window length after zero padding, points}
 
-\item{cutFreq}{(>0 to Nyquist Hz) repeat the calculation of spectral
+\item{cutFreq}{(>0 to Nyquist, Hz) repeat the calculation of spectral
 descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
 audio files}
@@ -163,8 +163,7 @@ interpolation, set \code{interpolWin} to NULL. See
 
 \item{pathfinding}{method of finding the optimal path through pitch
 candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
-'slow' = annealing. See \code{soundgen:::pathfinder} and the
-vignette on acoustic analysis}
+'slow' = annealing. See \code{soundgen:::pathfinder}}
 
 \item{annealPars}{a list of control parameters for postprocessing of
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
@@ -199,8 +198,9 @@ frame-by-frame values}
 \item{savePath}{if a valid path is specified, a plot is saved in this
 folder (defaults to NA)}
 
-\item{specPlot}{a list of graphical parameters passed to \code{\link{spec}}.
-Set to \code{NULL} to suppress plotting just the spectrogram}
+\item{specPlot}{a list of graphical parameters passed to
+\code{\link{spectrogram}}. Set to \code{NULL} to suppress plotting just the
+spectrogram}
 
 \item{pitchPlot}{a list of graphical parameters for displaying the
 final pitch contour. Set to \code{NULL} or \code{NA} to suppress}
@@ -222,10 +222,10 @@ Acoustic analysis of all .wav files in a folder.
 # 01_anikin-persson_2016_naturalistics-non-linguistic-vocalizations/260sounds_wav.zip
 # unzip them into a folder, say '~/Downloads/temp'
 myfolder = '~/Downloads/temp'  # 260 .wav files live here
-s = analyzeFolder(myfolder, verbose = TRUE)
+s = analyzeFolder(myfolder, verbose = TRUE)  # ~ 15-30 minutes!
 
 # Check accuracy: import manually verified pitch values (our "key")
-key = pitch_manual  # a vector of 260 floats
+key = pitchManual  # a vector of 260 floats
 trial = s$pitch_median
 cor(key, trial, use = 'pairwise.complete.obs')
 plot(log(key), log(trial))

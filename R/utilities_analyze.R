@@ -18,6 +18,7 @@
 #' @return Returns a list with two components: $pitch_array contains pitch
 #'   candidates for the frame, and $summaries contains other acoustic predictors
 #'   like HNR, specSlope, etc.
+#' @keywords internal
 analyzeFrame = function(frame,
                         autoCorrelation = NULL,
                         samplingRate = 44100,
@@ -185,6 +186,7 @@ analyzeFrame = function(frame,
 #' @param bin the width of one bin in spectrogram, Hz
 #' @return Returns a list of $dom (NA or numeric) and $dom_array
 #'   (either NULL or a dataframe of pitch candidates).
+#' @keywords internal
 getDom = function(frame,
                   samplingRate,
                   bin,
@@ -244,6 +246,7 @@ getDom = function(frame,
 #' @inheritParams analyze
 #' @return Returns a list of $HNR (NA or numeric) and $pitchAutocor_array
 #'   (either NULL or a dataframe of pitch candidates).
+#' @keywords internal
 getPitchAutocor = function(autoCorrelation,
                            autocorSmooth = NULL,
                            autocorThres,
@@ -330,6 +333,7 @@ getPitchAutocor = function(autoCorrelation,
 #' @inheritParams analyzeFrame
 #' @inheritParams analyze
 #' @return Returns either NULL or a dataframe of pitch candidates.
+#' @keywords internal
 getPitchCep = function(frame,
                        cepZp,
                        samplingRate,
@@ -416,6 +420,7 @@ getPitchCep = function(frame,
 #' @param bin the width of spectral bin in \code{frame}, Hz
 #' @param HNR harmonics-to-noise ratio returned by \code{\link{getPitchAutocor}}
 #' @return Returns either NULL or a dataframe of pitch candidates.
+#' @keywords internal
 getPitchSpec = function(frame,
                         specSmooth,
                         specHNRslope,

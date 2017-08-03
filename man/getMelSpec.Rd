@@ -34,3 +34,4 @@ Takes a .wav file or a waveform as numeric vector + samplingRate and returns
 mel-transformed spectrum (auditory spectrum). Calls
 \code{\link[tuneR]{melfcc}}. See \code{\link{matchPars}}.
 }
+\keyword{internal}

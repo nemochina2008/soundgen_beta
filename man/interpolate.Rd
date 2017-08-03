@@ -42,3 +42,4 @@ Interpolation: if a frame has no pitch candidate at all (NA) or no candidate
 between the most likely candidates for the adjacent frames, add such a
 candidate with some (low) certainty.
 }
+\keyword{internal}

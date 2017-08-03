@@ -15,3 +15,4 @@ Internal soundgen function.
 \details{
 Generates a gaussian window of length n. Based on the formula by P. Boersma (PRAAT)
 }
+\keyword{internal}

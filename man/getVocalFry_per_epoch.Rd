@@ -37,3 +37,4 @@ Helper function for adding vocal fry (subharmonics) to a single epoch, with
 unchanging subharmonics regime (fixed number of subharmonics and sideband
 width). See master function \code{\link{getVocalFry}}.
 }
+\keyword{internal}

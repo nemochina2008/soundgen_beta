@@ -1,21 +1,23 @@
 #' Morph sounds
 #'
-#' Takes two formulas for synthesizing two target sounds and produces a number
-#' of intermediate forms (morphs), attempting to go from one target sound to the
-#' other in a specified number of equal steps.
+#' Takes two formulas for synthesizing two target sounds with
+#' \code{\link{soundgen}} and produces a number of intermediate forms (morphs),
+#' attempting to go from one target sound to the other in a specified number of
+#' equal steps.
 #' @param formula1,formula2 lists of parameters for calling
 #'   \code{\link{soundgen}} that produce the two target sounds between which
-#'   morphing will occur
+#'   morphing will occur. Character strings containing the full call to soundgen
+#'   are also accepted (see examples)
 #' @param nMorphs the length of morphing sequence, including target sounds
 #' @param playMorphs if TRUE, the morphing sequence will be played
 #' @param savePath if it is the path to an existing directory, morphs will be
 #'   saved there as individual .wav files (defaults to NA)
 #' @param samplingRate sampling rate of output, Hz. NB: must be the same as in
 #'   \code{formula1} and \code{formula2}!
+#' @return A list of two sublists (\code{$formulas} and \code{$sounds}), each
+#'   sublist of length nMorphs. For ex., the formula for the second hybrid is
+#'   \code{m$formulas[[2]]}, and the waveform is \code{m$sounds[[2]]}
 #' @export
-#' @return A list of two sublists ('formulas' and 'sounds'), each sublist of
-#'   length nMorphs. For ex., the formula for the second hybrid is
-#'   m$formulas[[2]], and the waveform is m$sounds[[2]]
 #' @examples
 #' # write two formulas or copy-paste them from soundgen_app() or presets, for example:
 #' m = morph(formula1 = list(repeatBout = 2),

@@ -42,3 +42,4 @@ Internal soundgen function.
 Attempts to find F0 of a frame by looking for peaks in the cepstrum.
 See http://www.phon.ucl.ac.uk/courses/spsci/matlab/lect10.html
 }
+\keyword{internal}

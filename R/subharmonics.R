@@ -21,6 +21,7 @@
 #' @param throwaway01 discard harmonics that are weaker than this number (between
 #'   0 and 1) to save computational resources
 #' @return Returns a modified rolloff matrix with added subharmonics
+#' @keywords internal
 getVocalFry_per_epoch = function(rolloff,
                                  pitch_per_gc,
                                  nSubharm,
@@ -94,6 +95,7 @@ getVocalFry_per_epoch = function(rolloff,
 #' @inheritParams soundgen
 #' @return Returns a list consisting of a list of rolloff matrices (one matrix
 #'   per epoch) and a dataframe of epochs.
+#' @keywords internal
 #' @examples
 #' pitch_per_gc = c(400, 500, 600, 700)
 #' rolloff = getRolloff(pitch_per_gc, rolloff = -30)

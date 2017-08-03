@@ -43,3 +43,4 @@ Internal helper function for postprocessing of pitch contour. Wiggles a snake
 along the gradient of internal + external forces. NB: if the snake is run,
 the final contour may deviate from the actually measured pitch candidates!
 }
+\keyword{internal}

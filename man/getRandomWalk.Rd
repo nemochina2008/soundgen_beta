@@ -49,3 +49,4 @@ plot(soundgen:::getRandomWalk(len = 1000, rw_range = 15,
 plot(soundgen:::getRandomWalk(len = 1000, rw_range = 15,
   rw_smoothing = .2, trend = c(15, -1)))
 }
+\keyword{internal}

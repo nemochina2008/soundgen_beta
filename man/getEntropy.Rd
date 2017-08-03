@@ -47,3 +47,4 @@ sapply(s, function(x) round(soundgen:::getEntropy(x, type = 'shannon'), 2))
 sapply(s, function(x) round(soundgen:::getEntropy(x,
   type = 'shannon', normalize = TRUE), 2))
 }
+\keyword{internal}

@@ -15,3 +15,4 @@ morphFormants(f1, f2, nMorphs = 5)
 \description{
 Internal soundgen function.
 }
+\keyword{internal}

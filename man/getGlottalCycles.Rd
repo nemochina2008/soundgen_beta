@@ -25,3 +25,4 @@ The first index is always 1.
 soundgen:::getGlottalCycles (seq(150, 200, length.out = 350),
   samplingRate = 3500)
 }
+\keyword{internal}

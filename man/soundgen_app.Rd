@@ -7,5 +7,6 @@
 soundgen_app()
 }
 \description{
-Starts a shiny app, which provides an interactive wrapper to \code{\link{soundgen}}
+Starts a shiny app, which provides an interactive wrapper to
+\code{\link{soundgen}}
 }

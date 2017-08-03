@@ -22,8 +22,7 @@ tension of the resulting pitch curve}
 
 \item{pathfinding}{method of finding the optimal path through pitch
 candidates: 'none' = best candidate per frame, 'fast' = simple heuristic,
-'slow' = annealing. See \code{soundgen:::pathfinder} and the
-vignette on acoustic analysis}
+'slow' = annealing. See \code{soundgen:::pathfinder}}
 
 \item{annealPars}{a list of control parameters for postprocessing of
 pitch contour with SANN algorithm of \code{\link[stats]{optim}}. This is
@@ -60,3 +59,4 @@ Internal helper function for postprocessing pitch contour. Starts with a
 reasonable guess and computes the more-or-less optimal pitch contour (not
 quite the very optimal - too computationally expensive).
 }
+\keyword{internal}

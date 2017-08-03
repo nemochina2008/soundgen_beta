@@ -19,3 +19,4 @@ Internal soundgen function.
 \details{
 Merges syllables if they are separated by less than \code{shortestPause ms}. Called by \code{\link{findSyllables}}.
 }
+\keyword{internal}

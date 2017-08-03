@@ -25,3 +25,4 @@ Internal soundgen function.
 \details{
 Called by \code{\link{ssm}}.
 }
+\keyword{internal}

@@ -34,3 +34,4 @@ Internal soundgen function.
 Calculate the lowest frequency band in the spectrum above pitchFloor whose
 power exceeds a certain threshold.
 }
+\keyword{internal}

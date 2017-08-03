@@ -15,3 +15,4 @@ Internal soundgen function.
 \examples{
 soundgen:::to_dB(c(.1, .5, .75, .9, .95, .99, .999, .9999))
 }
+\keyword{internal}

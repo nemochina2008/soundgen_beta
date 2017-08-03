@@ -56,3 +56,4 @@ Attempts to find F0 of a frame by calculating ratios of putative harmonics
 "BaNa: A hybrid approach for noise resilient pitch detection." Statistical
 Signal Processing Workshop (SSP), 2012 IEEE.
 }
+\keyword{internal}

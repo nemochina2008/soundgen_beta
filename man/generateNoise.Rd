@@ -82,3 +82,4 @@ filterNoise = soundgen:::getSpectralEnvelope(
 noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -12,
   samplingRate = samplingRate, filterNoise = filterNoise)
 }
+\keyword{internal}

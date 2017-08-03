@@ -4,6 +4,8 @@
 # write vignettes
 # soundgen(creakyBreathy = 1, play = TRUE): check what makes the clicks at start/end of breathing
 
+# build pdf manual (terminal): R CMD Rd2pdf "/home/allgoodguys/Documents/Studying/Lund_PhD/methods/sound-synthesis/soundgen"
+
 
 #' @import stats graphics utils grDevices
 NULL
@@ -19,9 +21,7 @@ NULL
 #' formants. Intonation and amplitude contours can be applied both within each
 #' syllable and across multiple syllables. Suggested application: synthesis of
 #' animal or human non-linguistic vocalizations. For more information, see
-#' \url{http://cogsci.se/soundgen.html}
-#'
-#' Details: put some parts of the manual here.
+#' \url{http://cogsci.se/soundgen.html} and the vignette on sound generation.
 #' @param repeatBout the number of times the whole bout should be repeated
 #' @param nSyl the number of syllables in the bout. Intonation, amplitude, and
 #'   formants contours span multiple syllables, but not multiple bouts (see
@@ -47,7 +47,7 @@ NULL
 #'   fluctuations of user-specified pitch / noise / amplitude anchors
 #' @param maleFemale hyperparameter for shifting f0 contour, formants, and
 #'   vocalTract to make the speaker appear more male (-1...0) or more female
-#'   (0...+1).
+#'   (0...+1)
 #' @param creakyBreathy hyperparameter for a rough adjustment of voice quality
 #'   from creaky (-1) to breathy (+1)
 #' @param pitchEffectsAmount hyperparameter for regulating the (approximate)
@@ -89,8 +89,7 @@ NULL
 #'   presets for speaker "M1" or a list of formant times, frequencies,
 #'   amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
 #'   to schwa. Time stamps for formants and mouthOpening can be specified in ms
-#'   or an any other arbitarary scale, since duration is determined by
-#'   length(ampl). See \code{\link{getSpectralEnvelope}} for more details
+#'   or an any other arbitarary scale. See \code{\link{getSpectralEnvelope}} for more details
 #' @param formantDep scale factor of formant amplitude (1 = no change relative
 #'   to amplitudes in \code{formants})
 #' @param formantDepStoch the amplitude of additional stochastic formants added above
@@ -125,12 +124,12 @@ NULL
 #' @param amplAnchorsGlobal dataframe specifying the time (ms) and value (0 to
 #'   1) of global amplitude anchors, i.e. spanning multiple syllables
 #' @param samplingRate sampling frequency, Hz
-#' @param windowLength length of fft window, ms
+#' @param windowLength length of FFT window, ms
 #' @param overlap FFT window overlap, \%
 #' @param addSilence silence before and after the bout, ms
 #' @param pitchFloor,pitchCeiling lower & upper bounds of f0
 #' @param pitchSamplingRate sampling frequency of the pitch contour only, Hz. Low
-#'   values can decrease processing time. A rule of thumb is to set this to
+#'   values reduce processing time. A rule of thumb is to set this to
 #'   the same value as \code{pitchCeiling}
 #' @param throwaway discard harmonics and noise that are quieter than this
 #'   number (in dB) to save computational resources
@@ -141,7 +140,7 @@ NULL
 #' @param play if TRUE, plays the synthesized sound
 #' @param savePath full path for saving the output, e.g. '~/Downloads/temp.wav'.
 #'   If NA (default), doesn't save anything
-#' @param ... other plotting parameters passed to \code{\link{spec}}
+#' @param ... other plotting parameters passed to \code{\link{spectrogram}}
 #' @export
 #' @return Returns the synthesized waveform as a numeric vector.
 #' @examples

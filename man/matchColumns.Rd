@@ -24,3 +24,4 @@ right), so that the new number of columns = \code{len}
 a = matrix(1:9, nrow = 3)
 soundgen:::matchColumns(a, nCol = 6, padWith = NA)
 }
+\keyword{internal}

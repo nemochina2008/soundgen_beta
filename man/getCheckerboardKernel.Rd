@@ -26,3 +26,4 @@ Prepares a square matrix \code{size x size} specifying a gaussian kernel for mea
 kernel = soundgen:::getCheckerboardKernel(size = 64, kernelSD = 0.2, plot = TRUE)
 dim(kernel)
 }
+\keyword{internal}

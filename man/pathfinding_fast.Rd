@@ -33,3 +33,4 @@ twice (forward and backward), minimizing the cost of transitions at each step
 in terms of pitch jumps and distance from high-certainty candidates. The best
 of these two paths is accepted.
 }
+\keyword{internal}

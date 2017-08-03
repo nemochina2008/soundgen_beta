@@ -37,3 +37,4 @@ soundgen:::matchLengths(3:7, len = 3, padDir = 'left')
 # padded with zeroes on the left
 soundgen:::matchLengths(3:7, len = 30, padDir = 'left')
 }
+\keyword{internal}

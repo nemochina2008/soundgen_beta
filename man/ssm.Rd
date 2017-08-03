@@ -70,7 +70,7 @@ If \code{returnSSM} is TRUE, returns a list of two components: $ssm
   vector. If \code{returnSSM} is FALSE, only produces a plot.
 }
 \description{
-Calculates the self-similarity matrix and novelty vector for a sound.
+Calculates the self-similarity matrix and novelty vector of a sound.
 }
 \examples{
 sound = c(soundgen(), soundgen(nSyl = 4, sylLen = 50, pauseLen = 70,

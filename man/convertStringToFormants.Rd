@@ -28,3 +28,4 @@ consonants "s" "x" "j".
 formants = soundgen:::convertStringToFormants(
   phonemeString = 'aaeuiiiii', speaker = 'M1')
 }
+\keyword{internal}

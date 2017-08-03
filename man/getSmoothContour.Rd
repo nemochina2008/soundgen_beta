@@ -39,21 +39,19 @@ only a few anchors}
 \item{voiced, contourLabel}{graphical pars for plotting breathing contours
 (see examples below)}
 
-\item{...}{other plotting options passed on to \code{plot()}}
+\item{...}{other plotting options passed to \code{plot()}}
 }
 \value{
 Returns a numeric vector.
 }
 \description{
-Internal soundgen function.
-}
-\details{
-Returns a smooth contour based on an arbitrary number of anchors. Used for
-breathing and mouth opening. Note that pitch contours are treated as a
-special case: values are log-transformed prior to smoothing, so that with 2
-anchors we get a linear transition on a log scale (as if we were operating
-with musical notes rather than frequencies in Hz). Pitch plots have two Y
-axes: one showing Hz and the other showing musical notation.
+Returns a smooth contour based on an arbitrary number of anchors. Used by
+\code{\link{soundgen}} for generating intonation contour, mouth opening, etc.
+Note that pitch contours are treated as a special case: values are
+log-transformed prior to smoothing, so that with 2 anchors we get a linear
+transition on a log scale (as if we were operating with musical notes rather
+than frequencies in Hz). Pitch plots have two Y axes: one showing Hz and the
+other showing musical notation.
 }
 \examples{
 a = getSmoothContour(anchors = data.frame(

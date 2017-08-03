@@ -15,3 +15,4 @@ Internal soundgen function
 \details{
 Normalized input vector to range from 0 to 1
 }
+\keyword{internal}

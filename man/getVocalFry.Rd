@@ -48,3 +48,4 @@ rolloff_subh = soundgen:::getVocalFry(rolloff, pitch_per_gc,
 rolloff_subh = soundgen:::getVocalFry(rolloff, pitch_per_gc,
   subFreq = 200, subDep = 150, shortestEpoch = 0)
 }
+\keyword{internal}

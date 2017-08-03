@@ -19,18 +19,18 @@ optimized}
 'analyzeFolder' (in quotes)}
 
 \item{bounds}{a list setting the lower and upper boundaries for possible
-values of optimized parameters. For ex., if we optimize \code{smooth_ms}
-and \code{smooth_overlap}, reasonable bounds might be list(low = c(5,
+values of optimized parameters. For ex., if we optimize \code{smooth}
+and \code{smoothOverlap}, reasonable bounds might be list(low = c(5,
 0), high = c(500, 95))}
 
 \item{fitnessPar}{the name of output variable that we are comparing with the
-key, e.g. 'nBursts' or 'pitchMedian'}
+key, e.g. 'nBursts' or 'pitch_median'}
 
 \item{fitnessFun}{the function used to evaluate how well the output of
 \code{myfun} fits the key. Defaults to 1 - Pearson's correlation (i.e. 0 is
 perfect fit, 1 is awful fit). For pitch, log scale is more meaningful, so a
-good fitness criterion is \code{function(x) 1 - cor(log(x), key, use =
-'pairwise.complete.obs')}, where \code{key} is already log-transformed.}
+good fitness criterion is \code{function(x) 1 - cor(log(x), log(key), use =
+'pairwise.complete.obs')}}
 
 \item{myfolder}{path to where the .wav files live}
 
@@ -51,3 +51,4 @@ Internal soundgen function.
 \details{
 Called by \code{\link{optimizePars}}.
 }
+\keyword{internal}

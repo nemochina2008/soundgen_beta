@@ -14,6 +14,7 @@
 #' @param mergeSyl if TRUE, syllable separated by less than
 #'   \code{shortestPause} will be merged
 #' @return Returns a dataframe with timing of syllables.
+#' @keywords internal
 findSyllables = function(envelope,
                          timestep,
                          threshold,
@@ -75,6 +76,7 @@ findSyllables = function(envelope,
 #' Merges syllables if they are separated by less than \code{shortestPause ms}. Called by \code{\link{findSyllables}}.
 #' @param syllables a dataframe listing syllables with start and end
 #' @inheritParams segment
+#' @keywords internal
 mergeSyllables = function (syllables, shortestPause) {
   i = 1
   while (i < nrow(syllables)) {
@@ -98,6 +100,7 @@ mergeSyllables = function (syllables, shortestPause) {
 #' @inheritParams findSyllables
 #' @inheritParams segment
 #' @return Returns a dataframe with timing of bursts
+#' @keywords internal
 findBursts = function(envelope,
                       timestep,
                       interburst,

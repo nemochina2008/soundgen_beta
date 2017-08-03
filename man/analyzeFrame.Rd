@@ -28,7 +28,7 @@ is above some threshold - specified in \code{\link{analyze}})}
 pitch contour: 'autocor' = autocorrelation (~PRAAT), 'cep' = cepstral,
 'spec' = spectral (~BaNa), 'dom' = lowest dominant frequency band}
 
-\item{cutFreq}{(>0 to Nyquist Hz) repeat the calculation of spectral
+\item{cutFreq}{(>0 to Nyquist, Hz) repeat the calculation of spectral
 descriptives after discarding all info above \code{cutFreq}.
 Recommended if the original sampling rate varies across different analyzed
 audio files}
@@ -103,3 +103,4 @@ This function performs the heavy lifting of pitch tracking and acoustic
 analysis in general: it takes the spectrum of a single fft frame as input and
 analyzes it.
 }
+\keyword{internal}

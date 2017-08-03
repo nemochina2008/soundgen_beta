@@ -5,12 +5,12 @@
 \title{Spectral envelope}
 \usage{
 getSpectralEnvelope(nr, nc, formants = NA, formantDep = 1, rolloffLip = 6,
-  mouthAnchors = NA, mouthOpening_threshold = 0,
-  amplBoost_openMouth_dB = 0, vocalTract = NULL, temperature = 0,
-  formDrift = 0.3, formDisp = 0.2, formantDepStoch = 30,
-  smoothLinear_factor = 1, samplingRate = 16000, speedSound = 35400,
-  plot = FALSE, dur_ms = NULL, colorTheme = c("bw", "seewave", "...")[1],
-  nCols = 100, xlab = "Time", ylab = "Frequency, kHz", ...)
+  mouthAnchors = NA, mouthOpenThres = 0, openMouthBoost = 0,
+  vocalTract = NULL, temperature = 0, formDrift = 0.3, formDisp = 0.2,
+  formantDepStoch = 30, smoothLinearFactor = 1, samplingRate = 16000,
+  speedSound = 35400, plot = FALSE, duration = NULL,
+  colorTheme = c("bw", "seewave", "...")[1], nCols = 100, xlab = "Time",
+  ylab = "Frequency, kHz", ...)
 }
 \arguments{
 \item{nr}{the number of frequency bins = windowLength_points/2, where
@@ -18,12 +18,7 @@ windowLength_points is the size of window for Fourier transform}
 
 \item{nc}{the number of time steps for Fourier transform}
 
-\item{formants}{either a character string like "aaui" referring to default
-presets for speaker "M1" or a list of formant times, frequencies,
-amplitudes, and bandwidths (see ex. below). \code{formants = NA} defaults
-to schwa. Time stamps for formants and mouthOpening can be specified in ms
-or an any other arbitarary scale, since duration is determined by
-length(ampl). See \code{\link{getSpectralEnvelope}} for more details}
+\item{formants}{either a character string like "aaui" referring to default presets for speaker "M1" or a list of formant times, frequencies, amplitudes, and bandwidths. \code{formants = NA} defaults to schwa. Time stamps for formants and mouthOpening can be specified in ms or an any other arbitarary scale.}
 
 \item{formantDep}{scale factor of formant amplitude (1 = no change relative
 to amplitudes in \code{formants})}
@@ -35,11 +30,11 @@ open)}
 \item{mouthAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
 mouth-opening anchors}
 
-\item{mouthOpening_threshold}{the mouth is considered to be open when its
-opening is greater than \code{mouthOpening_threshold}. Defaults to 0}
+\item{mouthOpenThres}{the mouth is considered to be open when its
+opening is greater than \code{mouthOpenThres}. Defaults to 0}
 
-\item{amplBoost_openMouth_dB}{amplify the voice when the mouth is open by
-\code{amplBoost_openMouth_dB} dB}
+\item{openMouthBoost}{amplify the voice when the mouth is open by
+\code{openMouthBoost} dB}
 
 \item{vocalTract}{the length of vocal tract, cm. Used for calculating formant
 dispersion (for adding extra formants) and formant transitions as the mouth
@@ -48,27 +43,32 @@ opens and closes}
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
 
-\item{formDrift}{scale factor regulating the effect of temperature on the depth of random drift of all formants (user-defined and stochastic): the higher, the more formants drift at a given temperature}
+\item{formDrift}{scale factor regulating the effect of temperature on the
+depth of random drift of all formants (user-defined and stochastic): the
+higher, the more formants drift at a given temperature}
 
-\item{formDisp}{scale factor regulating the effect of temperature on the irregularity of the dispersion of stochastic formants: the higher, the more unevenly stochastic formants are spaced at a given temperature}
+\item{formDisp}{scale factor regulating the effect of temperature on the
+irregularity of the dispersion of stochastic formants: the higher, the more
+unevenly stochastic formants are spaced at a given temperature}
 
 \item{formantDepStoch}{the amplitude of additional formants added above
 the highest specified formant (only if temperature > 0)}
 
-\item{smoothLinear_factor}{regulates smoothing of formant anchors (0 to +Inf)
+\item{smoothLinearFactor}{regulates smoothing of formant anchors (0 to +Inf)
 as they are upsampled to the number of fft steps \code{nc}. This is
 necessary because the input \code{formants} normally contains fewer
 sets of formant values than the number of fft steps.
-\code{smoothLinear_factor} = 0: close to default spline; >3: approaches
+\code{smoothLinearFactor} = 0: close to default spline; >3: approaches
 linear extrapolation}
 
 \item{samplingRate}{sampling frequency, Hz}
 
-\item{speedSound}{speed of sound in warm air, cm/s. Stevens (2000) "Acoustic phonetics", p. 138}
+\item{speedSound}{speed of sound in warm air, cm/s. Stevens (2000) "Acoustic
+phonetics", p. 138}
 
 \item{plot}{if TRUE, produces a plot of the spectral envelope}
 
-\item{dur_ms}{duration of the sound, ms (for plotting purposes only)}
+\item{duration}{duration of the sound, ms (for plotting purposes only)}
 
 \item{colorTheme}{black and white ('bw'), as in seewave package ('seewave'),
 or another color theme (e.g. 'heat.colors')}
@@ -84,12 +84,9 @@ Returns a spectral filter (matrix nr x nc, where nr is the number of
   frequency bins = windowLength_points/2 and nc is the number of time steps)
 }
 \description{
-Internal soundgen function.
-}
-\details{
 Prepares a spectral envelope for filtering a sound to add formants, lip
 radiation, and some stochastic component regulated by temperature.
-formants is specified as a list containing time, frequency, amplitude,
+Formants are specified as a list containing time, frequency, amplitude,
 and width values for each formant (see examples). NB: each formant is
 generated as a gamma distribution with mean = freq and SD = width. Formant
 bandwidths in soundgen are therefore NOT compatible with formant bandwidths
@@ -97,7 +94,7 @@ used in Klatt synthesizer and other algorithms that rely on FIR instead of
 FFT.
 }
 \examples{
-# [a] with F1-F4 visible
+# [a] with F1-F3 visible
 image(t(getSpectralEnvelope(nr = 512, nc = 50,
   formants = soundgen:::convertStringToFormants('a'),
   temperature = 0)))

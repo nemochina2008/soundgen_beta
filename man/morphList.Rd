@@ -39,3 +39,4 @@ l2 = list(f1 = data.frame(time = c(0),
                           width = c(150)))
 ml = soundgen:::morphList(l1, l2, 4)
 }
+\keyword{internal}

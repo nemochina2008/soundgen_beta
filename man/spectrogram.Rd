@@ -28,7 +28,7 @@ samplingRate}
 \item{wn}{window type: gaussian, hanning, hamming, bartlett, rectangular,
 blackman, flattop}
 
-\item{zp}{zero padding, points}
+\item{zp}{window length after zero padding, points}
 
 \item{smoothFreq, smoothTime}{length of the window, in data points (0 to
 +inf), for calculating a rolling median. Applies median smoothing to
@@ -86,10 +86,10 @@ Returns nothing (if output = 'none'), raw spectrum (if output =
   real numbers.
 }
 \description{
-Produces a spectrogram of a sound using short-term Fourier transform. This is
-a simplified version of \code{\link[seewave]{spectro}} with fewer
-plotting options, but with added routines for noise reduction, smoothing in
-time and frequency domains, and controlling contrast and brightness.
+Produces the spectrogram of a sound using short-term Fourier transform. This
+is a simplified version of \code{\link[seewave]{spectro}} with fewer plotting
+options, but with added routines for noise reduction, smoothing in time and
+frequency domains, and controlling contrast and brightness.
 }
 \examples{
 # synthesize a sound 1 s long, with gradually increasing hissing noise

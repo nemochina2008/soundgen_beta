@@ -24,6 +24,7 @@
 #'   candidates are assigned a certainty equal to \code{interpolCert}
 #' @return Returns a numeric vector of pitch values representing the best found
 #'   path through pitch candidates.
+#' @keywords internal
 pathfinder = function(pitchCands,
                       pitchCert,
                       certWeight = 0.5,
@@ -144,6 +145,7 @@ pathfinder = function(pitchCands,
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
 #' @return Returns a modified pitchCands matrix.
+#' @keywords internal
 interpolate = function(pitchCands,
                        pitchCert,
                        pitchCenterGravity,
@@ -197,6 +199,7 @@ interpolate = function(pitchCands,
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
+#' @keywords internal
 pathfinding_fast = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             pitchCenterGravity = pitchCenterGravity,
@@ -272,6 +275,7 @@ pathfinding_fast = function(pitchCands = pitchCands,
 #' pitch candidates. Needed for postprocessing of pitch contour - finding the
 #' optimal pitch contour.
 #' @param cand1,cand2 two candidate pitch values
+#' @keywords internal
 #' @examples
 #' a = seq(-3, 3, by = .01)
 #' b = 1 / (1 + 10 * exp(3 - 7 * abs(a)))
@@ -293,6 +297,7 @@ costJumps = function(cand1, cand2) {
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
+#' @keywords internal
 pathfinding_slow = function(pitchCands = pitchCands,
                             pitchCert = pitchCert,
                             certWeight = certWeight,
@@ -338,6 +343,7 @@ pathfinding_slow = function(pitchCands = pitchCands,
 #' @param pitchCenterGravity numeric vector giving the mean of all pitch
 #'   candidates per fft frame weighted by our certainty in each of these
 #'   candidates
+#' @keywords internal
 costPerPath = function(path,
                        pitchCands,
                        pitchCert,
@@ -377,6 +383,7 @@ costPerPath = function(path,
 #' @param path currently evaluated path
 #' @inheritParams pathfinder
 #' @param ... nothing really, but otherwise optim() complains
+#' @keywords internal
 generatePath = function(path, pitchCands, ...) {
   i = 1
   while (i < 100) {
@@ -408,6 +415,7 @@ generatePath = function(path, pitchCands, ...) {
 #'   candidates
 #' @return Returns optimized pitch contour (numeric vector of the same length as
 #'   \code{pitch}).
+#' @keywords internal
 snake = function(pitch,
                  pitchCands,
                  pitchCert,
@@ -483,6 +491,7 @@ snake = function(pitch,
 #'   candidates
 #' @return Returns a numeric vector of the same length as \code{pitch} that
 #'   gives the total force acting on the snake at each point.
+#' @keywords internal
 forcePerPath = function (pitch,
                          pitchCands,
                          pitchCert,
@@ -499,7 +508,8 @@ forcePerPath = function (pitch,
     forces = ifelse(cands > pitch[i], forces, -forces)
     external_force[i] = sum(forces)
   }
-  # external_force is the "external" force - the attraction of high-certainty pitch candidates
+  # external_force is the "external" force - the attraction of high-certainty
+  # pitch candidates
 
   internal_force = -findGrad(pitch)
   # internal_force is the elastic force trying to make the curve smooth
@@ -520,6 +530,7 @@ forcePerPath = function (pitch,
 #' @param path numeric vector
 #' @param interpol the number of points to interpolate beyond each end of the path
 #' @return Returns a vector of the same length as input path giving its 4th derivative.
+#' @keywords internal
 findGrad = function(path, interpol = 3) {
   # interpolate 2 values before the first one and two after the last one based
   # on /interpol/ number of points in case the path is shorter than the
@@ -563,6 +574,7 @@ findGrad = function(path, interpol = 3) {
 #' @param smoothing_ww width of smoothing window (points)
 #' @param smoothingThres tolerated deviance from moving median (semitones)
 #' @return Returns a dataframe of the same dimensions as df.
+#' @keywords internal
 #' @examples
 #' df = data.frame(a = rnorm(100, mean = 100, sd = 20),
 #'                 b = rnorm(100, mean = 100, sd = 10))
@@ -606,6 +618,7 @@ medianSmoother = function (df, smoothing_ww, smoothingThres) {
 #'   candidate (autocor, cep or BaNa)
 #' @return Returns a dataframe specifying where each voiced segment starts and
 #'   ends (in fft frames, not ms!)
+#' @keywords internal
 findVoicedSegments = function(pitchCands,
                               shortestSyl,
                               shortestPause,

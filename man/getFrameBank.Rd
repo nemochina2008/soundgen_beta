@@ -20,7 +20,7 @@ blackman, flattop}
 
 \item{step}{you can override \code{overlap} by specifying FFT step, ms}
 
-\item{zp}{zero padding, points}
+\item{zp}{window length after zero padding, points}
 
 \item{filter}{fft window filter (defaults to NULL)}
 }
@@ -39,3 +39,4 @@ spacing. Handy for further processing.
 \examples{
 a = soundgen:::getFrameBank(sin(1:1000), 16000, 512, 'gaussian', 15, 0)
 }
+\keyword{internal}
