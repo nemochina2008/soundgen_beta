@@ -39,9 +39,9 @@ NULL
 #'   temperature on particular parameters. To change, specify just those pars
 #'   that you want to modify, don't rewrite the whole list (defaults are
 #'   hard-coded). \code{sylLenDep}: random variation of the duration of
-#'   syllables and pauses; \code{formDrift}: depth of random drift of formants;
-#'   \code{formDisp}: irregularity of the dispersion of stochastic formants;
-#'   \code{pitchDriftDep} amount of slow random drift of f0;
+#'   syllables and pauses; \code{formDrift}: the amount of random drift of
+#'   formants; \code{formDisp}: irregularity of the dispersion of stochastic
+#'   formants; \code{pitchDriftDep}: amount of slow random drift of f0;
 #'   \code{pitchDriftFreq}: frequency of slow random drift of f0;
 #'   \code{pitchAnchorsDep, noiseAnchorsDep, amplAnchorsDep}: random
 #'   fluctuations of user-specified pitch / noise / amplitude anchors

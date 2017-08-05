@@ -124,23 +124,24 @@ matchPars = function(target,
   af = phonTools::findformants(targetWave@left, fs = samplingRate, verify = FALSE)
 
   parDefault$nSyl = max(nrow(as$bursts), 1)
-  parDefault$sylLen = mean(as$syllables$sylLen)
+  parDefault$sylLen = round(mean(as$syllables$sylLen))
   medianPause = median(as$syllables$pauseLen, na.rm = TRUE)
   if (is.numeric(medianPause)) {
-    parDefault$pauseLen = medianPause
+    parDefault$pauseLen = round(medianPause)
   }
 
   p = as.numeric(na.omit(aa$pitch))
   p = downsample(p, srNew = 5, srOld = 1 / step * 1000)  # downsample F0 measures to 5 Hz
   if (length(p) > 1) {
-    parDefault$pitchAnchors = data.frame(time = seq(0, 1, length.out = length(p)),
-                                         value = p)
-  }
+    parDefault$pitchAnchors = data.frame(
+      time = round(seq(0, 1, length.out = length(p)), 2),
+      value = round(p)
+  )}
   if (is.list(af) && nrow(af) > 0) {
     for (f in 1:min(3, nrow(af))) {  # add max 3 formants
       parDefault$formants[[paste0('f', f)]] = list(
-        time = 0, freq = af$formant[f],
-        amp = 30, width = af$bandwidth[f]
+        time = 0, freq = round(af$formant[f]),
+        amp = 30, width = round(af$bandwidth[f])
       )
     }
   }
