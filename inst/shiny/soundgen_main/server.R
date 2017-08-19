@@ -861,7 +861,9 @@ server = function(input, output, session) {
     )
     # simplify arg_list by removing values that are the same as defaults
     idx_same = apply(matrix(1:length(arg_list)), 1, function(x) {
-      temp = all.equal(arg_list[[x]], defaults[[names(arg_list)[x]]], check.attributes = FALSE)
+      temp = all.equal(arg_list[[x]],
+                       defaults[[names(arg_list)[x]]],
+                       check.attributes = FALSE)
       if (class(temp) == 'character') temp = FALSE
       temp
     })

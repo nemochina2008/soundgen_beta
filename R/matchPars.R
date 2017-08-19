@@ -115,7 +115,7 @@ matchPars = function(target,
 
   ## initialize
   # start with default par values
-  parDefault = defaults[pars]
+  parDefault = soundgen:::defaults[pars]
   parDefault[['samplingRate']] = samplingRate
 
   # analyse the target and update the default pars
@@ -149,7 +149,7 @@ matchPars = function(target,
   # replace defaults with user-provided values, if any
   if (!is.null(init)) {
     for (i in 1:length(init)) {
-      if (!names(init)[i] %in% names(defaults)) {
+      if (!names(init)[i] %in% names(soundgen:::defaults)) {
         stop(paste('init parameter not recognized:', init[i]))
       }
       parDefault[[names(init)[i]]] = init[[i]]

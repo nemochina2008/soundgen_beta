@@ -711,7 +711,7 @@ wiggleAnchors = function(df,
       roundToInteger = FALSE
     ))
     if (class(w) == 'try-error') {
-      stop(paste('Failed to wiggle column', i, 'of df:',
+      warning(paste('Failed to wiggle column', i, 'of df:',
                  paste(df, collapse = ', ')))
     } else {
       df[, i] = w

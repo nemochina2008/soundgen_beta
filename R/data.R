@@ -1,4 +1,11 @@
-# devtools::use_data(defaults, noiseThresholdsDict, BaNaRatios, notesDict, internal = TRUE, overwrite = TRUE)
+# devtools::use_data(noiseThresholdsDict, BaNaRatios, internal = TRUE, overwrite = TRUE)
+
+#' Shiny app defaults
+#'
+#' A list of default values for Shiny app soundgen_app() - mostly the same as
+#' the defaults for soundgen(). NB: if defaults change, this has to be
+#' updated!!!
+"defaults"
 
 #' Manual counts of syllables in 260 sounds
 #'
