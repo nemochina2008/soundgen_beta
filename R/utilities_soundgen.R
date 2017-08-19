@@ -120,13 +120,21 @@ playme = function(sound, samplingRate = 16000) {
 #' @examples
 #' formants = soundgen:::convertStringToFormants(
 #'   phonemeString = 'aaeuiiiii', speaker = 'M1')
+#' formants = soundgen:::convertStringToFormants(
+#'   phonemeString = 'aaeuiiiii', speaker = 'Chimpanzee')
 convertStringToFormants = function(phonemeString, speaker = 'M1') {
   availablePresets = names(presets[[speaker]]$Formants)
+  if (length(availablePresets) < 1) {
+    warning(paste0('No phoneme presets found for speaker ', speaker,
+                  '. Defaulting to M1'))
+    speaker = 'M1'
+    availablePresets = names(presets[[speaker]]$Formants)
+  }
   input_phonemes = strsplit(phonemeString, "")[[1]]
   valid_phonemes = input_phonemes[input_phonemes %in% availablePresets]
   unique_phonemes = unique(valid_phonemes)
   if (length(valid_phonemes) < 1)
-    return(list())
+    return(NA)
 
   # for each input vowel, look up the corresponding formant values
   # in the presets dictionary and append to formants

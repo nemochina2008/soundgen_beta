@@ -6,7 +6,7 @@
 
 # build pdf manual (terminal): R CMD Rd2pdf "/home/allgoodguys/Documents/Studying/Lund_PhD/methods/sound-synthesis/soundgen"
 
-# install from github:
+# To install from github (in RStudio):
 # install.packages("devtools", "tuneR", "seewave", "phonTools", "zoo", "shiny", "shinyBS", "reshape2", "mvtnorm", "plyr", "dtw", "grid")
 # library(devtools)
 # install_github("tatters/soundgen")

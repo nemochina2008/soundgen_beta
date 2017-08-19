@@ -134,7 +134,8 @@ defaults = list(
                             amp = 40, width = 120),
                   f3 = list(time = 0, freq = 2900,
                             amp = 25, width = 200)),
-  formantsNoise = NA
+  formantsNoise = NA,
+  vowelString = NA
 )
 # devtools::use_data(defaults, overwrite = TRUE)
 

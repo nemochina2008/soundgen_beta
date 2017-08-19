@@ -79,12 +79,12 @@ server = function(input, output, session) {
         preset$vowelString = preset$formants  # in case formants = 'aui' etc
       }
 
-      sliders_to_reset = names(preset) [which(names(preset) %in% names(input))]
+      sliders_to_reset = names(preset)[which(names(preset) %in% names(input))]
       for (v in sliders_to_reset) {
         try(updateSliderInput(session, v, value = as.numeric(preset[[v]])))
       }
 
-      myPars_to_reset = names(myPars) [which(names(myPars) %in% names(preset))]
+      myPars_to_reset = names(myPars)[which(names(myPars) %in% names(preset))]
       for (v in myPars_to_reset) {
         myPars[[v]] = preset[[v]]
       }
@@ -110,8 +110,8 @@ server = function(input, output, session) {
                         value = as.character(call('print', preset$formants)[2]))
         myPars$formants = preset$formants
       } else { # if both are NULL
-        updateTextInput(session, inputId = 'vowelString', value = 'a')
-        updateVowels()
+        updateTextInput(session, inputId = 'vowelString', value = '')
+        # updateVowels()
       }
 
       if(!is.null(preset$noiseType)) {
@@ -159,7 +159,7 @@ server = function(input, output, session) {
 
   updateVowels = reactive({
     if (nchar(input$vowelString) > 0) {
-      try({converted = convertStringToFormants(input$vowelString,
+      try({converted = soundgen:::convertStringToFormants(input$vowelString,
                                                speaker = input$speaker)})
       if (sum(unlist(converted)) > 0) { # if the converted formant list is not empty
         myPars$formants = converted
@@ -741,7 +741,7 @@ server = function(input, output, session) {
       rolloffParab = input$rolloffParab,
       rolloffParabHarm = input$rolloffParabHarm,
       rolloffKHz = input$rolloffKHz,
-      baseline_Hz = 200,
+      baseline = 200,
       throwaway = input$throwaway,
       samplingRate = input$samplingRate,
       plot = TRUE
@@ -772,7 +772,7 @@ server = function(input, output, session) {
                         formantDepStoch = input$formantDepStoch,
                         samplingRate = input$samplingRate,
                         plot = TRUE,
-                        dur_ms = durSyl_withnoise(),
+                        duration = durSyl_withNoise(),
                         xlab = 'Time, ms',
                         ylab = 'Frequency, kHz',
                         colorTheme = input$spec_colorTheme
@@ -879,7 +879,7 @@ server = function(input, output, session) {
                                })
   )
 
-  output$myAudio = renderUI (
+  output$myAudio = renderUI(
     tags$audio(src = "temp.wav", type = "audio/wav", autoplay = NA, controls = NA)
   )
 
@@ -889,7 +889,7 @@ server = function(input, output, session) {
       file.remove(paste0('www/', myPars$myfile))
     }
     myPars$sound = do.call('soundgen', mycall()) # eval(parse(text = mycall()))  # generate audio
-    randomID = paste (sample (c(letters, 0:9), 8, replace = TRUE), collapse = '')
+    randomID = paste(sample(c(letters, 0:9), 8, replace = TRUE), collapse = '')
     myPars$myfile = paste0(randomID, '.wav')
     # this is the new sound file. NB: has to be saved in www/ !!!
     seewave::savewav(myPars$sound, f = input$samplingRate,
@@ -913,10 +913,12 @@ server = function(input, output, session) {
     new_preset_list = try(eval(parse(text = new_preset_text)), silent = TRUE)
 
     # create a new preset
-    new_presetID = paste (sample (c(letters, 0:9), 8, replace = TRUE), collapse = '')
+    new_presetID = paste(sample(c(letters, 0:9), 8, replace = TRUE),
+                         collapse = '')
     myPars$loaded_presets[[new_presetID]] = new_preset_list
 
     # update sliders
     reset_all()
+    mycall()
   })
 }

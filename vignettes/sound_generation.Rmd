@@ -69,12 +69,12 @@ If you need to generate a single syllable without pauses, the only temporal para
 1.  Set `nSyl` ("Number of syllables" in the app). Unvoiced noise is then allowed to fill in the pauses (if noise is longer than the voiced part), and you can specify an amplitude contour, intonation contour, and formant transitions that will span the entire bout. For ex., if the vowel sequence in a three-syllable bout is “uai”, the output will be approximately “[u] – pause – [a] – pause – [i]”. 
 ```{r}
 library(soundgen)
-s = soundgen(formants = 'uai', nSyl = 3, play = TRUE)
+s = soundgen(formants = 'uai', repeatBout = 1, nSyl = 3, play = TRUE)
 # "play = TRUE": to replay without re-generating the sound, type "playme(s)"
 ```
 1.  Set `repeatBout` ("Repeat bout # times" in the app). This is the same as calling `soundgen` repeatedly with the same settings or clicking the Generate button in the app several times. If temperature = 0, you will get exactly the same sound repeated each time, otherwise some variation will be introduced. For the same “uai” example, the output will be “[uai] – pause – [uai] – pause – [uai]”.
 ```{r}
-s = soundgen(formants = 'uai', repeatBout = 3, play = TRUE)
+s = soundgen(formants = 'uai', repeatBout = 3, nSyl = 1, play = TRUE)
 # playme(s)
 ```
 
