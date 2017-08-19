@@ -27,7 +27,7 @@ Imports: stats,
     dtw,
     grid,
     phonTools
-Depends: R (>= 2.10)
+Depends: R (>= 3.4)
 RoxygenNote: 6.0.1
 Suggests: knitr,
     rmarkdown

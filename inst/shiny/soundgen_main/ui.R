@@ -3,7 +3,7 @@ ui = fluidPage(
 
   fluidRow(
     column (6,
-            tabsetPanel("CONTROLS", id='parGroup',
+            tabsetPanel(id='parGroup',
                         navbarMenu ("Main",
                                     tabPanel("Intonation syllable",
                                              sidebarLayout(
