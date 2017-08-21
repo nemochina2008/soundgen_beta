@@ -291,7 +291,7 @@ getSpectralEnvelope = function(nr,
     # if we don't know vocalTract, but at least one formant is defined,
     # we guess the length of vocal tract
     formantDispersion = mean(diff(unlist(lapply(formants, function(f) f$freq))))
-    vocalTract = ifelse (
+    vocalTract = ifelse(
       is.numeric(formantDispersion),
       speedSound / 2 / formantDispersion,
       speedSound / 4 / formants$f1$freq
@@ -305,9 +305,9 @@ getSpectralEnvelope = function(nr,
       'time' = 0,
       'freq' = freq,
       'amp' = 30,
-      'width' = 50 + (log2(freq) - 5) * 20
+      'width' = 50 * (1 + freq^2 / 6 / 10^6)  # Tappert, Martony, and Fant (TMF)-1963
     ))
-    # freq = 50:5000; a = 50+(log2(freq)-5)*20; plot(freq, a))
+    # freq = 50:5000; a = 50 * (1 + freq^2 / 6 / 10^6); plot(freq, a)
   }
 
   # upsample to the length of fft steps

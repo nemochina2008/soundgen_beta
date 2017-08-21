@@ -1,8 +1,5 @@
 ## TODO: # check that numeric arguments are valid: make sure we don't expect NULL, add overlap etc to permittedValues before any lists, etc - check everything!!!
-# consider reducing formant width with increasing vocalTract in stochastic formants (to avoid formants merging - check if this is theoretically meaningful!)
 # mouth opening: see if abrupt transitions can be avoided as mouth opening goes from 0 to positive (some kind of smooth fun approaching 0?)
-# write vignettes
-# soundgen(creakyBreathy = 1, play = TRUE): check what makes the clicks at start/end of breathing
 
 # build pdf manual (terminal): R CMD Rd2pdf "/home/allgoodguys/Documents/Studying/Lund_PhD/methods/sound-synthesis/soundgen"
 
@@ -10,6 +7,14 @@
 # install.packages("devtools", "tuneR", "seewave", "phonTools", "zoo", "shiny", "shinyBS", "reshape2", "mvtnorm", "plyr", "dtw", "grid")
 # library(devtools)
 # install_github("tatters/soundgen")
+
+# view vignettes:
+# vignette(package = 'soundgen')
+# vignette('sound_generation', package = 'soundgen')
+# vignette('acoustic_analysis', package = 'soundgen')
+# or, to open in a browser
+# RShowDoc('sound_generation', package = 'soundgen')
+# RShowDoc('acoustic_analysis', package = 'soundgen')
 
 #' @import stats graphics utils grDevices
 NULL
