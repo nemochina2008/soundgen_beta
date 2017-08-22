@@ -160,7 +160,7 @@ server = function(input, output, session) {
   updateVowels = reactive({
     if (nchar(input$vowelString) > 0) {
       try({converted = soundgen:::convertStringToFormants(input$vowelString,
-                                               speaker = input$speaker)})
+                                                          speaker = input$speaker)})
       if (sum(unlist(converted)) > 0) { # if the converted formant list is not empty
         myPars$formants = converted
         # (...otherwise don't change myPars$formants to prevent crashing)
@@ -220,13 +220,13 @@ server = function(input, output, session) {
   })
 
   myPitchContour = reactive({
-    pitch_y_lwr = min (input$pitchRange[1], min(myPars$pitchAnchors$value) / 1.1)
-    pitch_y_upr = max (input$pitchRange[2], max(myPars$pitchAnchors$value) * 1.1)
-    getSmoothContour (anchors = myPars$pitchAnchors,
-                      len = input$sylLen * permittedValues['pitch', 'high'] / 1000,
-                      ylim = c(pitch_y_lwr, pitch_y_upr),
-                      samplingRate = permittedValues['pitch', 'high'],
-                      thisIsPitch = TRUE, plot = TRUE)
+    pitch_y_lwr = min(input$pitchRange[1], min(myPars$pitchAnchors$value) / 1.1)
+    pitch_y_upr = max(input$pitchRange[2], max(myPars$pitchAnchors$value) * 1.1)
+    getSmoothContour(anchors = myPars$pitchAnchors,
+                     len = input$sylLen * permittedValues['pitch', 'high'] / 1000,
+                     ylim = c(pitch_y_lwr, pitch_y_upr),
+                     samplingRate = permittedValues['pitch', 'high'],
+                     thisIsPitch = TRUE, plot = TRUE)
   })
 
   observeEvent(input$plotIntonation_click, {
@@ -302,18 +302,20 @@ server = function(input, output, session) {
 
   myPitchContourGlobal <- reactive({
     if (input$nSyl > 1) {
-      getDiscreteContour (anchors = myPars$pitchAnchorsGlobal,
-                          len = input$nSyl,
-                          method = 'spline',
-                          plot = TRUE,
-                          ylab = 'Pitch delta, semitones',
-                          valueFloor = permittedValues['pitchDeltas', 'low'],
-                          valueCeiling = permittedValues['pitchDeltas', 'high'],
-                          ylim = c(permittedValues['pitchDeltas', 'low'],
-                                   permittedValues['pitchDeltas', 'high']))
+      soundgen:::getDiscreteContour(
+        anchors = myPars$pitchAnchorsGlobal,
+        len = input$nSyl,
+        method = 'spline',
+        plot = TRUE,
+        ylab = 'Pitch delta, semitones',
+        valueFloor = permittedValues['pitchDeltas', 'low'],
+        valueCeiling = permittedValues['pitchDeltas', 'high'],
+        ylim = c(permittedValues['pitchDeltas', 'low'],
+                 permittedValues['pitchDeltas', 'high'])
+      )
     } else {
-      plot (1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
-      text (x = 5, y = 5, labels = 'Need >1 syllable!', adj = .5, col = 'blue', cex = 1)
+      plot(1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
+      text(x = 5, y = 5, labels = 'Need >1 syllable!', adj = .5, col = 'blue', cex = 1)
     }
 
   })
@@ -385,7 +387,7 @@ server = function(input, output, session) {
 
 
   ## NOISE
-  output$plot_unvoiced = renderPlot({
+  output$plotUnvoiced = renderPlot({
     myNoiseContour()
   })
 
@@ -406,9 +408,9 @@ server = function(input, output, session) {
                      plot = TRUE)
   })
 
-  observeEvent(input$plot_unvoiced_click, {
-    click_x = round(input$plot_unvoiced_click$x)
-    click_y = round(input$plot_unvoiced_click$y)
+  observeEvent(input$plotUnvoiced_click, {
+    click_x = round(input$plotUnvoiced_click$x)
+    click_y = round(input$plotUnvoiced_click$y)
     # if the click is outside the allowed range of y, re-interpret the click as within the range
     if (click_y < permittedValues['noiseAmpl', 'low']) {
       click_y = permittedValues['noiseAmpl', 'low']
@@ -438,9 +440,9 @@ server = function(input, output, session) {
     myPars$noiseAnchors$value = myPars$noiseAnchors$value[idx_order]
   })
 
-  observeEvent(input$plot_unvoiced_dblclick, {
+  observeEvent(input$plotUnvoiced_dblclick, {
     closestPoint = nearPoints(as.data.frame(myPars[['noiseAnchors']]),
-                              input$plot_unvoiced_dblclick, xvar = 'time',
+                              input$plotUnvoiced_dblclick, xvar = 'time',
                               yvar = 'value', threshold = 100000, maxpoints = 1)
     idx = as.numeric(rownames(closestPoint))
     if (length(idx) > 0 && length(myPars$noiseAnchors$time) > 2) {
@@ -468,7 +470,7 @@ server = function(input, output, session) {
 
 
   ## MOUTH OPENING
-  output$plot_mouth = renderPlot({
+  output$plotMouth = renderPlot({
     myMouthOpening()
   })
 
@@ -488,9 +490,9 @@ server = function(input, output, session) {
     # OR: xlim = range(myPars$noiseAnchors$time)
   })
 
-  observeEvent(input$plot_mouth_click, {
-    click_x = round(round(input$plot_mouth_click$x) / durSyl_withNoise(), 2)
-    click_y = round(input$plot_mouth_click$y, 2)
+  observeEvent(input$plotMouth_click, {
+    click_x = round(round(input$plotMouth_click$x) / durSyl_withNoise(), 2)
+    click_y = round(input$plotMouth_click$y, 2)
     # if the click is outside the allowed range of y, re-interpret the click
     # as within the range
     if (click_y < permittedValues['mouthOpening', 'low']) {
@@ -524,10 +526,10 @@ server = function(input, output, session) {
     myPars$mouthAnchors$value = myPars$mouthAnchors$value[idx_order]
   })
 
-  observeEvent(input$plot_mouth_dblclick, {
+  observeEvent(input$plotMouth_dblclick, {
     ref = as.data.frame(myPars[['mouthAnchors']])
     ref$time = ref$time * durSyl_withNoise()
-    closestPoint = nearPoints(ref, input$plot_mouth_dblclick, xvar = 'time',
+    closestPoint = nearPoints(ref, input$plotMouth_dblclick, xvar = 'time',
                               yvar = 'value', threshold = 100000, maxpoints = 1)
     idx = as.numeric(rownames(closestPoint))
     # we can remove any anchor except the first and the last (because mouth
@@ -551,24 +553,24 @@ server = function(input, output, session) {
 
 
   ## AMPLITUDE ENVELOPE LOCAL (PER VOICED SYLLABLE)
-  output$plotAmpl_syl = renderPlot({
+  output$plotAmplSyl = renderPlot({
     amplEnvelope_syl()
   })
 
   amplEnvelope_syl <- reactive({
-    getSmoothContour (anchors = myPars$amplAnchors,
-                      xaxs = "i",
-                      xlim = c(0, input$sylLen),
-                      ylim = c(0, -input$throwaway),
-                      valueFloor = 0, valueCeiling = -input$throwaway,
-                      len = input$sylLen / 1000 * 1000,
-                      samplingRate = 1000, plot = TRUE)
+    getSmoothContour(anchors = myPars$amplAnchors,
+                     xaxs = "i",
+                     xlim = c(0, input$sylLen),
+                     ylim = c(0, -input$throwaway),
+                     valueFloor = 0, valueCeiling = -input$throwaway,
+                     len = input$sylLen / 1000 * 1000,
+                     samplingRate = 1000, plot = TRUE)
     # xaxs = "i" to enforce exact axis limits, otherwise we exceed the range
   })
 
-  observeEvent(input$plotAmpl_syl_click, {
-    click_x = round (round(input$plotAmpl_syl_click$x)/input$sylLen,2)
-    click_y = round(input$plotAmpl_syl_click$y)
+  observeEvent(input$plotAmplSyl_click, {
+    click_x = round (round(input$plotAmplSyl_click$x)/input$sylLen,2)
+    click_y = round(input$plotAmplSyl_click$y)
     # if the click is outside the allowed range of y, re-interpret the click
     # as within the range
     if (click_y < 0) click_y = 0
@@ -598,10 +600,10 @@ server = function(input, output, session) {
     myPars$amplAnchors$value = myPars$amplAnchors$value[idx_order]
   })
 
-  observeEvent(input$plotAmpl_syl_dblclick, {
+  observeEvent(input$plotAmplSyl_dblclick, {
     ref = as.data.frame(myPars[['amplAnchors']])
     ref$time = ref$time * input$sylLen
-    closestPoint = nearPoints(ref, input$plotAmpl_syl_dblclick, xvar = 'time',
+    closestPoint = nearPoints(ref, input$plotAmplSyl_dblclick, xvar = 'time',
                               yvar = 'value', threshold = 100000, maxpoints = 1)
     idx = as.numeric(rownames(closestPoint))
     # we can remove any anchor except the first and the last (because ampl
@@ -708,29 +710,51 @@ server = function(input, output, session) {
 
 
   ## O T H E R    P L O T S
-  output$plot_syllables = renderPlot({
-    divideIntoSyllables (sylLen = input$sylLen,
-                         nSyl = input$nSyl,
-                         pauseLen = input$pauseLen,
-                         sylDur_min = permittedValues['sylLen', 'low'],
-                         sylDur_max = permittedValues['sylLen', 'high'],
-                         pauseDur_min = permittedValues['pauseLen', 'low'],
-                         pauseDur_max = permittedValues['pauseLen', 'high'],
-                         temperature = input$temperature, plot = TRUE)
+  output$plotSyllables = renderPlot({
+    soundgen:::divideIntoSyllables(sylLen = input$sylLen,
+                                   nSyl = input$nSyl,
+                                   pauseLen = input$pauseLen,
+                                   sylDur_min = permittedValues['sylLen', 'low'],
+                                   sylDur_max = permittedValues['sylLen', 'high'],
+                                   pauseDur_min = permittedValues['pauseLen', 'low'],
+                                   pauseDur_max = permittedValues['pauseLen', 'high'],
+                                   temperature = input$temperature, plot = TRUE)
   })
 
-  output$plot_variation = renderPlot({
-    divideIntoSyllables (sylLen = input$sylLen,
-                         nSyl = input$nSyl,
-                         pauseLen = input$pauseLen,
-                         sylDur_min = permittedValues['sylLen', 'low'],
-                         sylDur_max = permittedValues['sylLen', 'high'],
-                         pauseDur_min = permittedValues['pauseLen', 'low'],
-                         pauseDur_max = permittedValues['pauseLen', 'high'],
-                         temperature = input$temperature, plot = TRUE)
+  output$plotHypers = renderPlot({
+    soundgen:::divideIntoSyllables(sylLen = input$sylLen,
+                                   nSyl = input$nSyl,
+                                   pauseLen = input$pauseLen,
+                                   sylDur_min = permittedValues['sylLen', 'low'],
+                                   sylDur_max = permittedValues['sylLen', 'high'],
+                                   pauseDur_min = permittedValues['pauseLen', 'low'],
+                                   pauseDur_max = permittedValues['pauseLen', 'high'],
+                                   temperature = input$temperature, plot = TRUE)
   })
 
-  output$plot_spectrum = renderPlot({
+  output$plotSettings = renderPlot({
+    soundgen:::divideIntoSyllables(sylLen = input$sylLen,
+                                   nSyl = input$nSyl,
+                                   pauseLen = input$pauseLen,
+                                   sylDur_min = permittedValues['sylLen', 'low'],
+                                   sylDur_max = permittedValues['sylLen', 'high'],
+                                   pauseDur_min = permittedValues['pauseLen', 'low'],
+                                   pauseDur_max = permittedValues['pauseLen', 'high'],
+                                   temperature = input$temperature, plot = TRUE)
+  })
+
+  output$plotVibrato = renderPlot({
+    plot(x = 1:input$sylLen,
+         y = input$vibratoDep * sin(2 * pi * (1:input$sylLen) *
+                                      input$vibratoFreq / 1000),
+         ylim = c(-permittedValues['vibratoDep', 'high'],
+                  permittedValues['vibratoDep', 'high']),
+         type = 'l',
+         xlab = 'Time, ms',
+         ylab = 'F0 delta, semitones')
+  })
+
+  output$plotRolloff = renderPlot({
     # seewave::meanspec(myPars$sound, f = input$samplingRate, dB = 'max0',
     #   wl = floor(input$specWindowLength*input$samplingRate/1000/2)*2,
     #   flim = c(0,10), main = 'Spectrum')
@@ -748,19 +772,7 @@ server = function(input, output, session) {
     )
   })
 
-  output$plot_settings = renderPlot({
-    seewave::meanspec(myPars$sound,  f = input$samplingRate, dB = 'max0',
-                      wl = floor(input$specWindowLength * input$samplingRate / 1000 / 2) * 2,
-                      flim = c(0, 10), main = 'Spectrum')
-  })
-
-  output$plot_consonant = renderPlot({
-    seewave::meanspec(myPars$sound,  f = input$samplingRate, dB = 'max0',
-                      wl = floor(input$specWindowLength * input$samplingRate / 1000 / 2) * 2,
-                      flim = c(0, 10), main = 'Spectrum')
-  })
-
-  output$plot_formants = renderPlot({
+  output$plotFormants = renderPlot({
     getSpectralEnvelope(nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2),
                         nc = 100,
                         formants = myPars$formants,
@@ -779,37 +791,106 @@ server = function(input, output, session) {
     )
   })
 
-  output$plot_timbre = renderPlot({
-    seewave::meanspec(myPars$sound,  f = input$samplingRate, dB = 'max0',
-                      wl = floor(input$specWindowLength * input$samplingRate / 1000 / 2) * 2,
-                      flim = c(0, 10), main = 'Spectrum')
+  output$plotAM = renderPlot({
+    plot(x = 1:input$sylLen,
+         y = input$amDep * sin(2 * pi * (1:input$sylLen) *
+                                 input$amFreq / 1000),
+         ylim = c(-permittedValues['amDep', 'high'],
+                  permittedValues['amDep', 'high']),
+         type = 'l',
+         xlab = 'Time, ms',
+         ylab = 'Amplitude delta, %')
   })
 
-  output$plot_pitchModulation = renderPlot({
-    seewave::meanspec(myPars$sound,  f = input$samplingRate, dB = 'max0',
-                      wl = floor(input$specWindowLength * input$samplingRate / 1000 / 2) * 2,
-                      flim = c(0, 10), main = 'Spectrum')
+  output$plotNonlin = renderPlot({
+    # see source.R, "get a random walk for intra-syllable variation"
+    rw = soundgen:::zeroOne(soundgen:::getRandomWalk(
+      len = 100,
+      rw_range = input$temperature,
+      trend = c(.5, -.5), # randomWalk_trendStrength
+      rw_smoothing = .3
+    )) * 100
+    rw_bin = soundgen:::getIntegerRandomWalk(
+      rw,
+      nonlinBalance = input$nonlinBalance,
+      minLength = ceiling(input$shortestEpoch / 1000 * myPitchContour()),
+      plot = FALSE  # for some reason fails to plot
+    )
+    q1 = soundgen:::noiseThresholdsDict$q1[input$nonlinBalance + 1]
+    q2 = soundgen:::noiseThresholdsDict$q2[input$nonlinBalance + 1]
+    rw_bin_100 = rw_bin
+    rw_bin_100[rw_bin_100 == 1] = q1
+    rw_bin_100[rw_bin_100 == 2] = q2
+
+    timeseq = seq(0, input$sylLen, length.out = length(rw))
+    plot(x = timeseq,
+         y = rw, ylim = c(0, 110), type = 'l', lwd = 1,
+         xlab = 'Time', ylab = 'Latent non-linearity', main = 'Random walk')
+    points(x = timeseq,
+           y = rw_bin_100, type = 'l', lwd = 4, col = 'blue')
+    lines(x = c(0, input$sylLen), y = c(q1, q1), lty = 3, lwd = 2, col = 'red')
+    text(x = 0, y = q1 + 2, labels = 'subh', pos = 4)
+    lines(x = c(0, input$sylLen), y = c(q2, q2), lty = 3, lwd = 2, col = 'red')
+    text(x = 0, y = q2 + 2, labels = 'subh + jitter', pos = 4)
   })
 
-  output$plotNoise = renderPlot({
-    seewave::meanspec(myPars$sound,  f = input$samplingRate, dB = 'max0',
-                      wl = floor(input$specWindowLength * input$samplingRate / 1000 / 2) * 2,
-                      flim = c(0, 10), main = 'Spectrum')
+  output$plotConsonant = renderPlot({
+    if (is.na(myPars$formantsNoise)) {
+      # same as plotFormants
+      getSpectralEnvelope(
+        nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2),
+        nc = 100,
+        formants = myPars$formants,
+        formantDep = input$formantDep,
+        rolloffLip = input$rolloffLip,
+        mouthAnchors = myPars$mouthAnchors,
+        vocalTract = input$vocalTract,
+        temperature = input$temperature,
+        formantDepStoch = input$formantDepStoch,
+        samplingRate = input$samplingRate,
+        plot = TRUE,
+        duration = durSyl_withNoise(),
+        xlab = 'Time, ms',
+        ylab = 'Frequency, kHz',
+        colorTheme = input$spec_colorTheme
+      )
+    } else {
+      plot(1:100)
+      getSpectralEnvelope(
+        nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2),
+        nc = 100,
+        formants = myPars$formantsNoise,
+        formantDep = input$formantDep,
+        rolloffLip = input$rolloffLip + input$rolloffNoise,
+        temperature = 0,
+        samplingRate = input$samplingRate,
+        plot = TRUE,
+        duration = durSyl_withNoise(),
+        xlab = 'Time, ms',
+        ylab = 'Frequency, kHz',
+        colorTheme = input$spec_colorTheme
+      )
+    }
   })
 
   output$spectrogram = renderPlot({
-    spectrogram(myPars$sound,
-         samplingRate = input$samplingRate,
-         wn = 'gaussian', windowLength = input$specWindowLength,
-         step = round(input$specWindowLength / 4),
-         osc = TRUE, xlab = 'Time, ms', ylab = 'Frequency, kHz',
-         main = 'Spectrogram', contrast = input$specContrast,
-         brightness = input$specBrightness,
-         colorTheme = input$spec_colorTheme,
-         method = input$spec_method,
-         ylim = c(input$spec_ylim[1], input$spec_ylim[2]))
+    if (input$spectrogram_or_spectrum == 'spectrogram') {
+      spectrogram(myPars$sound,
+                  samplingRate = input$samplingRate,
+                  wn = 'gaussian', windowLength = input$specWindowLength,
+                  step = round(input$specWindowLength / 4),
+                  osc = TRUE, xlab = 'Time, ms', ylab = 'Frequency, kHz',
+                  main = 'Spectrogram', contrast = input$specContrast,
+                  brightness = input$specBrightness,
+                  colorTheme = input$spec_colorTheme,
+                  method = input$spec_method,
+                  ylim = c(input$spec_ylim[1], input$spec_ylim[2]))
+    } else {
+      seewave::meanspec(myPars$sound, f = input$samplingRate, dB = 'max0',
+                        wl = floor(input$specWindowLength * input$samplingRate / 1000 / 2) * 2,
+                        flim = c(0, 10), main = 'Spectrum')
+    }
   })
-
 
   ## A U D I O
   # create a string with the call to soundgen() with the par values from the UI
@@ -824,8 +905,8 @@ server = function(input, output, session) {
       temperature = input$temperature,
       maleFemale = input$maleFemale,
       creakyBreathy = input$creakyBreathy,
-      pitchEffectsAmount = input$pitchEffectsAmount,
-      pitchEffectsIntensity = input$pitchEffectsIntensity,
+      nonlinBalance = input$nonlinBalance,
+      nonlinDep = input$nonlinDep,
       jitterDep = input$jitterDep,
       jitterLen = input$jitterLen,
       vibratoFreq = input$vibratoFreq,
@@ -845,8 +926,8 @@ server = function(input, output, session) {
       subFreq = input$subFreq,
       subDep = input$subDep,
       shortestEpoch = input$shortestEpoch,
-      trillDep = input$trillDep,
-      trillFreq = input$trillFreq,
+      amDep = input$amDep,
+      amFreq = input$amFreq,
       noiseAnchors = myPars$noiseAnchors,
       formantsNoise = myPars$formantsNoise,
       rolloffNoise = input$rolloffNoise,

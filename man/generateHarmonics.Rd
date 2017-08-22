@@ -4,16 +4,16 @@
 \alias{generateHarmonics}
 \title{Generate harmonics}
 \usage{
-generateHarmonics(pitch, attackLen = 50, pitchEffectsAmount = 0,
-  pitchEffectsIntensity = 0, jitterDep = 0, jitterLen = 1,
-  vibratoFreq = 100, vibratoDep = 0, shimmerDep = 0, creakyBreathy = 0,
-  rolloff = -18, rolloffOct = -2, rolloffKHz = -6, rolloffParab = 0,
-  rolloffParabHarm = 3, rolloffLip = 6, rolloff_perAmpl = 12,
-  temperature = 0, pitchDriftDep = 0.5, pitchDriftFreq = 0.125,
+generateHarmonics(pitch, attackLen = 50, nonlinBalance = 0, nonlinDep = 0,
+  jitterDep = 0, jitterLen = 1, vibratoFreq = 100, vibratoDep = 0,
+  shimmerDep = 0, creakyBreathy = 0, rolloff = -18, rolloffOct = -2,
+  rolloffKHz = -6, rolloffParab = 0, rolloffParabHarm = 3,
+  rolloffLip = 6, rolloff_perAmpl = 12, temperature = 0,
+  pitchDriftDep = 0.5, pitchDriftFreq = 0.125,
   randomWalk_trendStrength = 0.5, shortestEpoch = 300, subFreq = 100,
-  subDep = 0, trillDep = 0, trillFreq = 30, amplAnchors = NA,
-  overlap = 75, samplingRate = 16000, pitchFloor = 75,
-  pitchCeiling = 3500, pitchSamplingRate = 3500, throwaway = -120)
+  subDep = 0, amDep = 0, amFreq = 30, amplAnchors = NA, overlap = 75,
+  samplingRate = 16000, pitchFloor = 75, pitchCeiling = 3500,
+  pitchSamplingRate = 3500, throwaway = -120)
 }
 \arguments{
 \item{pitch}{a contour of fundamental frequency (numeric vector). NB: for
@@ -24,12 +24,12 @@ upsampled before synthesis.}
 \item{attackLen}{duration of fade-in / fade-out at each end of syllables and
 noise (ms)}
 
-\item{pitchEffectsAmount}{hyperparameter for regulating the (approximate)
+\item{nonlinBalance}{hyperparameter for regulating the (approximate)
 proportion of sound with different regimes of pitch effects (none /
 subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 entire sound has jitter + subharmonics. Ignored if temperature = 0}
 
-\item{pitchEffectsIntensity}{hyperparameter for regulating the intensity of
+\item{nonlinDep}{hyperparameter for regulating the intensity of
 subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as
 specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
 
@@ -104,10 +104,10 @@ strength of subharmonics fades as they move away from harmonics in f0
 stack. Low values produce narrow sidebands, high values produce uniformly
 strong subharmonics}
 
-\item{trillDep}{amplitude modulation depth. 0: no change; 1: amplitude
+\item{amDep}{amplitude modulation depth, %. 0: no change; 100: amplitude
 modulation with amplitude range equal to the dynamic range of the sound}
 
-\item{trillFreq}{amplitude modulation frequency, Hz}
+\item{amFreq}{amplitude modulation frequency, Hz}
 
 \item{amplAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
 amplitude anchors}

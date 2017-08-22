@@ -1,4 +1,5 @@
-## TODO: # check that numeric arguments are valid: make sure we don't expect NULL, add overlap etc to permittedValues before any lists, etc - check everything!!!
+## TODO: # add proper plots to soundgen_app() UI
+# check that numeric arguments are valid: make sure we don't expect NULL, add overlap etc to permittedValues before any lists, etc - check everything!!!
 # mouth opening: see if abrupt transitions can be avoided as mouth opening goes from 0 to positive (some kind of smooth fun approaching 0?)
 
 # build pdf manual (terminal): R CMD Rd2pdf "/home/allgoodguys/Documents/Studying/Lund_PhD/methods/sound-synthesis/soundgen"
@@ -59,11 +60,11 @@ NULL
 #'   (0...+1)
 #' @param creakyBreathy hyperparameter for a rough adjustment of voice quality
 #'   from creaky (-1) to breathy (+1)
-#' @param pitchEffectsAmount hyperparameter for regulating the (approximate)
+#' @param nonlinBalance hyperparameter for regulating the (approximate)
 #'   proportion of sound with different regimes of pitch effects (none /
 #'   subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 #'   entire sound has jitter + subharmonics. Ignored if temperature = 0
-#' @param pitchEffectsIntensity hyperparameter for regulating the intensity of
+#' @param nonlinDep hyperparameter for regulating the intensity of
 #'   subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as
 #'   specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0
 #' @param jitterLen duration of stable periods between pitch jumps, ms. Use a
@@ -114,9 +115,9 @@ NULL
 #'   strong subharmonics
 #' @param shortestEpoch minimum duration of each epoch with unchanging
 #'   subharmonics regime, in ms
-#' @param trillDep amplitude modulation depth. 0: no change; 1: amplitude
+#' @param amDep amplitude modulation depth, %. 0: no change; 100: amplitude
 #'   modulation with amplitude range equal to the dynamic range of the sound
-#' @param trillFreq amplitude modulation frequency, Hz
+#' @param amFreq amplitude modulation frequency, Hz
 #' @param noiseAnchors dataframe specifying the time (ms) and amplitude (dB) of
 #'   anchors for generating the noise component such as aspiration, hissing, etc
 #' @param formantsNoise the same as \code{formants}, but for the
@@ -171,7 +172,7 @@ NULL
 #'   pitchAnchorsGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 #'
 #' # Subharmonics in sidebands (noisy scream, chimpanzee-like)
-#' sound = soundgen (pitchEffectsAmount = 100, subFreq = 75, subDep = 130,
+#' sound = soundgen (nonlinBalance = 100, subFreq = 75, subDep = 130,
 #'   pitchAnchors = data.frame(
 #'     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
 #'   sylLen = 800,
@@ -179,7 +180,7 @@ NULL
 #'
 #' # Jitter and mouth opening (bark, dog-like)
 #' sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
-#'   pitchEffectsAmount = 100, subFreq = 100, subDep = 60, jitterDep = 1,
+#'   nonlinBalance = 100, subFreq = 100, subDep = 60, jitterDep = 1,
 #'   pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
 #'   mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
 #'   vocalTract = 5, play = TRUE)
@@ -203,8 +204,8 @@ soundgen = function(repeatBout = 1,
                     ),
                     maleFemale = 0,
                     creakyBreathy = 0,
-                    pitchEffectsAmount = 0,
-                    pitchEffectsIntensity = 50,
+                    nonlinBalance = 0,
+                    nonlinDep = 50,
                     jitterLen = 1,
                     jitterDep = 3,
                     vibratoFreq = 5,
@@ -229,8 +230,8 @@ soundgen = function(repeatBout = 1,
                     subFreq = 100,
                     subDep = 100,
                     shortestEpoch = 300,
-                    trillDep = 0,
-                    trillFreq = 30,
+                    amDep = 0,
+                    amFreq = 30,
                     noiseAnchors = data.frame(time = c(0, 300),
                                               value = c(-120, -120)),
                     formantsNoise = NA,
@@ -300,7 +301,7 @@ soundgen = function(repeatBout = 1,
   # adjust parameters according to the specified hyperparameters
   if (creakyBreathy < 0) {
     # for creaky voice
-    pitchEffectsAmount = min(100, pitchEffectsAmount - creakyBreathy * 50)
+    nonlinBalance = min(100, nonlinBalance - creakyBreathy * 50)
     jitterDep = max(0, jitterDep - creakyBreathy / 2)
     shimmerDep = max(0, shimmerDep - creakyBreathy * 5)
     subDep = subDep * 2 ^ (-creakyBreathy)
@@ -316,14 +317,14 @@ soundgen = function(repeatBout = 1,
   # adjust rolloff for both creaky and breathy voices
   rolloff = rolloff - creakyBreathy * 10
   rolloffOct = rolloffOct - creakyBreathy * 5
-  subFreq = 2 * (subFreq - 50) / (1 + exp(-.1 * (50 - pitchEffectsIntensity))) + 50
-  # subFreq unchanged for pitchEffectsIntensity=50%, raised for lower and
+  subFreq = 2 * (subFreq - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50
+  # subFreq unchanged for nonlinDep=50%, raised for lower and
   # lowered for higher noise intensities. Max set at 2*subFreq-50, min at 50 Hz.
-  # Illustration: subFreq=250; pitchEffectsIntensity=0:100; plot(pitchEffectsIntensity,
-  #   2 * (subFreq - 50) / (1 + exp(-.1 * (50 - pitchEffectsIntensity))) + 50, type = 'l')
-  jitterDep = 2 * jitterDep / (1 + exp(.1 * (50 - pitchEffectsIntensity)))
-  # Illustration: jitterDep = 1.5; pitchEffectsIntensity = 0:100;
-  # plot(pitchEffectsIntensity, 2 * jitterDep / (1 + exp(.1 * (50 - pitchEffectsIntensity))),
+  # Illustration: subFreq=250; nonlinDep=0:100; plot(nonlinDep,
+  #   2 * (subFreq - 50) / (1 + exp(-.1 * (50 - nonlinDep))) + 50, type = 'l')
+  jitterDep = 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep)))
+  # Illustration: jitterDep = 1.5; nonlinDep = 0:100;
+  # plot(nonlinDep, 2 * jitterDep / (1 + exp(.1 * (50 - nonlinDep))),
   #   type = 'l')
   if (maleFemale != 0) {
     # adjust pitch and formants along the male-female dimension
@@ -363,7 +364,7 @@ soundgen = function(repeatBout = 1,
 
   # prepare a list of pars for calling generateHarmonics()
   pars_to_vary = c(
-    'pitchEffectsIntensity',
+    'nonlinDep',
     'attackLen',
     'jitterDep',
     'shimmerDep',
@@ -373,7 +374,7 @@ soundgen = function(repeatBout = 1,
     'subFreq',
     'subDep'
   )
-  # don't add pitchEffectsAmount, otherwise there is no simple way to remove noise at temp>0
+  # don't add nonlinBalance, otherwise there is no simple way to remove noise at temp>0
   pars_to_round = c('attackLen', 'subFreq', 'subDep')
   pars_list = list(
     'attackLen' = attackLen,
@@ -395,10 +396,10 @@ soundgen = function(repeatBout = 1,
     'subFreq' = subFreq,
     'subDep' = subDep,
     'rolloffLip' = rolloffLip,
-    'trillDep' = trillDep,
-    'trillFreq' = trillFreq,
-    'pitchEffectsAmount' = pitchEffectsAmount,
-    'pitchEffectsIntensity' = pitchEffectsIntensity,
+    'amDep' = amDep,
+    'amFreq' = amFreq,
+    'nonlinBalance' = nonlinBalance,
+    'nonlinDep' = nonlinDep,
     'pitchFloor' = pitchFloor,
     'pitchCeiling' = pitchCeiling,
     'pitchSamplingRate' = pitchSamplingRate,
@@ -767,10 +768,10 @@ soundgen = function(repeatBout = 1,
     } # plot(soundFiltered, type = 'l')
 
     # trill - rapid regular amplitude modulation
-    if (trillDep > 0) {
+    if (amDep > 0) {
       trill = 1 - sin (2 * pi * (1:length(soundFiltered)) /
-                         samplingRate * trillFreq) * trillDep # / 2
-      # plot (trill, type='l')
+                         samplingRate * amFreq) * amDep / 100
+      # plot(trill, type='l')
     } else {
       trill = 1
     }
@@ -799,8 +800,8 @@ soundgen = function(repeatBout = 1,
   if (!is.na(savePath)) {
     seewave::savewav(bout, filename = savePath, f = samplingRate)
   }
-  if (plot) {
+  if(plot) {
     spectrogram(bout, samplingRate = samplingRate, ...)
   }
-  return (bout)
+  return(bout)
 }

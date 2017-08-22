@@ -81,7 +81,7 @@ generateNoise = function(len,
   breathingStrength = 2 ^ (breathingStrength / 10)
 
   if (sum(is.na(breathingStrength)) > 0) {
-    return (rep(0, len))
+    return(rep(0, len))
   }
 
   # set up spectral filter
@@ -172,8 +172,8 @@ generateNoise = function(len,
 #' # playme(sound, samplingRate = 16000) # no formants yet
 generateHarmonics = function(pitch,
                              attackLen = 50,
-                             pitchEffectsAmount = 0,
-                             pitchEffectsIntensity = 0,
+                             nonlinBalance = 0,
+                             nonlinDep = 0,
                              jitterDep = 0,
                              jitterLen = 1,
                              vibratoFreq = 100,
@@ -194,8 +194,8 @@ generateHarmonics = function(pitch,
                              shortestEpoch = 300,
                              subFreq = 100,
                              subDep = 0,
-                             trillDep = 0,
-                             trillFreq = 30,
+                             amDep = 0,
+                             amFreq = 30,
                              amplAnchors = NA,
                              overlap = 75,
                              samplingRate = 16000,
@@ -236,17 +236,17 @@ generateHarmonics = function(pitch,
 
   # get a random walk for intra-syllable variation
   if (temperature > 0) {
-    rw = getRandomWalk (
+    rw = getRandomWalk(
       len = nGC,
       rw_range = temperature,
-      trend = c(randomWalk_trendStrength,-randomWalk_trendStrength),
+      trend = c(randomWalk_trendStrength, -randomWalk_trendStrength),
       rw_smoothing = .3
     ) # plot (rw, type = 'l')
     rw_0_100 = zeroOne(rw) * 100
     # plot (rw_0_100, type = 'l')
     rw_bin = getIntegerRandomWalk(
       rw_0_100,
-      pitchEffectsAmount = pitchEffectsAmount,
+      nonlinBalance = nonlinBalance,
       minLength = ceiling(shortestEpoch / 1000 * pitch_per_gc)
     )
     # minLength is shortestEpoch / period_ms, where
@@ -262,7 +262,7 @@ generateHarmonics = function(pitch,
   }
 
   # calculate jitter (random variation of F0)
-  if (jitterDep > 0 & pitchEffectsAmount > 0) {
+  if (jitterDep > 0 & nonlinBalance > 0) {
     ratio = pitch_per_gc * jitterLen / 1000 # the number of gc that make
     #   up one jitter period (vector of length nGC)
     idx = 1
@@ -345,7 +345,7 @@ generateHarmonics = function(pitch,
   # image(t(rolloff_source))
 
   # add shimmer (random variation in amplitude)
-  if (shimmerDep > 0 & pitchEffectsAmount > 0) {
+  if (shimmerDep > 0 & nonlinBalance > 0) {
     shimmer = 2 ^ (rnorm (
       n = ncol(rolloff_source),
       mean = 0,
@@ -357,7 +357,7 @@ generateHarmonics = function(pitch,
   }
 
   # add vocal fry (subharmonics)
-  if (subDep > 0 & pitchEffectsAmount > 0) {
+  if (subDep > 0 & nonlinBalance > 0) {
     vocalFry = getVocalFry(
       rolloff = rolloff_source,
       pitch_per_gc = pitch_per_gc,

@@ -10,21 +10,20 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   tempEffects = list(sylLenDep = 0.02, formDrift = 0.3, formDisp = 0.2,
   pitchDriftDep = 0.5, pitchDriftFreq = 0.125, pitchAnchorsDep = 0.05,
   noiseAnchorsDep = 0.1, amplAnchorsDep = 0.1), maleFemale = 0,
-  creakyBreathy = 0, pitchEffectsAmount = 0, pitchEffectsIntensity = 50,
-  jitterLen = 1, jitterDep = 3, vibratoFreq = 5, vibratoDep = 0,
-  shimmerDep = 0, attackLen = 50, rolloff = -12, rolloffOct = -12,
-  rolloffKHz = -6, rolloffParab = 0, rolloffParabHarm = 3,
-  rolloffLip = 6, formants = list(f1 = list(time = 0, freq = 860, amp = 30,
-  width = 120), f2 = list(time = 0, freq = 1280, amp = 40, width = 120), f3 =
-  list(time = 0, freq = 2900, amp = 25, width = 200)), formantDep = 1,
-  formantDepStoch = 30, vocalTract = 15.5, subFreq = 100, subDep = 100,
-  shortestEpoch = 300, trillDep = 0, trillFreq = 30,
-  noiseAnchors = data.frame(time = c(0, 300), value = c(-120, -120)),
-  formantsNoise = NA, rolloffNoise = -14, mouthAnchors = data.frame(time =
-  c(0, 1), value = c(0.5, 0.5)), amplAnchors = NA, amplAnchorsGlobal = NA,
-  samplingRate = 16000, windowLength = 50, overlap = 75,
-  addSilence = 100, pitchFloor = 50, pitchCeiling = 3500,
-  pitchSamplingRate = 3500, throwaway = -120,
+  creakyBreathy = 0, nonlinBalance = 0, nonlinDep = 50, jitterLen = 1,
+  jitterDep = 3, vibratoFreq = 5, vibratoDep = 0, shimmerDep = 0,
+  attackLen = 50, rolloff = -12, rolloffOct = -12, rolloffKHz = -6,
+  rolloffParab = 0, rolloffParabHarm = 3, rolloffLip = 6,
+  formants = list(f1 = list(time = 0, freq = 860, amp = 30, width = 120), f2 =
+  list(time = 0, freq = 1280, amp = 40, width = 120), f3 = list(time = 0, freq =
+  2900, amp = 25, width = 200)), formantDep = 1, formantDepStoch = 30,
+  vocalTract = 15.5, subFreq = 100, subDep = 100, shortestEpoch = 300,
+  amDep = 0, amFreq = 30, noiseAnchors = data.frame(time = c(0, 300),
+  value = c(-120, -120)), formantsNoise = NA, rolloffNoise = -14,
+  mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
+  amplAnchors = NA, amplAnchorsGlobal = NA, samplingRate = 16000,
+  windowLength = 50, overlap = 75, addSilence = 100, pitchFloor = 50,
+  pitchCeiling = 3500, pitchSamplingRate = 3500, throwaway = -120,
   invalidArgAction = c("adjust", "abort", "ignore")[1], plot = FALSE,
   play = FALSE, savePath = NA, ...)
 }
@@ -67,12 +66,12 @@ vocalTract to make the speaker appear more male (-1...0) or more female
 \item{creakyBreathy}{hyperparameter for a rough adjustment of voice quality
 from creaky (-1) to breathy (+1)}
 
-\item{pitchEffectsAmount}{hyperparameter for regulating the (approximate)
+\item{nonlinBalance}{hyperparameter for regulating the (approximate)
 proportion of sound with different regimes of pitch effects (none /
 subharmonics only / subharmonics and jitter). 0\% = no noise; 100\% = the
 entire sound has jitter + subharmonics. Ignored if temperature = 0}
 
-\item{pitchEffectsIntensity}{hyperparameter for regulating the intensity of
+\item{nonlinDep}{hyperparameter for regulating the intensity of
 subharmonics and jitter, 0 to 100\% (50\% = jitter and subharmonics are as
 specified, <50\% weaker, >50\% stronger). Ignored if temperature = 0}
 
@@ -143,10 +142,10 @@ strong subharmonics}
 \item{shortestEpoch}{minimum duration of each epoch with unchanging
 subharmonics regime, in ms}
 
-\item{trillDep}{amplitude modulation depth. 0: no change; 1: amplitude
+\item{amDep}{amplitude modulation depth, %. 0: no change; 100: amplitude
 modulation with amplitude range equal to the dynamic range of the sound}
 
-\item{trillFreq}{amplitude modulation frequency, Hz}
+\item{amFreq}{amplitude modulation frequency, Hz}
 
 \item{noiseAnchors}{dataframe specifying the time (ms) and amplitude (dB) of
 anchors for generating the noise component such as aspiration, hissing, etc}
@@ -229,7 +228,7 @@ sound = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140,
   pitchAnchorsGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 
 # Subharmonics in sidebands (noisy scream, chimpanzee-like)
-sound = soundgen (pitchEffectsAmount = 100, subFreq = 75, subDep = 130,
+sound = soundgen (nonlinBalance = 100, subFreq = 75, subDep = 130,
   pitchAnchors = data.frame(
     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
   sylLen = 800,
@@ -237,7 +236,7 @@ sound = soundgen (pitchEffectsAmount = 100, subFreq = 75, subDep = 130,
 
 # Jitter and mouth opening (bark, dog-like)
 sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
-  pitchEffectsAmount = 100, subFreq = 100, subDep = 60, jitterDep = 1,
+  nonlinBalance = 100, subFreq = 100, subDep = 60, jitterDep = 1,
   pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
   mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
   vocalTract = 5, play = TRUE)
