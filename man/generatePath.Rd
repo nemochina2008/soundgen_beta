@@ -21,6 +21,6 @@ Internal soundgen function.
 Internal helper function for postprocessing of pitch contours called by
 \code{\link{pathfinding_slow}}. Generates proposals for new paths through
 pitch candidates. It gives up and returns NA after 100 attempts, which stops
-annealing - so the adaptation of pitch contour doesn't happen if
+annealing - so the adaptation of pitch contour doesn't happen
 }
 \keyword{internal}

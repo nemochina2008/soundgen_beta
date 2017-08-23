@@ -1,5 +1,5 @@
 ui = fluidPage(
-  headerPanel('soundgen 1.0.0'),
+  # headerPanel('soundgen 1.0.0'),
 
   fluidRow(
     column(6,
@@ -202,7 +202,7 @@ ui = fluidPage(
                                              sidebarPanel(
                                                actionButton(inputId = "noise_flatten", label = "Flatten contour"),
                                                shinyBS:::bsPopover(id='noise_flatten', title=NULL, content='Revert to a flat contour with amplitude equal to the first (left) anchor', placement="right", trigger="hover"),
-                                               sliderInput('noiseTime', 'Breathing start / end, ms', value=c(0,300), min=permittedValues['sylLen', 'low'], max=permittedValues['sylLen', 'high'], step=permittedValues['sylLen','step']),
+                                               sliderInput('noiseTime', 'Breathing start / end, ms', value=c(0, 300), min=-permittedValues['sylLen', 'high'] / 2, max=permittedValues['sylLen', 'high'], step=permittedValues['sylLen','step']),
                                                shinyBS:::bsPopover(id='noiseTime', title=NULL, content='Timing of respiration noise relative to the voiced component', placement="right", trigger="hover"),
                                                tableOutput("noise_anchors"), width=6
                                              ),
@@ -333,7 +333,7 @@ ui = fluidPage(
 
   fluidRow(
     column(12,
-           HTML('SoundGen 1.0.0 beta, August 2017. Visit <a href="http://cogsci.se/soundgen.html">project web page</a>. Contact me at andrey.anikin / at / lucs.lu.se. Thank you!')
+           HTML('SoundGen 1.0.0 beta, August 2017. Load/detach library(shinyBS) to show/hide tips. Project web page <a href="http://cogsci.se/soundgen.html">http://cogsci.se/soundgen.html</a>. Contact me at andrey.anikin / at / lucs.lu.se. Thank you!')
     )
   )
 )

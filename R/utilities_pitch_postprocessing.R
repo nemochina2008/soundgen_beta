@@ -379,7 +379,7 @@ costPerPath = function(path,
 #' Internal helper function for postprocessing of pitch contours called by
 #' \code{\link{pathfinding_slow}}. Generates proposals for new paths through
 #' pitch candidates. It gives up and returns NA after 100 attempts, which stops
-#' annealing - so the adaptation of pitch contour doesn't happen if
+#' annealing - so the adaptation of pitch contour doesn't happen
 #' @param path currently evaluated path
 #' @inheritParams pathfinder
 #' @param ... nothing really, but otherwise optim() complains
@@ -390,7 +390,7 @@ generatePath = function(path, pitchCands, ...) {
     point_to_wiggle = sample(1:length(path), 1)
     idx = which(!is.na(pitchCands[, point_to_wiggle])) [-path[point_to_wiggle]]
     if (length(idx) > 0 && is.numeric(idx)) {
-      path[point_to_wiggle] = idx[1]
+      path[point_to_wiggle] = sample(idx, size = 1)
       return(path)
     }
     i = i + 1

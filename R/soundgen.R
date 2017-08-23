@@ -1,5 +1,4 @@
-## TODO: # add proper plots to soundgen_app() UI
-# check that numeric arguments are valid: make sure we don't expect NULL, add overlap etc to permittedValues before any lists, etc - check everything!!!
+## TODO: # check that numeric arguments are valid: make sure we don't expect NULL, add overlap etc to permittedValues before any lists, etc - check everything!!!
 # mouth opening: see if abrupt transitions can be avoided as mouth opening goes from 0 to positive (some kind of smooth fun approaching 0?)
 
 # build pdf manual (terminal): R CMD Rd2pdf "/home/allgoodguys/Documents/Studying/Lund_PhD/methods/sound-synthesis/soundgen"
@@ -154,9 +153,20 @@ NULL
 #' @export
 #' @return Returns the synthesized waveform as a numeric vector.
 #' @examples
+#' # NB: GUI for soundgen is available as a Shiny app.
+#' # Type "soundgen_app()" to start it
+#'
 #' sound = soundgen(play = TRUE)
-#' spectrogram(sound, 16000, osc = TRUE)
-#  # playme(sound)
+#' # spectrogram(sound, 16000, osc = TRUE)
+#' # playme(sound)
+#'
+#' # Use the in-built collection of presets:
+#' # names(presets)  # speakers
+#' # names(presets$Chimpanzee)  # calls per speaker
+#' s1 = eval(parse(text = presets$Chimpanzee$Scream_conflict))  # screaming chimp
+#' # playme(s1)
+#' s2 = eval(parse(text = presets$F1$Scream_conflict))
+#' # playme(s2)
 
 #' # unless temperature is 0, the sound is different every time
 #' for (i in 1:3) sound = soundgen(play = TRUE, temperature = .2)
@@ -171,7 +181,7 @@ NULL
 #'     time = c(0, 0.65, 1), value = c(977, 1540, 826)),
 #'   pitchAnchorsGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 #'
-#' # Subharmonics in sidebands (noisy scream, chimpanzee-like)
+#' # Subharmonics in sidebands (noisy scream)
 #' sound = soundgen (nonlinBalance = 100, subFreq = 75, subDep = 130,
 #'   pitchAnchors = data.frame(
 #'     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),

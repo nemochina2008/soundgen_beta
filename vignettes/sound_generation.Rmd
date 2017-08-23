@@ -52,7 +52,15 @@ Having briefly looked at the fundamental principles of sound generation, we proc
 
 # Using soundgen
 ## Where to start
-To generate a sound, you can either type `soundgen_app()` to open an interactive Shiny app or call `soundgen()` from R console with manually specified parameters. 
+To generate a sound, you can either type `soundgen_app()` to open an interactive Shiny app or call `soundgen()` from R console with manually specified parameters. `presets` contains a collection of presets that demonstrate some of the possibilities. 
+```{r}
+library(soundgen)
+soundgen(play = TRUE)  # default sound: a short [a] by a male speaker
+# names(presets)  # speakers
+# names(presets$Chimpanzee)  # calls per speaker
+s = eval(parse(text = presets$Chimpanzee$Scream_conflict))  # screaming chimp
+playme(s)
+```
 
 The basic workflow in the Shiny app is as follows:
 
@@ -68,7 +76,6 @@ If you need to generate a single syllable without pauses, the only temporal para
 
 1.  Set `nSyl` ("Number of syllables" in the app). Unvoiced noise is then allowed to fill in the pauses (if noise is longer than the voiced part), and you can specify an amplitude contour, intonation contour, and formant transitions that will span the entire bout. For ex., if the vowel sequence in a three-syllable bout is “uai”, the output will be approximately “[u] – pause – [a] – pause – [i]”. 
 ```{r}
-library(soundgen)
 s = soundgen(formants = 'uai', repeatBout = 1, nSyl = 3, play = TRUE)
 # "play = TRUE": to replay without re-generating the sound, type "playme(s)"
 ```
@@ -107,12 +114,12 @@ a = getSmoothContour(anchors = data.frame(time = c(0, .5, 1),
 
 *TIP Given the same anchors, the shape of the resulting curve depends on syllable duration. That's because the amount of smoothing is adjusted automatically as you change syllable duration. Double-check that all your contours still look reasonable if you change the duration!*
 
-To draw F0 contour in the Shiny app, use "Main / Intonation syllable" tab and click the intonation plot to add anchors. Soundgen then generates a smooth curve through these anchors. If you click the plot close to an existing anchor, it moves to where you clicked; if you click far from any existing anchor, a new anchor is added. To remove an anchor, double-click close to it. To go back to a straight line, click the button labeled “Flatten pitch contour”.
+To draw F0 contour in the Shiny app, use "Intonation / Intonation syllable" tab and click the intonation plot to add anchors. Soundgen then generates a smooth curve through these anchors. If you click the plot close to an existing anchor, it moves to where you clicked; if you click far from any existing anchor, a new anchor is added. To remove an anchor, double-click close to it. To go back to a straight line, click the button labeled “Flatten pitch contour”.
 
 *TIP The same principles apply to all contour plots in soundgen (amplitude, mouth opening, and noise contours). Note also that all contours are rescaled when the duration changes, with the single exception of negative time anchors for noise (i.e. the length of pre-syllable aspiration does not depend on syllable duration)*
 
 #### Multiple syllables
-If the bout consists of several syllables (`nSyl > 1`), you can also specify the overall intonation over several syllables using `pitchAnchorsGlobal` (app: "Main / Intonation global"). The global intonation contour specifies the deviation of pitch per syllable from the main pitch contour in semitones, i.e. 12 semitones = 1 octave. In other words, it shows how much higher or lower the average pitch of each syllable is compared to the rest of the syllables. For ex., we can generate five seagull-like sounds, which have the same intonation contour within each syllable, but which vary in average pitch spanning about an octave in an inverted U-shaped curve:
+If the bout consists of several syllables (`nSyl > 1`), you can also specify the overall intonation over several syllables using `pitchAnchorsGlobal` (app: "Intonation / Intonation global"). The global intonation contour specifies the deviation of pitch per syllable from the main pitch contour in semitones, i.e. 12 semitones = 1 octave. In other words, it shows how much higher or lower the average pitch of each syllable is compared to the rest of the syllables. For ex., we can generate five seagull-like sounds, which have the same intonation contour within each syllable, but which vary in average pitch spanning about an octave in an inverted U-shaped curve:
 ```{r fig.width = 5, fig.height = 5}
 s = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140, plot = TRUE, play = TRUE,
                  pitchAnchors = data.frame(time = c(0, 0.65, 1), 
@@ -125,7 +132,7 @@ s = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140, plot = TRUE, play = TRUE,
 
 ## Hyper-parameters
 ### Temperature
-It is a basic principle of soundgen that random variation can be introduced in the generated sound. This behavior is controlled by a single high-level parameter, `temperature`. If `temperature = 0`, you will get exactly the same sound by executing the same call to `soundgen` repeatedly. If `temperature > 0`, each generated sound will be somewhat different, even if all the control parameters are exactly the same. In particular, positive temperature introduces fluctuations in syllable structure, all contours (intonation, breathing, amplitude, mouth opening), and many effects (jitter, subharmonics, etc). It also "wiggles" user-specified formants and adds new formants above the specified ones at a distance calculated based on the vocal tract length (see Section "Vowel quality (formants)" below).
+It is a basic principle of soundgen that random variation can be introduced in the generated sound. This behavior is controlled by a single high-level parameter, `temperature` (app: "Main / Hypers"). If `temperature = 0`, you will get exactly the same sound by executing the same call to `soundgen` repeatedly. If `temperature > 0`, each generated sound will be somewhat different, even if all the control parameters are exactly the same. In particular, positive temperature introduces fluctuations in syllable structure, all contours (intonation, breathing, amplitude, mouth opening), and many effects (jitter, subharmonics, etc). It also "wiggles" user-specified formants and adds new formants above the specified ones at a distance calculated based on the vocal tract length (see Section "Vowel quality (formants)" below).
 
 Code example : 
 ```{r}
@@ -184,7 +191,7 @@ for (i in cb) {
 ```
 
 ## Amplitude contours
-Use `amplAnchors` and `amplAnchorsGlobal` to modulate the amplitude (loudness) of an individual syllable or a polysyllabic bout, respectively. In the app, they are found under "Main / Amplitude syllable" and "Main / Amplitude global". Note that they both affect only the voiced component. In contrast, `attackLen` ("Attack length, ms" in the app) and `trill_dep` ("Trill") affect both the voiced and the unvoiced components. 
+Use `amplAnchors` and `amplAnchorsGlobal` to modulate the amplitude (loudness) of an individual syllable or a polysyllabic bout, respectively. In the app, they are found under "Amplitude / Amplitude syllable" and "Amplitude / Amplitude global". Note that they both affect only the voiced component. In contrast, `attackLen` ("Attack length, ms" in the app) and `amDep` ("AM depth") affect both the voiced and the unvoiced components. 
 ```{r fig.width = 5, fig.height = 5}
 # each syllable has a 20-dB dip in the middle (note the dumb-bell shapes 
 # in the oscillogram under the spectrogram), and there is an overall fade-out
@@ -206,7 +213,7 @@ s = soundgen(sylLen = 1000, formants = NA,
 
 ## Vowel quality (formants)
 ### Vowel presets
-Argument `formants` (tab "Voiced / Vowel" in the app) sets the formants – frequency bands used to filter the excitation source. Just as an equalizer in a sound player amplifies some frequencies and dampens others, aappropriate filters can be applied to a tonal sound to make it resemble a human voice saying different vowels.
+Argument `formants` (tab "Tract / Formants" in the app) sets the formants – frequency bands used to filter the excitation source. Just as an equalizer in a sound player amplifies some frequencies and dampens others, aappropriate filters can be applied to a tonal sound to make it resemble a human voice saying different vowels.
 
 Using presets for callers M1 and F1, you can directly specify a string of vowels. When you call `soundgen` with `formants = 'aouuuui'` or some such character string, the values are taken from `presets$M1$Formants` (or `presets$F1$Formants` if the speaker is "F1" in the Shiny app). Formants can remain the same throughout the vocalizations, or they can move. For example, `formants = 'ai'` produces a sound that goes smoothly from [a] to [i], while `formants = 'aaai'` produces mostly [a] with a rapid transition to [i] at the very end. Argument `formantStrength` ("Formant prominence" in the app) adjusts the overall effect of all formant filters at once.
 
@@ -273,7 +280,7 @@ spectrogram(s, samplingRate = 16000, ylim = c(0, 4), contrast = .5,
 ```
 
 ### Mouth opening
-A convenient shortcut for manipulating formants without coding all transitions by hand is provided by `mouthAnchors` argument (in the app, tab "Main / Mouth opening"). This can be thought of as a hyper-parameter offering an easy way to define moving formants within a syllable: formants go down as the mouth closes and rise as it opens (see Moore, 2016). In addition, lip radiation is removed when the mouth is completely closed, and the vowel is automatically nasalized. This feature can save you a lot of manual coding. Here is a simple example, with the mouth gradually opening and closing again:
+A convenient shortcut for manipulating formants without coding all transitions by hand is provided by `mouthAnchors` argument (in the app, tab "Tract / Mouth opening"). This can be thought of as a hyper-parameter offering an easy way to define moving formants within a syllable: formants go down as the mouth closes and rise as it opens (see Moore, 2016). In addition, lip radiation is removed when the mouth is completely closed, and the vowel is automatically nasalized. This feature can save you a lot of manual coding. Here is a simple example, with the mouth gradually opening and closing again:
 ```{r fig.width = 7, fig.height = 5}
 s = soundgen(sylLen = 2500, play = TRUE,
              pitchAnchors = data.frame(time = c(0, 1), 
@@ -302,7 +309,7 @@ s = soundgen(rolloff = -20, rolloffOct = -3, play = TRUE,
              pitchAnchors = data.frame(time = c(0, 1), value = c(170, 340)))
 ```
 
-In the app the relevant parameters are found in the tab "Voiced / Source spectrum". To develop an intuition for source spectrum settings, I recommend practicing with disabled formants in the app (set "Formants prominence" under "Main / Vowel" to 0). This way you can isolate the effects of source spectrum and use the preview plot for instant feedback – it shows the rolloff for the lowest and the highest pitch in your intonation contour.
+In the app the relevant parameters are found in the tab "Source / Rolloff". To develop an intuition for source spectrum settings, I recommend practicing with disabled formants in the app (set "Formants prominence" under "Tract / Formants" to 0). This way you can isolate the effects of source spectrum and use the preview plot for instant feedback – it shows the rolloff for the lowest and the highest pitch in your intonation contour.
 
 ## Nonlinear effects
 Soundgen can add the following nonlinear effects to the sourced component: subharmonics, jitter, and shimmer. These effects basically make the sound appear harsh. Jitter and shimmer are created by adding random noise to the periods and amplitudes, respectively, of the "glottal cycles". Subharmonics could be created by adding rapid frequency modulation to F0 contour, but for maximum flexibility soundgen uses a different - slightly hacky, but powerful - technique of literally setting up an additional sine wave for each subharmonic based on the desired frequency of subharmonics (`subFreq`). The actual frequency will not be exactly equal to `subFreq`, since it must be a fraction of F0 at all time points (one half, one third, etc). The amplitude of each subharmonic is a function of its distance from the nearest harmonic of the F0 stack and the desired width of sidebands (`subDep`). This way we can create sidebands that vary naturally as F0 changes over time, producing bifurcations, and dynamically vary the nature of subharmonic regimes (see Wilden et al., 2012). 
@@ -384,7 +391,7 @@ s2 = soundgen(vibratoDep = 3, vibratoFreq = 3, sylLen = 1000, play = TRUE,
 ```
 
 ## Unvoiced component = noise
-In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces broad-spectrum noise (unvoiced component). This noise can be added to the voiced component to create breathing, snuffing, hissing, etc. This can be done in two ways:
+In addition to the tonal (harmonic, voiced) component, which is synthesized as a stack of harmonics (sine waves), soundgen produces broad-spectrum noise (unvoiced component). This noise can be added to the voiced component to create breathing, snuffing, hissing, etc. This can be done in two ways (in the app, go to "Tract / Unvoiced type"):
 
 1.  Breathing. This noise type is generated as white noise with spectral rolloff given by `rolloffNoise` ("Noise rolloff, dB/octave" in the app). It is added to the voiced component *before* formant filtering. As a result, it follows exactly the same formant structure as the voiced component, and you cannot modify its spectrum beyond the basic rolloff setting. This is useful for adding noise that originates deep in the throat, close to the vocal cords. To generate breathing, specify `noiseAnchors`, but leave `formantsNoise` blank (NA, which is its default value). Soundgen then assumes that the unvoiced component should have the same formant structure as the voiced component.
 
@@ -409,7 +416,7 @@ s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
          sylLen = 500, play = TRUE, plot = TRUE)
 ```
 
-In the shiny app, the tab "Unvoiced / Noise timing" is for specifying the amplitude contour of the unvoiced component. It shows the timing of noise relative to the voiced component of a typical syllable. Note that noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
+In the shiny app, the tab "Source / Unvoiced timing" is for specifying the amplitude contour of the unvoiced component. It shows the timing of noise relative to the voiced component of a typical syllable. Note that noise is allowed to fill the pauses between syllables, but not between bouts. For example, in this two-syllable bout noise carries over after the end of each voiced component, since syllable duration is 120 ms and the last breathing time anchor is 209 ms:
 ```{r fig.width = 7, fig.height = 5}
 s = soundgen(nSyl = 2, sylLen = 120, pauseLen = 120, 
              temperature = 0, rolloffNoise = -5, 

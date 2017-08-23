@@ -44,7 +44,8 @@ server = function(input, output, session) {
   ## R E S E T T I N G
   sliders_to_reset = c('')
 
-  # this key function is EXTREMELY bug-prone - careful with what you change! The right order is crucial
+  # This key function is EXTREMELY bug-prone - careful with what you change!
+  # The right order is crucial
   reset_all = reactive({
     # print('running reset_all()')
     myPars$updateDur = FALSE # to prevent duration-related settings in myPars
@@ -127,6 +128,14 @@ server = function(input, output, session) {
       } else { # if both are NULL
         updateTextInput(session, inputId = 'noiseType', value = 'b')
         updateNoise()
+      }
+
+      if (!is.list(preset$noiseAnchors) & is.numeric(preset$sylLen)) {
+        myPars$noiseAnchors = data.frame(
+          time = c(0, preset$sylLen),
+          value = c(-120, -120)
+        )
+        myPars$sylDur_previous = input$sylLen
       }
     }
   })
@@ -386,12 +395,12 @@ server = function(input, output, session) {
     digits = 2, align = 'c', rownames = FALSE)
 
 
-  ## NOISE
+  ## UNVOICED
   output$plotUnvoiced = renderPlot({
-    myNoiseContour()
+    myUnvoicedContour()
   })
 
-  myNoiseContour = reactive({
+  myUnvoicedContour = reactive({
     br_xlim_low = min(input$noiseTime[1], 0)
     br_xlim_high = max(input$noiseTime[2], input$sylLen)
     br_ylim_low = permittedValues['noiseAmpl', 'low']

@@ -51,7 +51,7 @@ s1 = soundgen(sylLen = 900, temperature = 0,
               pitchAnchors = list(time = c(0, .3, .8, 1), 
                                   value = c(300, 900, 400, 2300)),
               noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
-              subDep = 100, jitterDep = 0.5, pitchEffectsAmount = 100)
+              subDep = 100, jitterDep = 0.5, nonlinBalance = 100)
 # playme(s1)  # replay as many times as needed w/o re-synthesizing the sound
 ```
 
