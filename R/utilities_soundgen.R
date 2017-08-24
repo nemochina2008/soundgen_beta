@@ -99,7 +99,16 @@ playme = function(sound, samplingRate = 16000) {
     )
     soundWave = tuneR::normalize(soundWave, unit = '32') # / 2
   }
-  tuneR::play(soundWave, 'play')
+
+  os = Sys.info()[['sysname']]
+  if (os == 'Linux' | os == 'linux') {
+    tuneR::play(soundWave, 'play')
+  } else if (os == 'Windows' | os == 'windows') {
+    tuneR::play(soundWave)
+  } else if (os == 'Darwin' | os == 'darwin') {
+    tuneR::play(soundWave)  # ?
+  }
+
   # can't get rid of printed output! sink(), capture.output, invisible don't work!!!
 }
 
