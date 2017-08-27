@@ -467,5 +467,5 @@ generateHarmonics = function(pitch,
   waveform = waveform * drift_upsampled
   # playme(waveform, samplingRate = samplingRate)
   # spectrogram(waveform, samplingRate = samplingRate)
-  return (waveform)
+  return(waveform)
 }

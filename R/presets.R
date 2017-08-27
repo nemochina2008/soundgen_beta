@@ -35,7 +35,7 @@ permittedValues = matrix(c(
   'vibratoFreq', 5, 3, 10, .5,
   'vibratoDep', 0, 0, 3, 0.125,
   'shimmerDep', 0, 0, 100, 1,
-  'attackLen', 50, 1, 200, 10,
+  'attackLen', 50, 0, 200, 10,
   'rolloff', -12, -60, 0, 1,
   'rolloffOct', -12, -30, 10, 1,
   'rolloffParab', 0, -50, 50, 5,
@@ -135,7 +135,9 @@ defaults = list(
                   f3 = list(time = 0, freq = 2900,
                             amp = 25, width = 200)),
   formantsNoise = NA,
-  vowelString = NA
+  vowelString = NA,
+  samplingRate = 16000,
+  windowLength = 50
 )
 # devtools::use_data(defaults, overwrite = TRUE)
 
@@ -335,6 +337,14 @@ presets = list(
     Hoot_excited = 'soundgen(sylLen = 730, pitchAnchors = list(time = c(0, 0.52, 1), value = c(440, 405, 440)), rolloff = -20, rolloffOct = 0, formants = list(f1 = list(time = c(0, 0.4, 1), freq = c(300, 500, 400), amp = c(30, 30, 30), width = c(80, 80, 80)), f2 = list(time = c(0, 0.2, 1), freq = c(500, 1000, 700), amp = c(30, 30, 30), width = c(120, 120, 120)), f3 = list(time = 0, freq = 2500, amp = 30, width = 120), f4 = list(time = 0, freq = 4000, amp = 30, width = 200), f5 = list(time = 0, freq = 5580, amp = 30, width = 200)), noiseAnchors = list(time = c(0, 730), value = c(-8, -8)), rolloffNoise = -13)',
 
     Laugh_playing = 'soundgen(nSyl = 5, sylLen = 100, pauseLen = 150, pitchAnchors = list(time = c(0, 0.5, 1), value = c(134, 144, 117)), rolloff = -22, rolloffOct = 0, rolloffParab = -20, rolloffParabHarm = 8, formants = list(f1 = list(time = 0, freq = 300, amp = 30, width = 80), f2 = list(time = 0, freq = 950, amp = 30, width = 120), f3 = list(time = 0, freq = 1600, amp = 40, width = 120), f4 = list(time = 0, freq = 2240, amp = 25, width = 200), f5 = list(time = 0, freq = 2900, amp = 20, width = 100)), noiseAnchors = list(time = c(20, 60, 100), value = c(-120, -19, -120)), formantsNoise = list(f1 = list(time = 0, freq = 300, amp = 30, width = 80), f2 = list(time = 0, freq = 950, amp = 30, width = 120), f3 = list(time = 0, freq = 1600, amp = 40, width = 120), f4 = list(time = 0, freq = 2240, amp = 25, width = 200), f5 = list(time = 0, freq = 2900, amp = 20, width = 100)), rolloffNoise = -16)',
+
+    Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
+      # ...
+    )
+  ),
+
+  Cat = list(
+    Chirp = 'soundgen(sylLen = 120, pitchAnchors = list(time = c(0, 0.5, 1), value = c(828, 768, 423)), nonlinBalance = 100, jitterDep = 0.3, shimmerDep = 11, attackLen = 1, rolloff = -3, rolloffOct = -4, formants = list(f1 = list(time = 0, freq = 875, amp = 30, width = 282), f2 = list(time = 0, freq = 1944, amp = 30, width = 372), f3 = list(time = 0, freq = 2409, amp = 30, width = 448)), vocalTract = 10, subDep = 0, noiseAnchors = list(time = c(-1, 120, 161), value = c(-60, 14, -47)), amplAnchors = list(time = c(0, 0.33, 1), value = c(120, 120, 87)), windowLength = 10)',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       # ...

@@ -21,8 +21,9 @@
 #' @inheritParams spectrogram
 #' @param pars arguments to \code{\link{soundgen}} that we are attempting to
 #'   optimize
-#' @param init a lsit of the values of other arguments to soundgen that are
-#'   fixed at non-default values
+#' @param init a list of initial values for the optimized parameters \code{pars}
+#'   and the values of other arguments to soundgen that are fixed at non-default
+#'   values (if any)
 #' @param method method of comparing mel-transformed spectra of two sounds:
 #'   "cor" = average Pearson's correlation of mel-transformed spectra of
 #'   individual FFT frames; "cosine" = same as "cor" but with cosine similarity
@@ -114,8 +115,9 @@ matchPars = function(target,
                           plot = FALSE)
 
   ## initialize
-  # start with default par values
+  # start with default par values, unless initial values are provided
   parDefault = defaults[pars]
+  parDefault[names(parDefault) %in% names(init)] = init[names(parDefault)]
   parDefault[['samplingRate']] = samplingRate
 
   # analyse the target and update the default pars
@@ -147,7 +149,7 @@ matchPars = function(target,
   }
 
   # replace defaults with user-provided values, if any
-  if (!is.null(init)) {
+  if (is.list(init)) {
     for (i in 1:length(init)) {
       if (!names(init)[i] %in% names(defaults)) {
         stop(paste('init parameter not recognized:', init[i]))

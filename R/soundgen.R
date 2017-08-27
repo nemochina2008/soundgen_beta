@@ -572,17 +572,20 @@ soundgen = function(repeatBout = 1,
         #   and the voiced part is long enough to bother synthesizing it
         syllable = rep(0, round(dur_syl * samplingRate / 1000))
       } else {
-        syllable = try(do.call(generateHarmonics,  c(pars_syllable,
-                                                     list(pitch = pitchContour_syl, amplAnchors = amplAnchors_per_syl))))
         # the actual synthesis is here
+        syllable = try(do.call(generateHarmonics,  c(
+          pars_syllable,
+          list(pitch = pitchContour_syl, amplAnchors = amplAnchors_per_syl)
+        ))
+        )
       }
       # spectrogram(syllable, samplingRate = samplingRate)
       # playme(syllable, samplingRate = samplingRate)
       if (class(syllable) == 'try-error') {
-        stop ('Failed to generate the new syllable!')
+        stop('Failed to generate the new syllable!')
       }
       if (sum(is.na(syllable)) > 0) {
-        stop ('The new syllable contains NA values!')
+        stop('The new syllable contains NA values!')
       }
 
       # generate pause for all but the last syllable
@@ -618,9 +621,9 @@ soundgen = function(repeatBout = 1,
         } else {
           movingFormants = max(unlist(lapply(formantsNoise, length))) > 1 |
             sum(mouthAnchors$value != .5) > 0 # are noise formants moving, as opposed to constant?
-          nInt = ifelse (movingFormants,
-                         round(diff(range(noiseAnchors_syl[[s]]$time)) / 10),
-                         1) # the number of different noise spectra,
+          nInt = ifelse(movingFormants,
+                        round(diff(range(noiseAnchors_syl[[s]]$time)) / 10),
+                        1) # the number of different noise spectra,
           # allowing one column (noise spectrum) per 10 ms of audio
           spectralEnvelopeNoise = getSpectralEnvelope(
             nr = windowLength_points / 2,

@@ -62,12 +62,15 @@ s = eval(parse(text = presets$Chimpanzee$Scream_conflict))  # screaming chimp
 playme(s)
 ```
 
+Audio playback may fail, depending on your platform and installed software. Soundgen relies on `tuneR` library for audio playback. If `soundgen(play = TRUE)` throws an error, save the sound first `sound = soundgen()` and then try to play it. See the <a href="https://cran.r-project.org/web/packages/seewave/vignettes/seewave_IO.pdf">seewave vignette</a> for a in-depth discussion of audio playback in R.
+
 The basic workflow in the Shiny app is as follows:
 
+1. Start the app by typing `soundgen_app()`. If RStudio doesn't open it in a browser by default, click "Open in browser". Firefox and Chrome are known to work, but Safari cannot play .wav files, so there is no audio playback in Safari.
 1.  Set parameters in the tabs on the left (see the sections below for details). You can also start with a preset that resembles the sound you want and then fine-tune control parameters.
-1.  Check the preview plots, tables of anchors etc to ensure you get what you want.
-1.  Click Generate to create a WAV file, play it (NB: no sound in Safari! Use Firefox or Chrome), and view the spectrogram of the generated sound.
-1.  Save the WAV file or go back to (1) to make further adjustments. 
+1.  Check the preview plots and tables of anchors to ensure you get what you want.
+1.  Click Generate. This will create a .wav file, play it, and display the spectrogram.
+1.  Save the generated sound or go back to (1) to make further adjustments. 
 
 *TIP The interactive app `soundgen_app()` gives you the exact R code for calling `soundgen()`, which you can copy-paste into your R environment and generate manually the same sound as the one you have created in the app. If you find yourself in doubt about the right format for a particular argument, you can use the app first, copy-paste the code into your R console, and modify it as needed. You can also import an existing formula into the app, adjust the parameters in an interactive environment, and then export it again.*
 
@@ -515,6 +518,8 @@ target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
 m1 = matchPars(target = target,
                samplingRate = 16000,
                maxIter = 0)  # no optimization, only acoustic analysis
+# ignore the warning about failing to improve the fit: we don't want to optimize yet
+
 # m1$pars contains a list of soundgen settings
 cand1 = do.call(soundgen, c(m1$pars, list(play = TRUE, temperature = 0)))
 ```

@@ -44,6 +44,8 @@ ui = fluidPage(
                                              sidebarPanel(
                                                numericInput('samplingRate', 'Sampling rate, Hz', value=16000, min=8000, max=44000, step=4000),
                                                shinyBS:::bsPopover(id='samplingRate', title=NULL, content='The number of points per second of audio. Higher = better quality; lower = faster. Can be any integer, not necessarily a power of two.', placement="right", trigger="hover"),
+                                               numericInput('windowLength', 'FFT window length, ms', value=50, min=5, max=100, step=5),
+                                               shinyBS:::bsPopover(id='samplingRate', title=NULL, content='The length of window for performing FFT - inverse FFT when filtering the source.', placement="right", trigger="hover"),
                                                numericInput('pitchSamplingRate', 'Pitch sampling rate, Hz', value=3500, min=100, max=44000, step=100),
                                                shinyBS:::bsPopover(id='pitchSamplingRate', title=NULL, content='The number of considered F0 values per second of audio. Should be >= pitchCeiling for best quality', placement="right", trigger="hover"),
                                                numericInput('throwaway', 'Dynamic range, dB', value=-120, min=-200, max=-40, step=10),

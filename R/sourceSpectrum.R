@@ -248,6 +248,10 @@ getRolloff = function(pitch_per_gc = c(440),
 #' image(t(getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
 #'   temperature = .1, vocalTract = 15.5)))
 #'
+#' # no formants at all
+#' image(t(getSpectralEnvelope(nr = 512, nc = 50,
+#'   formants = NA, temperature = 0)))
+#'
 #' # manual specification of formants
 #' image(t(getSpectralEnvelope(nr = 512, nc = 50,
 #' samplingRate = 16000, formants = list(
@@ -284,10 +288,10 @@ getSpectralEnvelope = function(nr,
       formants = lapply(formants, as.data.frame)
     }
   } else if (!is.null(formants) && !is.na(formants)) {
-    stop('If not NULL, formants must be a list or a string of characters
+    stop('If defined, formants must be a list or a string of characters
           from dictionary presets: a, o, i, e, u, 0 (schwa)')
   }
-  if (is.null(vocalTract) & length(formants[[1]]) > 2) {
+  if (!is.numeric(vocalTract) & length(formants[[1]]) > 2) {
     # if we don't know vocalTract, but at least one formant is defined,
     # we guess the length of vocal tract
     formantDispersion = mean(diff(unlist(lapply(formants, function(f) f$freq))))
@@ -297,7 +301,7 @@ getSpectralEnvelope = function(nr,
       speedSound / 4 / formants$f1$freq
     )
   }
-  if (length(formants[[1]]) < 2) {
+  if (length(formants[[1]]) < 2 & is.numeric(vocalTract)) {
     # ie if is.na(formants) or if there's something wrong with it,
     # we fall back on vocalTract to make a schwa
     freq = speedSound / 4 / vocalTract
@@ -310,210 +314,219 @@ getSpectralEnvelope = function(nr,
     # freq = 50:5000; a = 50 * (1 + freq^2 / 6 / 10^6); plot(freq, a)
   }
 
-  # upsample to the length of fft steps
-  nPoints = max(unlist(lapply(formants, nrow)))
-  formants_upsampled = lapply(formants, function(f) {
-    temp = apply(f, 2, function(y) {
-      if (nrow(f) > 1) {
-        # just spline produces imprecise, overly smoothed curves. Loess is just
-        # too slow for this. So we apply linear extrapolation to formant values
-        # first, to get a fairly straight line between anchors, and THEN smooth
-        # it out with spline
-        out = spline(approx(y, n = nPoints + 2 ^ smoothLinearFactor,
-                            x = f$time)$y, n = nc)$y
-      } else {
-        out = rep(y, nc)
-      }
-      out
-    })
-    if (class(temp) == 'numeric') {
-      # if nc==1, we get numeric instead of
-      # matrix and need to convert
-      temp = t(as.matrix(temp))
-    }
-    temp
-  }) # check that class(formants_upsampled[[1]]) == 'matrix'
-
-  ## Stochastic part (only for temperature > 0)
-  if (temperature > 0) {
-    # create a few new, relatively high-frequency "pseudo-formants" moving
-    # together with the real formants
-    if (is.null(vocalTract) && length(formants) > 1) {
-      ff = unlist(lapply(formants, function(x) x$freq[1]))
-      formantDispersion = mean(c(ff[1], diff(ff)))
-    } else if (!is.null(vocalTract)) {
-      formantDispersion = 2 * speedSound / (4 * vocalTract)
-    } else {
-      formantDispersion = NA # making sdG also NA, ie extra formants not added
-    }
-    sdG = formantDispersion * temperature * formDisp
-    nFormants = length(formants_upsampled)
-    freq_max = max(formants_upsampled[[nFormants]][, 'freq'])
-
-    if (!is.na(sdG) && formantDepStoch > 0) {
-      while (freq_max < (samplingRate / 2 - 1000)) {
-        # don't add extra formants close to Nyquist to avoid artifacts
-        rw = getRandomWalk(
-          len = nc,
-          rw_range = temperature * formDrift,
-          rw_smoothing = 0,
-          trend = 0
-        )
-        # for nPoints == 1, returns one number close to 1
-        if (length(rw) > 1) {
-          rw = rw - mean(rw) + 1
-        } # for actual random walks, make sure mean is 1
-        temp = data.frame (
-          'time' = formants_upsampled[[1]][, 'time'],
-          'freq' = formants_upsampled[[nFormants]][, 'freq'] +
-            round(rgamma(1,
-                         formantDispersion ^ 2 / sdG ^ 2,
-                         formantDispersion / sdG ^ 2
-            ) * rw
-            ))
-        # rgamma: mean = formantDepStoch, sd = formantDepStoch*temperature
-        temp$amp = round(rgamma(
-          1,
-          (formantDep / temperature) ^ 2,
-          formantDepStoch * formantDep /
-            (formantDepStoch * temperature) ^ 2 ) * rw)
-        temp$width = 50 + (log2(temp$freq) - 5) * 20
-        # visualize: freq=50:8000; plot(freq, 50+(log2(freq)-5)*20)
-        formants_upsampled[[nFormants + 1]] = temp
-        nFormants = nFormants + 1
-        freq_max = max(formants_upsampled[[nFormants]]$freq)
-      }
-    }
-
-    # wiggle both user-specified and stochastically added formants
-    for (f in 1:nFormants) {
-      for (c in 2:4) {
-        # wiggle freq, ampl and bandwidth independently
-        rw = getRandomWalk(
-          len = nc,
-          rw_range = temperature * formDrift,
-          rw_smoothing = 0.3,
-          trend = rnorm(1)
-        )
-        # if nc == 1, returns one number close to 1
-        if (length(rw) > 1) {
-          # for actual random walks, make sure mean is 1
-          rw = rw - mean(rw) + 1
-        }
-        formants_upsampled[[f]][, c] = formants_upsampled[[f]][, c] * rw
-      }
-    } # end of wiggling existing formants
-  } # end of if temperature > 0
-
-  ## Deterministic part
-  # convert formant freqs and widths from Hz to bins
-  bin_width = samplingRate / 2 / nr # Hz
-  bin_freqs = seq(bin_width / 2, samplingRate / 2, length.out = nr) # Hz
-  for (f in 1:length(formants_upsampled)) {
-    formants_upsampled[[f]][, 'freq'] =
-      (formants_upsampled[[f]][, 'freq'] - bin_width / 2) / bin_width + 1
-    # frequencies expressed in bin indices (how many bin widths above the
-    # central frequency of the first bin)
-    formants_upsampled[[f]][, 'width'] =
-      formants_upsampled[[f]][, 'width'] / bin_width
-  }
-
-  # mouth opening
-  if (length(mouthAnchors) < 1 | sum(is.na(mouthAnchors)) > 0) {
-    mouthOpening_upsampled = rep(0.5, nc) # defaults to mouth half-open the
-    # whole time - sort of hanging loosely agape ;))
-    mouthOpen_binary = rep(1, nc)
-  } else {
-    mouthOpening_upsampled = getSmoothContour(
-      len = nc,
-      anchors = mouthAnchors,
-      valueFloor = permittedValues['mouthOpening', 'low'],
-      valueCeiling = permittedValues['mouthOpening', 'high'],
-      plot = FALSE
-    )
-    mouthOpening_upsampled[mouthOpening_upsampled < mouthOpenThres] = 0
-    mouthOpen_binary = ifelse(mouthOpening_upsampled > 0, 1, 0)
-  }
-  # plot(mouthOpening_upsampled, type = 'l')
-
-  # adjust formants for mouth opening
-  if (!is.null(vocalTract) && is.finite(vocalTract)) {
-    # is.finite() returns F for NaN, NA, ±inf, etc
-    adjustment_hz = (mouthOpening_upsampled - 0.5) * speedSound /
-      (4 * vocalTract) # speedSound = 35400 cm/s, speed of sound in warm
-    # air. The formula for mouth opening is modified from Moore (2016)
-    # "A Real-Time Parametric General-Purpose Mammalian Vocal Synthesiser".
-    # mouthOpening = .5 gives no modification (neutral, "default" position)
-    adjustment_bins = (adjustment_hz - bin_width / 2) / bin_width + 1
-  } else {
-    adjustment_bins = 0
-  }
-  for (f in 1:length(formants_upsampled)) {
-    formants_upsampled[[f]][, 'freq'] =
-      formants_upsampled[[f]][, 'freq'] + adjustment_bins
-    # force each formant frequency to be positive
-    formants_upsampled[[f]][, 'freq'] [formants_upsampled[[f]][, 'freq'] < 1] = 1
-  }
-
-  # nasalize the parts with closed mouth: see Hawkins & Stevens (1985);
-  # http://www.cslu.ogi.edu/tutordemos/SpectrogramReading/cse551html/cse551/node35.html
-  nasalizedIdx = which(mouthOpen_binary == 0) # or specify a separate
-  # nasalization contour
-  if (length(nasalizedIdx) > 0) {
-    # add a pole
-    formants_upsampled$fnp = formants_upsampled$f1
-    formants_upsampled$fnp[, 'amp'] = 0
-    formants_upsampled$fnp[nasalizedIdx, 'amp'] =
-      formants_upsampled$f1[nasalizedIdx, 'amp'] * 2 / 3
-    formants_upsampled$fnp[nasalizedIdx, 'width'] =
-      formants_upsampled$f1[nasalizedIdx, 'width'] * 2 / 3
-    formants_upsampled$fnp[nasalizedIdx, 'freq'] =
-      ifelse(
-        formants_upsampled$f1[nasalizedIdx, 'freq'] > 550 / bin_width,
-        formants_upsampled$f1[nasalizedIdx, 'freq'] - 250 / bin_width,
-        formants_upsampled$f1[nasalizedIdx, 'freq'] + 250 / bin_width
-      )
-    # 250 Hz below or above F1, depending on whether F1 is above or below
-    # 550 Hz
-
-    # add a zero
-    formants_upsampled$fnz = formants_upsampled$f1
-    formants_upsampled$fnz[, 'amp'] = 0
-    formants_upsampled$fnz[nasalizedIdx, 'amp'] =
-      -formants_upsampled$f1[nasalizedIdx, 'amp'] * 2 / 3
-    formants_upsampled$fnz[nasalizedIdx, 'freq'] =
-      (formants_upsampled$fnp[nasalizedIdx, 'freq'] +
-         formants_upsampled$f1[nasalizedIdx, 'freq']) / 2  # midway between
-    # f1 and fnp
-    formants_upsampled$fnz[nasalizedIdx, 'width'] =
-      formants_upsampled$fnp[nasalizedIdx, 'width']
-    # modify f1
-    formants_upsampled$f1[nasalizedIdx, 'amp'] =
-      formants_upsampled$f1[nasalizedIdx, 'amp'] * 4 / 5
-    formants_upsampled$f1[nasalizedIdx, 'width'] =
-      formants_upsampled$f1[nasalizedIdx, 'width'] * 5 / 4
-  }
-
-  # create a "spectrum"-shaped filter matrix
+  # create a "spectrogram"-shaped filter matrix
   spectralEnvelope = matrix(0, nrow = nr, ncol = nc)
-  for (f in 1:length(formants_upsampled)) {
-    mg = formants_upsampled[[f]][, 'freq']  # mean of gamma distribution
-    # (vector of length nc)
-    sdg = formants_upsampled[[f]][, 'width']  # sd of gamma distribution
-    # (vector of length nc)
-    sdg[sdg == 0] = 1  # otherwise division by 0
-    shape = mg ^ 2 / sdg ^ 2
-    rate = mg / sdg ^ 2
-    formant = matrix(0, nrow = nr, ncol = nc)
-    for (c in 1:nc) {
-      formant[, c] = dgamma (1:nr, shape[c], rate[c])
-      formant[, c] = formant[, c] / max(formant[, c]) *
-        formants_upsampled[[f]][c, 'amp']
+
+  # START OF FORMANTS
+  if (is.list(formants)) {
+    # upsample to the length of fft steps
+    nPoints = max(unlist(lapply(formants, nrow)))
+    formants_upsampled = lapply(formants, function(f) {
+      temp = apply(f, 2, function(y) {
+        if (nrow(f) > 1) {
+          # just spline produces imprecise, overly smoothed curves. Loess is just
+          # too slow for this. So we apply linear extrapolation to formant values
+          # first, to get a fairly straight line between anchors, and THEN smooth
+          # it out with spline
+          out = spline(approx(y, n = nPoints + 2 ^ smoothLinearFactor,
+                              x = f$time)$y, n = nc)$y
+        } else {
+          out = rep(y, nc)
+        }
+        out
+      })
+      if (class(temp) == 'numeric') {
+        # if nc==1, we get numeric instead of
+        # matrix and need to convert
+        temp = t(as.matrix(temp))
+      }
+      temp
+    }) # check that class(formants_upsampled[[1]]) == 'matrix'
+
+    ## Stochastic part (only for temperature > 0)
+    if (temperature > 0) {
+      # create a few new, relatively high-frequency "pseudo-formants" moving
+      # together with the real formants
+      if (is.null(vocalTract) && length(formants) > 1) {
+        ff = unlist(lapply(formants, function(x) x$freq[1]))
+        formantDispersion = mean(c(ff[1], diff(ff)))
+      } else if (!is.null(vocalTract)) {
+        formantDispersion = 2 * speedSound / (4 * vocalTract)
+      } else {
+        formantDispersion = NA # making sdG also NA, ie extra formants not added
+      }
+      sdG = formantDispersion * temperature * formDisp
+      nFormants = length(formants_upsampled)
+      freq_max = max(formants_upsampled[[nFormants]][, 'freq'])
+
+      if (!is.na(sdG) && formantDepStoch > 0) {
+        while (freq_max < (samplingRate / 2 - 1000)) {
+          # don't add extra formants close to Nyquist to avoid artifacts
+          rw = getRandomWalk(
+            len = nc,
+            rw_range = temperature * formDrift,
+            rw_smoothing = 0,
+            trend = 0
+          )
+          # for nPoints == 1, returns one number close to 1
+          if (length(rw) > 1) {
+            rw = rw - mean(rw) + 1
+          } # for actual random walks, make sure mean is 1
+          temp = data.frame (
+            'time' = formants_upsampled[[1]][, 'time'],
+            'freq' = formants_upsampled[[nFormants]][, 'freq'] +
+              round(rgamma(1,
+                           formantDispersion ^ 2 / sdG ^ 2,
+                           formantDispersion / sdG ^ 2
+              ) * rw
+              ))
+          # rgamma: mean = formantDepStoch, sd = formantDepStoch*temperature
+          temp$amp = round(rgamma(
+            1,
+            (formantDep / temperature) ^ 2,
+            formantDepStoch * formantDep /
+              (formantDepStoch * temperature) ^ 2 ) * rw)
+          temp$width = 50 + (log2(temp$freq) - 5) * 20
+          # visualize: freq=50:8000; plot(freq, 50+(log2(freq)-5)*20)
+          formants_upsampled[[nFormants + 1]] = temp
+          nFormants = nFormants + 1
+          freq_max = max(formants_upsampled[[nFormants]]$freq)
+        }
+      }
+
+      # wiggle both user-specified and stochastically added formants
+      for (f in 1:nFormants) {
+        for (c in 2:4) {
+          # wiggle freq, ampl and bandwidth independently
+          rw = getRandomWalk(
+            len = nc,
+            rw_range = temperature * formDrift,
+            rw_smoothing = 0.3,
+            trend = rnorm(1)
+          )
+          # if nc == 1, returns one number close to 1
+          if (length(rw) > 1) {
+            # for actual random walks, make sure mean is 1
+            rw = rw - mean(rw) + 1
+          }
+          formants_upsampled[[f]][, c] = formants_upsampled[[f]][, c] * rw
+        }
+      } # end of wiggling existing formants
+    } # end of if temperature > 0
+
+    ## Deterministic part
+    # convert formant freqs and widths from Hz to bins
+    bin_width = samplingRate / 2 / nr # Hz
+    bin_freqs = seq(bin_width / 2, samplingRate / 2, length.out = nr) # Hz
+    for (f in 1:length(formants_upsampled)) {
+      formants_upsampled[[f]][, 'freq'] =
+        (formants_upsampled[[f]][, 'freq'] - bin_width / 2) / bin_width + 1
+      # frequencies expressed in bin indices (how many bin widths above the
+      # central frequency of the first bin)
+      formants_upsampled[[f]][, 'width'] =
+        formants_upsampled[[f]][, 'width'] / bin_width
     }
-    spectralEnvelope = spectralEnvelope + formant
+
+    # mouth opening
+    if (length(mouthAnchors) < 1 | sum(is.na(mouthAnchors)) > 0) {
+      mouthOpening_upsampled = rep(0.5, nc) # defaults to mouth half-open the
+      # whole time - sort of hanging loosely agape ;))
+      mouthOpen_binary = rep(1, nc)
+    } else {
+      mouthOpening_upsampled = getSmoothContour(
+        len = nc,
+        anchors = mouthAnchors,
+        valueFloor = permittedValues['mouthOpening', 'low'],
+        valueCeiling = permittedValues['mouthOpening', 'high'],
+        plot = FALSE
+      )
+      mouthOpening_upsampled[mouthOpening_upsampled < mouthOpenThres] = 0
+      mouthOpen_binary = ifelse(mouthOpening_upsampled > 0, 1, 0)
+    }
+    # plot(mouthOpening_upsampled, type = 'l')
+
+    # adjust formants for mouth opening
+    if (!is.null(vocalTract) && is.finite(vocalTract)) {
+      # is.finite() returns F for NaN, NA, ±inf, etc
+      adjustment_hz = (mouthOpening_upsampled - 0.5) * speedSound /
+        (4 * vocalTract) # speedSound = 35400 cm/s, speed of sound in warm
+      # air. The formula for mouth opening is adapted from Moore (2016)
+      # "A Real-Time Parametric General-Purpose Mammalian Vocal Synthesiser".
+      # mouthOpening = .5 gives no modification (neutral, "default" position)
+      adjustment_bins = (adjustment_hz - bin_width / 2) / bin_width + 1
+    } else {
+      adjustment_bins = 0
+    }
+    for (f in 1:length(formants_upsampled)) {
+      formants_upsampled[[f]][, 'freq'] =
+        formants_upsampled[[f]][, 'freq'] + adjustment_bins
+      # force each formant frequency to be positive
+      formants_upsampled[[f]][, 'freq'] [formants_upsampled[[f]][, 'freq'] < 1] = 1
+    }
+
+    # nasalize the parts with closed mouth: see Hawkins & Stevens (1985);
+    # http://www.cslu.ogi.edu/tutordemos/SpectrogramReading/cse551html/cse551/node35.html
+    nasalizedIdx = which(mouthOpen_binary == 0) # or specify a separate
+    # nasalization contour
+    if (length(nasalizedIdx) > 0) {
+      # add a pole
+      formants_upsampled$fnp = formants_upsampled$f1
+      formants_upsampled$fnp[, 'amp'] = 0
+      formants_upsampled$fnp[nasalizedIdx, 'amp'] =
+        formants_upsampled$f1[nasalizedIdx, 'amp'] * 2 / 3
+      formants_upsampled$fnp[nasalizedIdx, 'width'] =
+        formants_upsampled$f1[nasalizedIdx, 'width'] * 2 / 3
+      formants_upsampled$fnp[nasalizedIdx, 'freq'] =
+        ifelse(
+          formants_upsampled$f1[nasalizedIdx, 'freq'] > 550 / bin_width,
+          formants_upsampled$f1[nasalizedIdx, 'freq'] - 250 / bin_width,
+          formants_upsampled$f1[nasalizedIdx, 'freq'] + 250 / bin_width
+        )
+      # 250 Hz below or above F1, depending on whether F1 is above or below
+      # 550 Hz
+
+      # add a zero
+      formants_upsampled$fnz = formants_upsampled$f1
+      formants_upsampled$fnz[, 'amp'] = 0
+      formants_upsampled$fnz[nasalizedIdx, 'amp'] =
+        -formants_upsampled$f1[nasalizedIdx, 'amp'] * 2 / 3
+      formants_upsampled$fnz[nasalizedIdx, 'freq'] =
+        (formants_upsampled$fnp[nasalizedIdx, 'freq'] +
+           formants_upsampled$f1[nasalizedIdx, 'freq']) / 2  # midway between
+      # f1 and fnp
+      formants_upsampled$fnz[nasalizedIdx, 'width'] =
+        formants_upsampled$fnp[nasalizedIdx, 'width']
+      # modify f1
+      formants_upsampled$f1[nasalizedIdx, 'amp'] =
+        formants_upsampled$f1[nasalizedIdx, 'amp'] * 4 / 5
+      formants_upsampled$f1[nasalizedIdx, 'width'] =
+        formants_upsampled$f1[nasalizedIdx, 'width'] * 5 / 4
+    }
+
+    # add formants to spectrogram
+    for (f in 1:length(formants_upsampled)) {
+      mg = formants_upsampled[[f]][, 'freq']  # mean of gamma distribution
+      # (vector of length nc)
+      sdg = formants_upsampled[[f]][, 'width']  # sd of gamma distribution
+      # (vector of length nc)
+      sdg[sdg == 0] = 1  # otherwise division by 0
+      shape = mg ^ 2 / sdg ^ 2
+      rate = mg / sdg ^ 2
+      formant = matrix(0, nrow = nr, ncol = nc)
+      for (c in 1:nc) {
+        formant[, c] = dgamma (1:nr, shape[c], rate[c])
+        formant[, c] = formant[, c] / max(formant[, c]) *
+          formants_upsampled[[f]][c, 'amp']
+      }
+      spectralEnvelope = spectralEnvelope + formant
+    }
+    spectralEnvelope = spectralEnvelope * formantDep
+    # plot(spectralEnvelope[, 1], type = 'l')
+  } else {
+    mouthOpen_binary = rep(1, nc)
+    mouthOpening_upsampled = rep(0.5, nc)
   }
-  spectralEnvelope = spectralEnvelope * formantDep
-  # plot(spectralEnvelope[, 1], type = 'l')
+  # END OF FORMANTS
 
   # add lip radiation when the mouth is open
   lip_dB = rolloffLip * log2(1:nr) # vector of length nr

@@ -944,6 +944,7 @@ server = function(input, output, session) {
       amplAnchors = myPars$amplAnchors,
       amplAnchorsGlobal = myPars$amplAnchorsGlobal,
       samplingRate = input$samplingRate,
+      windowLength = input$windowLength,
       pitchFloor = input$pitchFloorCeiling[1],
       pitchCeiling = input$pitchFloorCeiling[2],
       pitchSamplingRate = input$pitchSamplingRate,
