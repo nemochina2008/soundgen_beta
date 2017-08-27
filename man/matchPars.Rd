@@ -21,8 +21,9 @@ a numeric vector, rather than a .wav file)}
 \item{pars}{arguments to \code{\link{soundgen}} that we are attempting to
 optimize}
 
-\item{init}{a lsit of the values of other arguments to soundgen that are
-fixed at non-default values}
+\item{init}{a list of initial values for the optimized parameters \code{pars}
+and the values of other arguments to soundgen that are fixed at non-default
+values (if any)}
 
 \item{method}{method of comparing mel-transformed spectra of two sounds:
 "cor" = average Pearson's correlation of mel-transformed spectra of

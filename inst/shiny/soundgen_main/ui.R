@@ -139,7 +139,9 @@ ui = fluidPage(
                                                sliderInput('amDep', 'AM depth', value=permittedValues['amDep','default'], min=permittedValues['amDep', 'low'], max=permittedValues['amDep', 'high'], step=permittedValues['amDep','step']),
                                                shinyBS:::bsPopover(id='amDep', title=NULL, content='Depth of amplitude modulation', placement="right", trigger="hover"),
                                                sliderInput('amFreq', 'AM frequency, Hz', value=permittedValues['amFreq','default'], min=permittedValues['amFreq', 'low'], max=permittedValues['amFreq', 'high'], step=permittedValues['amFreq','step']),
-                                               shinyBS:::bsPopover(id='amFreq', title=NULL, content='Frequency of amplitude modulation', placement="right", trigger="hover"), width=6
+                                               shinyBS:::bsPopover(id='amFreq', title=NULL, content='Frequency of amplitude modulation', placement="right", trigger="hover"),
+                                               sliderInput('amShape', 'AM shape', value=permittedValues['amShape','default'], min=permittedValues['amShape', 'low'], max=permittedValues['amShape', 'high'], step=permittedValues['amShape','step']),
+                                               shinyBS:::bsPopover(id='amShape', title=NULL, content='Shape of amplitude modulation: 0 = ~sine, -1 = notches, +1 = clicks', placement="right", trigger="hover"), width=6
                                              ),
                                              mainPanel(
                                                plotOutput('plotAM'), width=6

@@ -110,6 +110,10 @@ image(t(getSpectralEnvelope(nr = 512, nc = 50,
 image(t(getSpectralEnvelope(nr = 512, nc = 50, formants = NA,
   temperature = .1, vocalTract = 15.5)))
 
+# no formants at all
+image(t(getSpectralEnvelope(nr = 512, nc = 50,
+  formants = NA, temperature = 0)))
+
 # manual specification of formants
 image(t(getSpectralEnvelope(nr = 512, nc = 50,
 samplingRate = 16000, formants = list(

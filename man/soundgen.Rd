@@ -18,8 +18,8 @@ soundgen(repeatBout = 1, nSyl = 1, sylLen = 300, pauseLen = 200,
   list(time = 0, freq = 1280, amp = 40, width = 120), f3 = list(time = 0, freq =
   2900, amp = 25, width = 200)), formantDep = 1, formantDepStoch = 30,
   vocalTract = 15.5, subFreq = 100, subDep = 100, shortestEpoch = 300,
-  amDep = 0, amFreq = 30, noiseAnchors = data.frame(time = c(0, 300),
-  value = c(-120, -120)), formantsNoise = NA, rolloffNoise = -14,
+  amDep = 0, amFreq = 30, amShape = 0, noiseAnchors = data.frame(time =
+  c(0, 300), value = c(-120, -120)), formantsNoise = NA, rolloffNoise = -14,
   mouthAnchors = data.frame(time = c(0, 1), value = c(0.5, 0.5)),
   amplAnchors = NA, amplAnchorsGlobal = NA, samplingRate = 16000,
   windowLength = 50, overlap = 75, addSilence = 100, pitchFloor = 50,
@@ -146,6 +146,8 @@ subharmonics regime, in ms}
 modulation with amplitude range equal to the dynamic range of the sound}
 
 \item{amFreq}{amplitude modulation frequency, Hz}
+
+\item{amShape}{amplitude modulation shape (-1 to +1, defaults to 0)}
 
 \item{noiseAnchors}{dataframe specifying the time (ms) and amplitude (dB) of
 anchors for generating the noise component such as aspiration, hissing, etc}

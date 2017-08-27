@@ -617,3 +617,39 @@ isCentral.localMax = function(x, threshold) {
   middle = ceiling(length(x) / 2)
   return(which.max(x) == middle & x[middle] > threshold)
 }
+
+
+#' Get sigmoid filter
+#'
+#' Internal soundgen function.
+#'
+#' Produces a filter for amplitude modulation ranging from clicks to
+#' approximately a sine wave to reversed clicks (small episodes of silence). The
+#' filter is made from concatenated sigmoids and their mirror reflections.
+#' @return Returns a vector of length \code{len} and range from 0 to 1
+#' @param len the length of output vector
+#' @param samplingRate the sampling rate of the output vector, Hz
+#' @param freq the frequency of amplitude modulation, Hz
+#' @param shape 0 = ~sine, -1 = clicks, +1 = notches (NB: vice versa in soundgen!)
+#' @param spikiness the larger, the more quickly the shape of filter leaves
+#'   sine-like approximation as shape deviates from 0
+#' @examples
+#' for (shape in c(0, -.1, .1, -1, 1)) {
+#'   plot(getSigmoid(shape = shape, len = 1000, samplingRate = 500,  freq = 2),
+#'   type = 'l',  main = paste('shape =', shape), xlab = '', ylab = '')
+#' }
+getSigmoid = function(len,
+                      samplingRate = 16000,
+                      freq = 5,
+                      shape = 0,
+                      spikiness = 1) {
+  from = -exp(-shape * spikiness)
+  to = exp(shape * spikiness)
+  slope = exp(abs(shape)) * 5  # close to sine
+
+  a = seq(from = from, to = to, length.out = samplingRate / freq / 2)
+  b = 1 / (1 + exp(-a * slope))
+  b = zeroOne(b)
+  out = rep(c(b, rev(b)), length.out = len)
+  return(out)
+}

@@ -801,9 +801,13 @@ server = function(input, output, session) {
   })
 
   output$plotAM = renderPlot({
+    sig = getSigmoid(len = input$sylLen,
+                     samplingRate = 1000,
+                     freq = input$amFreq,
+                     shape = input$amShape)
+    trill = (.5 - sig) * input$amDep
     plot(x = 1:input$sylLen,
-         y = input$amDep * sin(2 * pi * (1:input$sylLen) *
-                                 input$amFreq / 1000),
+         y = trill,
          ylim = c(-permittedValues['amDep', 'high'],
                   permittedValues['amDep', 'high']),
          type = 'l',
@@ -937,6 +941,7 @@ server = function(input, output, session) {
       shortestEpoch = input$shortestEpoch,
       amDep = input$amDep,
       amFreq = input$amFreq,
+      amShape = input$amShape,
       noiseAnchors = myPars$noiseAnchors,
       formantsNoise = myPars$formantsNoise,
       rolloffNoise = input$rolloffNoise,

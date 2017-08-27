@@ -114,6 +114,7 @@ NULL
 #' @param amDep amplitude modulation depth, %. 0: no change; 100: amplitude
 #'   modulation with amplitude range equal to the dynamic range of the sound
 #' @param amFreq amplitude modulation frequency, Hz
+#' @param amShape amplitude modulation shape (-1 to +1, defaults to 0)
 #' @param noiseAnchors dataframe specifying the time (ms) and amplitude (dB) of
 #'   anchors for generating the noise component such as aspiration, hissing, etc
 #' @param formantsNoise the same as \code{formants}, but for the
@@ -239,6 +240,7 @@ soundgen = function(repeatBout = 1,
                     shortestEpoch = 300,
                     amDep = 0,
                     amFreq = 30,
+                    amShape = 0,
                     noiseAnchors = data.frame(time = c(0, 300),
                                               value = c(-120, -120)),
                     formantsNoise = NA,
@@ -779,8 +781,13 @@ soundgen = function(repeatBout = 1,
 
     # trill - rapid regular amplitude modulation
     if (amDep > 0) {
-      trill = 1 - sin (2 * pi * (1:length(soundFiltered)) /
-                         samplingRate * amFreq) * amDep / 100
+      # trill = 1 - sin(2 * pi * (1:length(soundFiltered)) /
+      #                  samplingRate * amFreq) * amDep / 100
+      sig = getSigmoid(len = length(soundFiltered),
+                       samplingRate = samplingRate,
+                       freq = amFreq,
+                       shape = amShape)
+      trill = 1 - sig * amDep / 100
       # plot(trill, type='l')
     } else {
       trill = 1

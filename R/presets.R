@@ -50,6 +50,7 @@ permittedValues = matrix(c(
   'shortestEpoch', 300, 50, 500, 25,
   'amDep', 0, 0, 100, 5,
   'amFreq', 30, 10, 100, 5,
+  'amShape', 0, -1, 1, .025,
   'samplingRate', 16000, 8000, 44100, 100,
   'rolloffNoise', -14, -20, 20, 1,
 
@@ -110,6 +111,7 @@ defaults = list(
   shortestEpoch = 300,
   amDep = 0,
   amFreq = 30,
+  amShape = 0,
   rolloffNoise = -14,
   samplingRate = 16000,
   windowLength_points = 512,
