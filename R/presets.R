@@ -351,7 +351,7 @@ presets = list(
 
     Growl = 'soundgen(sylLen = 2700, pitchAnchors = list(time = c(0, 0.8, 1), value = c(65, 65, 48)), temperature = 0.05, nonlinBalance = 100, jitterDep = 1.7, jitterLen = 17, shimmerDep = 14, rolloff = -21, rolloffOct = 0, rolloffParab = 20, rolloffParabHarm = 20, formants = list(f1 = list(time = 0, freq = 400, amp = 40, width = 200), f2 = list(time = 0, freq = 3000, amp = 10, width = 200)), vocalTract = 10, subDep = 0, noiseAnchors = list(time = c(8, 2676), value = c(-120, -120)))',
 
-    Hiss = 'soundgen(pitchAnchors = NULL, formants = list(f1 = list(time = 0, freq = 1112, amp = 30, width = 277), f2 = list(time = 0, freq = 2610, amp = 30, width = 310), f3 = list(time = 0, freq = 4587, amp = 30, width = 529)), formantDepStoch = 20, vocalTract = 10, noiseAnchors = list(time = c(-185, 74, 503), value = c(-5, 40, -24)), rolloffNoise = -12, mouthAnchors = list(time = c(0, 0.13, 1), value = c(0, 0.5, 0.5)), play = TRUE)',
+    Hiss = 'soundgen(pitchAnchors = NULL, formants = list(f1 = list(time = 0, freq = 1112, amp = 30, width = 277), f2 = list(time = 0, freq = 2610, amp = 30, width = 310), f3 = list(time = 0, freq = 4587, amp = 30, width = 529)), formantDepStoch = 20, vocalTract = 10, noiseAnchors = list(time = c(-185, 74, 503), value = c(-5, 40, -24)), rolloffNoise = -12, mouthAnchors = list(time = c(0, 0.13, 1), value = c(0, 0.5, 0.5)))',
 
     Howl = 'soundgen(sylLen = 3150, pitchAnchors = list(time = c(0, 0.05, 0.18, 0.45, 0.91, 1), value = c(221, 322, 346, 304, 273, 253)), temperature = 0.075, rolloffOct = -13, formants = list(f1 = list(time = 0, freq = 895, amp = 30, width = 150), f2 = list(time = c(0, 1), freq = c(1500, 2000), amp = 40, width = 150), f3 = list(time = 0, freq = 3287, amp = 30, width = 165)), vocalTract = 10, mouthAnchors = list(time = c(0, 0.1, 0.19, 0.25, 0.41, 0.91,  1), value = c(0, 0.37, 0.29, 0.66, 0.37, 0.34, 0.27)))',
 
@@ -359,6 +359,12 @@ presets = list(
   time = c(0, 0.12, 0.86, 1), value = c(0, 0.52, 0.57, 0)))',
 
     Meow = 'soundgen(sylLen = 920, pitchAnchors = list(time = c(0, 0.2, 1), value = c(480, 550, 515)), attackLen = 150, rolloff = -6, formants = list(f1 = list(time = 0, freq = 1594, amp = 30, width = 200), f3 = list(time = 0, freq = 3600, amp = 30, width = 200)), vocalTract = 10, noiseAnchors = list(time = c(0, 920), value = c(-120, -120)), mouthAnchors = list(time = c(0, 0.16, 0.91, 1), value = c(0, 1, 0.31, 0.06)))',
+
+    Purr = 'soundgen(repeatBout = 2, nSyl = 2, sylLen = 800, pauseLen = 50, pitchAnchors = list(time = c(0, 1), value = c(25, 25)), temperature = 0.1, nonlinBalance = 100, jitterDep = 1.2, jitterLen = 34, rolloff = -18, rolloffOct = -30, rolloffParab = 25, rolloffParabHarm = 9, rolloffLip = 0, formants = list(f1 = list(time = 0, freq = 1200, amp = 30, width = 150)), vocalTract = 10, subDep = 0, amDep = 70, amFreq = 25, noiseAnchors = list(time = c(-191, -115, 839), value = c(-92, -26, -58)), rolloffNoise = -13)',
+
+    Scream = 'soundgen(repeatBout = 2, sylLen = 1610, pauseLen = 500, pitchAnchors = list(time = c(0, 0.28, 0.53, 0.88, 1), value = c(388, 385, 669, 663, 392)), temperature = 0.05, nonlinBalance = 35, jitterDep = 1.9, rolloff = -8, formants = list(f1 = list(time = c(0, 1), freq = c(1800, 1000), amp = 40, width = 150), f2 = list(time = 0, freq = 2400, amp = 40, width = 150)), vocalTract = 10, subFreq = 150, subDep = 80, noiseAnchors = list(time = c(0, 603), value = c(-120, -120)))',
+
+    Snarl = 'soundgen(sylLen = 450, pitchAnchors = list(time = c(0, 0.08, 1), value = c(193, 454, 434)), nonlinBalance = 72, jitterDep = 2.9, attackLen = 0, rolloff = 0, formants = list(f1 = list(time = 0, freq = 1500, amp = 40, width = 250), f2 = list(time = 0, freq = 2500, amp = 40, width = 300)), vocalTract = 10, subFreq = 150, subDep = 110, shortestEpoch = 75, noiseAnchors = list(time = c(0, 83), value = c(-120, -120)), mouthAnchors = list(time = c(0, 0.3, 0.63, 1), value = c(0, 1, 1, 0.5)), windowLength = 10)',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
       # ...

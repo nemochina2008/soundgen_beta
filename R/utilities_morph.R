@@ -45,11 +45,22 @@ morphDF = function(a,
   # example of expected input a & b: data.frame(time=c(0,1), value=c(-30,15))  NB: min 2 rows!!!
 
   if (identical(a, b)) {
-    return (rep(list(a), nMorphs))
+    return(rep(list(a), nMorphs))
   }
 
-  if (is.list(a)) a = as.data.frame(a)
-  if (is.list(b)) b = as.data.frame(b)
+  if (class(a) != 'data.frame') a = as.data.frame(a)
+  if (class(b) != 'data.frame') b = as.data.frame(b)
+
+  # in case one df is NA or NULL, we copy the other one
+  if ((any(is.na(a)) | ncol(a) < 2) & (!any(is.na(b)) & ncol(b) == 2)) {
+    a = b
+    a[, 2] = 0
+  } else if ((any(is.na(b)) | ncol(b) < 2) & (!any(is.na(a)) & ncol(a) == 2)) {
+    b = a
+    b[, 2] = 0
+  } else if ((any(is.na(a)) | ncol(a) < 2) & (any(is.na(b)) | ncol(b) < 2)) {
+    return(rep(list(NA), nMorphs))
+  }
 
   mymax_x = max(max(a[, 1]), max(b[, 1]))
   mymin_x = min(min(a[, 1]), min(b[, 1]))

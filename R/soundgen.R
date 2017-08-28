@@ -420,7 +420,10 @@ soundgen = function(repeatBout = 1,
     'overlap' = overlap
   )
   pars_syllable = pars_list
-  if (sum(!is.na(pitchAnchorsGlobal)) > 0 && nSyl > 1) {
+  if (is.list(pitchAnchorsGlobal) &&
+      any(!is.na(pitchAnchorsGlobal)) &&
+      any(pitchAnchorsGlobal$value != 0) &&
+      nSyl > 1) {
     pitchDeltas = 2 ^ (
       getDiscreteContour(
         len = nSyl,

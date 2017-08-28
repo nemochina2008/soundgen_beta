@@ -58,6 +58,8 @@ morph = function(formula1,
   defaults = paste0('list(', defaults, ')')
   defaults = eval(parse(text = defaults))
   # NB: defaults = as.list(args(soundgen)) produces list elements of type "call" :((
+  # exclude booleans
+  defaults = defaults[!names(defaults) %in% c('plot', 'play', 'savePath', 'invalidArgAction')]
 
   notDefaultIdx_formula1 = notDefaultIdx_formula2 = NA
   if (length(formula1) > 0) {
@@ -109,19 +111,35 @@ morph = function(formula1,
 
   # log-transform pitch and formant frequencies before morphing
   if ('pitchAnchors' %in% names(f1)) {
-    f1$pitchAnchors$value = log(f1$pitchAnchors$value)
-    f2$pitchAnchors$value = log(f2$pitchAnchors$value)
+    if (is.numeric(f1$pitchAnchors$value)) f1$pitchAnchors$value = log(f1$pitchAnchors$value)
+    if (is.numeric(f2$pitchAnchors$value)) f2$pitchAnchors$value = log(f2$pitchAnchors$value)
   }
   if ('formants' %in% names(f1)) {
     for (l in 1:length(f1$formants)) {
-      f1$formants[[l]]$freq = log(f1$formants[[l]]$freq)
-      f2$formants[[l]]$freq = log(f2$formants[[l]]$freq)
+      if (is.numeric(f1$formants[[l]]$freq)) {
+        f1$formants[[l]]$freq = log(f1$formants[[l]]$freq)
+      }
+    }
+  }
+  if ('formants' %in% names(f2)) {
+    for (l in 1:length(f2$formants)) {
+      if (is.numeric(f2$formants[[l]]$freq)) {
+        f2$formants[[l]]$freq = log(f2$formants[[l]]$freq)
+      }
     }
   }
   if ('formantsNoise' %in% names(f1)) {
     for (l in 1:length(f1$formantsNoise)) {
-      f1$formantsNoise[[l]]$freq = log(f1$formantsNoise[[l]]$freq)
-      f2$formantsNoise[[l]]$freq = log(f2$formantsNoise[[l]]$freq)
+      if (is.numeric(f1$formantsNoise[[l]]$freq)) {
+        f1$formantsNoise[[l]]$freq = log(f1$formantsNoise[[l]]$freq)
+      }
+    }
+  }
+  if ('formantsNoise' %in% names(f2)) {
+    for (l in 1:length(f2$formantsNoise)) {
+      if (is.numeric(f2$formantsNoise[[l]]$freq)) {
+        f2$formantsNoise[[l]]$freq = log(f2$formantsNoise[[l]]$freq)
+      }
     }
   }
 
@@ -139,7 +157,7 @@ morph = function(formula1,
     } else if (names(f1[p]) %in% c('formants', 'formantsNoise')) {
       m[[p]] = morphList(f1[[p]], f2[[p]], nMorphs = nMorphs)
     } else {
-      m[[p]] = morphDF(as.data.frame(f1[[p]]), as.data.frame(f2[[p]]), nMorphs = nMorphs)
+      m[[p]] = morphDF(f1[[p]], f2[[p]], nMorphs = nMorphs)
     }
     # a convoluted way of saving the output of morphFormants() in appropriate
     # slots in the output list
@@ -152,22 +170,28 @@ morph = function(formula1,
   # exponentiate pitch and formant frequencies after morphing
   if ('pitchAnchors' %in% names(f1)) {
     for (h in 1:nMorphs) {
-      formulas[[h]]$pitchAnchors$value = exp(formulas[[h]]$pitchAnchors$value)
+      if (is.numeric(formulas[[h]]$pitchAnchors$value)) {
+        formulas[[h]]$pitchAnchors$value = exp(formulas[[h]]$pitchAnchors$value)
+      }
     }
   }
   if ('formants' %in% names(f1)) {
     for (h in 1:nMorphs) {
       for (l in 1:length(f1$formants)) {
-        formulas[[h]]$formants[[l]]$freq =
-          exp(formulas[[h]]$formants[[l]]$freq)
+        if (is.numeric(formulas[[h]]$formants[[l]]$freq)) {
+          formulas[[h]]$formants[[l]]$freq =
+            exp(formulas[[h]]$formants[[l]]$freq)
+        }
       }
     }
   }
   if ('formantsNoise' %in% names(f1)) {
     for (h in 1:nMorphs) {
       for (l in 1:length(f1$formantsNoise)) {
-        formulas[[h]]$formantsNoise[[l]]$freq =
-          exp(formulas[[h]]$formantsNoise[[l]]$freq)
+        if (is.numeric(formulas[[h]]$formantsNoise[[l]]$freq)) {
+          formulas[[h]]$formantsNoise[[l]]$freq =
+            exp(formulas[[h]]$formantsNoise[[l]]$freq)
+        }
       }
     }
   }
