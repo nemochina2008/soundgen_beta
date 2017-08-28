@@ -224,84 +224,111 @@ server = function(input, output, session) {
 
 
   ## P I T C H
+  observeEvent(input$generateVoiced, {
+    if (input$generateVoiced == FALSE) {
+      myPars$pitchAnchors = NULL
+      myPars$pitchAnchorsGlobal = NULL
+    } else {
+      myPars$pitchAnchors = defaults$pitchAnchors
+      myPars$pitchAnchorsGlobal = defaults$pitchAnchorsGlobal
+    }
+  })
+
   output$plotIntonation = renderPlot({
     myPitchContour()
   })
 
   myPitchContour = reactive({
-    pitch_y_lwr = min(input$pitchRange[1], min(myPars$pitchAnchors$value) / 1.1)
-    pitch_y_upr = max(input$pitchRange[2], max(myPars$pitchAnchors$value) * 1.1)
-    getSmoothContour(anchors = myPars$pitchAnchors,
-                     len = input$sylLen * permittedValues['pitch', 'high'] / 1000,
-                     ylim = c(pitch_y_lwr, pitch_y_upr),
-                     samplingRate = permittedValues['pitch', 'high'],
-                     thisIsPitch = TRUE, plot = TRUE)
+    if (is.list(myPars$pitchAnchors)) {
+      pitch_y_lwr = min(input$pitchRange[1], min(myPars$pitchAnchors$value) / 1.1)
+      pitch_y_upr = max(input$pitchRange[2], max(myPars$pitchAnchors$value) * 1.1)
+      getSmoothContour(anchors = myPars$pitchAnchors,
+                       len = input$sylLen * permittedValues['pitch', 'high'] / 1000,
+                       ylim = c(pitch_y_lwr, pitch_y_upr),
+                       samplingRate = permittedValues['pitch', 'high'],
+                       thisIsPitch = TRUE, plot = TRUE)
+    } else {
+      plot(1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
+      text(x = 5, y = 5, labels = 'No voiced component', adj = .5, col = 'blue', cex = 1)
+    }
   })
 
   observeEvent(input$plotIntonation_click, {
-    click_x = round(input$plotIntonation_click$x / input$sylLen, 2)
-    click_y = round(semitonesToHz(input$plotIntonation_click$y))
-    # if the click is below or above thresholds, move within thresholds
-    if (click_y < permittedValues['pitch', 'low']) {
-      click_y = permittedValues['pitch', 'low']
-    }
-    if (click_y > permittedValues['pitch', 'high']) {
-      click_y = permittedValues['pitch', 'high']
-    }
-
-    closest_point_in_time = which.min(abs(myPars$pitchAnchors$time - click_x))
-    delta_x = abs(myPars$pitchAnchors$time[closest_point_in_time] - click_x)
-    # if the click is near (within ±5% of the time range) an existing anchor
-    # point, we update the pitch of this anchor according to click location (and
-    # the time as well, unless it is the first or the last anchor)
-    if (delta_x < 0.05) {
-      myPars$pitchAnchors$value[closest_point_in_time] = click_y
-      if (closest_point_in_time != 1 &&
-          closest_point_in_time != length(myPars$pitchAnchors$time)) {
-        myPars$pitchAnchors$time[closest_point_in_time] = click_x
+    if (is.list(myPars$pitchAnchors)) {
+      click_x = round(input$plotIntonation_click$x / input$sylLen, 2)
+      click_y = round(semitonesToHz(input$plotIntonation_click$y))
+      # if the click is below or above thresholds, move within thresholds
+      if (click_y < permittedValues['pitch', 'low']) {
+        click_y = permittedValues['pitch', 'low']
       }
-    } else { # otherwise, we simply add the new point as another anchor
-      myPars[['pitchAnchors']] = data.frame (
-        'time' = c(myPars$pitchAnchors$time, click_x),
-        'value' = c(myPars$pitchAnchors$value, click_y)
-      ) # convoluted, but otherwise problems with unwanted dataframe-list conversion, etc
+      if (click_y > permittedValues['pitch', 'high']) {
+        click_y = permittedValues['pitch', 'high']
+      }
+
+      closest_point_in_time = which.min(abs(myPars$pitchAnchors$time - click_x))
+      delta_x = abs(myPars$pitchAnchors$time[closest_point_in_time] - click_x)
+      # if the click is near (within ±5% of the time range) an existing anchor
+      # point, we update the pitch of this anchor according to click location (and
+      # the time as well, unless it is the first or the last anchor)
+      if (delta_x < 0.05) {
+        myPars$pitchAnchors$value[closest_point_in_time] = click_y
+        if (closest_point_in_time != 1 &&
+            closest_point_in_time != length(myPars$pitchAnchors$time)) {
+          myPars$pitchAnchors$time[closest_point_in_time] = click_x
+        }
+      } else { # otherwise, we simply add the new point as another anchor
+        myPars[['pitchAnchors']] = data.frame (
+          'time' = c(myPars$pitchAnchors$time, click_x),
+          'value' = c(myPars$pitchAnchors$value, click_y)
+        ) # convoluted, but otherwise problems with unwanted dataframe-list conversion, etc
+      }
+      # sort the updated dataframe of pitch anchors to make sure the point are in
+      # the right order (otherwise it's hard to keep track of which are the first
+      # and last anchors - and we have to, since those cannot be removed)
+      idx_order = order(myPars$pitchAnchors$time)
+      myPars$pitchAnchors$time = myPars$pitchAnchors$time[idx_order]
+      myPars$pitchAnchors$value = myPars$pitchAnchors$value[idx_order]
     }
-    # sort the updated dataframe of pitch anchors to make sure the point are in
-    # the right order (otherwise it's hard to keep track of which are the first
-    # and last anchors - and we have to, since those cannot be removed)
-    idx_order = order(myPars$pitchAnchors$time)
-    myPars$pitchAnchors$time = myPars$pitchAnchors$time[idx_order]
-    myPars$pitchAnchors$value = myPars$pitchAnchors$value[idx_order]
   })
 
   observeEvent(input$plotIntonation_dblclick, {
-    ref = as.data.frame(myPars[['pitchAnchors']])
-    ref$time = ref$time * input$sylLen
-    closestPoint = nearPoints(ref, input$plotIntonation_dblclick,
-                              xvar = 'time', yvar = 'value',
-                              threshold = 100000, maxpoints = 1)
-    idx = as.numeric(rownames(closestPoint))
-    if (length(idx) > 0 && idx != 1 && idx != length(myPars$pitchAnchors$time)) {
-      # we can remove any anchor except the first and the last (because pitch at
-      # start and end of sound has to be defined)
-      myPars[['pitchAnchors']] = data.frame(
-        'time' = myPars$pitchAnchors$time[-idx],
-        'value' = myPars$pitchAnchors$value[-idx]
-      )
+    if (is.list(myPars$pitchAnchors)) {
+      ref = as.data.frame(myPars[['pitchAnchors']])
+      ref$time = ref$time * input$sylLen
+      closestPoint = nearPoints(ref, input$plotIntonation_dblclick,
+                                xvar = 'time', yvar = 'value',
+                                threshold = 100000, maxpoints = 1)
+      idx = as.numeric(rownames(closestPoint))
+      if (length(idx) > 0 && idx != 1 && idx != length(myPars$pitchAnchors$time)) {
+        # we can remove any anchor except the first and the last (because pitch at
+        # start and end of sound has to be defined)
+        myPars[['pitchAnchors']] = data.frame(
+          'time' = myPars$pitchAnchors$time[-idx],
+          'value' = myPars$pitchAnchors$value[-idx]
+        )
+      }
     }
   })
 
   observeEvent(input$pitch_flatten, {
     # flat pitch equal to the first pitch anchor
+    if (is.list(myPars$pitchAnchors)) {
     myPars[['pitchAnchors']] = data.frame('time' = c(0,1),
                                           'value' = rep(myPars$pitchAnchors$value[1], 2))
+    }
   })
 
-  output$pitch_anchors = renderTable(expr = data.frame(
-    'Time, ms' = round(myPars$pitchAnchors$time * input$sylLen, 0),
-    'Pitch, Hz' = round(myPars$pitchAnchors$value, 0),
-    row.names = 1:length(myPars$pitchAnchors$time)),
-    digits = 0, align = 'c', rownames = FALSE)
+  output$pitch_anchors = renderTable(expr = {
+    if (is.list(myPars$pitchAnchors)) {
+      data.frame(
+        'Time, ms' = round(myPars$pitchAnchors$time * input$sylLen, 0),
+        'Pitch, Hz' = round(myPars$pitchAnchors$value, 0))
+    } else {
+      'None'
+    }
+  },
+  digits = 0, align = 'c', rownames = FALSE )
+
 
 
   ## P I T C H   G L O B A L
@@ -310,7 +337,7 @@ server = function(input, output, session) {
   })
 
   myPitchContourGlobal <- reactive({
-    if (input$nSyl > 1) {
+    if (input$nSyl > 1 && is.list(myPars$pitchAnchorsGlobal)) {
       soundgen:::getDiscreteContour(
         anchors = myPars$pitchAnchorsGlobal,
         len = input$nSyl,
@@ -326,73 +353,84 @@ server = function(input, output, session) {
       plot(1:10, 1:10, type = 'n', xlab = '', ylab = '', axes = FALSE)
       text(x = 5, y = 5, labels = 'Need >1 syllable!', adj = .5, col = 'blue', cex = 1)
     }
-
   })
 
   observeEvent(input$plotIntonation_clickGlobal, {
-    timeRange = input$nSyl - 1
-    click_x = (input$plotIntonation_clickGlobal$x - 1) / timeRange  # ranges 0 to 1
-    click_y = round(input$plotIntonation_clickGlobal$y, 1)
-    # if the click is below or above thresholds, move within thresholds
-    if (click_y < permittedValues['pitchDeltas', 'low']) {
-      click_y = permittedValues['pitchDeltas', 'low']
-    }
-    if (click_y > permittedValues['pitchDeltas', 'high']) {
-      click_y = permittedValues['pitchDeltas', 'high']
-    }
-
-    closest_point_in_time = which.min(abs(myPars$pitchAnchorsGlobal$time - click_x))
-    delta_x = abs(myPars$pitchAnchorsGlobal$time[closest_point_in_time] - click_x)
-    # if the click is near (within ±20% of the time range) an existing anchor
-    # point, we update the pitch of this anchor according to click location (and
-    # the time as well, unless it is the first or the last anchor)
-    if (delta_x < 0.2) {
-      myPars$pitchAnchorsGlobal$value[closest_point_in_time] = click_y
-      if (closest_point_in_time != 1 &&
-          closest_point_in_time != length(myPars$pitchAnchorsGlobal$time)) {
-        myPars$pitchAnchorsGlobal$time[closest_point_in_time] = click_x
+    if (is.list(myPars$pitchAnchorsGlobal)) {
+      timeRange = input$nSyl - 1
+      click_x = (input$plotIntonation_clickGlobal$x - 1) / timeRange  # ranges 0 to 1
+      click_y = round(input$plotIntonation_clickGlobal$y, 1)
+      # if the click is below or above thresholds, move within thresholds
+      if (click_y < permittedValues['pitchDeltas', 'low']) {
+        click_y = permittedValues['pitchDeltas', 'low']
       }
-    }  else { # otherwise, we simply add the new point as another anchor
-      myPars[['pitchAnchorsGlobal']] = data.frame (
-        'time' = c(myPars$pitchAnchorsGlobal$time, click_x),
-        'value' = c(myPars$pitchAnchorsGlobal$value, click_y)
-      ) # convoluted, but otherwise problems with unwanted dataframe-list conversion, etc
+      if (click_y > permittedValues['pitchDeltas', 'high']) {
+        click_y = permittedValues['pitchDeltas', 'high']
+      }
+
+      closest_point_in_time = which.min(abs(myPars$pitchAnchorsGlobal$time - click_x))
+      delta_x = abs(myPars$pitchAnchorsGlobal$time[closest_point_in_time] - click_x)
+      # if the click is near (within ±20% of the time range) an existing anchor
+      # point, we update the pitch of this anchor according to click location (and
+      # the time as well, unless it is the first or the last anchor)
+      if (delta_x < 0.2) {
+        myPars$pitchAnchorsGlobal$value[closest_point_in_time] = click_y
+        if (closest_point_in_time != 1 &&
+            closest_point_in_time != length(myPars$pitchAnchorsGlobal$time)) {
+          myPars$pitchAnchorsGlobal$time[closest_point_in_time] = click_x
+        }
+      }  else { # otherwise, we simply add the new point as another anchor
+        myPars[['pitchAnchorsGlobal']] = data.frame (
+          'time' = c(myPars$pitchAnchorsGlobal$time, click_x),
+          'value' = c(myPars$pitchAnchorsGlobal$value, click_y)
+        ) # convoluted, but otherwise problems with unwanted dataframe-list conversion, etc
+      }
+      # sort the updated dataframe of pitch anchors to make sure the point are in the right order (otherwise it's hard to keep track of which are the first and last anchors - and we have to, since those cannot be removed)
+      idx_order = order(myPars$pitchAnchorsGlobal$time)
+      myPars$pitchAnchorsGlobal$time = myPars$pitchAnchorsGlobal$time[idx_order]
+      myPars$pitchAnchorsGlobal$value = myPars$pitchAnchorsGlobal$value[idx_order]
     }
-    # sort the updated dataframe of pitch anchors to make sure the point are in the right order (otherwise it's hard to keep track of which are the first and last anchors - and we have to, since those cannot be removed)
-    idx_order = order(myPars$pitchAnchorsGlobal$time)
-    myPars$pitchAnchorsGlobal$time = myPars$pitchAnchorsGlobal$time[idx_order]
-    myPars$pitchAnchorsGlobal$value = myPars$pitchAnchorsGlobal$value[idx_order]
   })
 
   observeEvent(input$plotIntonation_dblclickGlobal, {
-    ref = as.data.frame(myPars[['pitchAnchorsGlobal']])
-    ref$time = ref$time * (input$nSyl - 1) + 1
-    closestPoint = nearPoints(ref, input$plotIntonation_dblclickGlobal,
-                              xvar = 'time', yvar = 'value',
-                              threshold = 100000, maxpoints = 1)
-    idx = as.numeric(rownames(closestPoint))
-    if (length(idx) > 0 && idx != 1 &&
-        idx != length(myPars$pitchAnchorsGlobal$time)) {
-      # we can remove any anchor except the first and the last (because pitch at
-      # start and end of sound has to be defined)
-      myPars[['pitchAnchorsGlobal']] = data.frame(
-        'time' = myPars$pitchAnchorsGlobal$time[-idx],
-        'value' = myPars$pitchAnchorsGlobal$value[-idx]
-      )
+    if (is.list(myPars$pitchAnchorsGlobal)) {
+      ref = as.data.frame(myPars[['pitchAnchorsGlobal']])
+      ref$time = ref$time * (input$nSyl - 1) + 1
+      closestPoint = nearPoints(ref, input$plotIntonation_dblclickGlobal,
+                                xvar = 'time', yvar = 'value',
+                                threshold = 100000, maxpoints = 1)
+      idx = as.numeric(rownames(closestPoint))
+      if (length(idx) > 0 && idx != 1 &&
+          idx != length(myPars$pitchAnchorsGlobal$time)) {
+        # we can remove any anchor except the first and the last (because pitch at
+        # start and end of sound has to be defined)
+        myPars[['pitchAnchorsGlobal']] = data.frame(
+          'time' = myPars$pitchAnchorsGlobal$time[-idx],
+          'value' = myPars$pitchAnchorsGlobal$value[-idx]
+        )
+      }
     }
   })
 
   observeEvent(input$pitch_flattenGlobal, {
     # flat pitch modulation across syllables
-    myPars[['pitchAnchorsGlobal']] = data.frame('time' = c(0,1),
-                                                'value' = c(0,0))
+    if (is.list(myPars$pitchAnchorsGlobal)) {
+      myPars[['pitchAnchorsGlobal']] = data.frame('time' = c(0,1),
+                                                  'value' = c(0,0))
+    }
   })
 
-  output$pitch_anchorsGlobal = renderTable(expr = data.frame(
-    'Time 0 to 1' = myPars$pitchAnchorsGlobal$time,
-    'Pitch delta, semitones' = round(myPars$pitchAnchorsGlobal$value,0),
-    row.names = 1:length(myPars$pitchAnchorsGlobal$time)),
-    digits = 2, align = 'c', rownames = FALSE)
+
+  output$pitch_anchorsGlobal = renderTable(expr = {
+    if (is.list(myPars$pitchAnchorsGlobal)) {
+      data.frame(
+        'Time 0 to 1' = myPars$pitchAnchorsGlobal$time,
+        'Pitch delta, semitones' = round(myPars$pitchAnchorsGlobal$value, 0))
+    } else {
+      'None'
+    }
+  },
+  digits = 2, align = 'c', rownames = FALSE)
 
 
   ## UNVOICED
@@ -801,10 +839,10 @@ server = function(input, output, session) {
   })
 
   output$plotAM = renderPlot({
-    sig = getSigmoid(len = input$sylLen,
-                     samplingRate = 1000,
-                     freq = input$amFreq,
-                     shape = input$amShape)
+    sig = soundgen:::getSigmoid(len = input$sylLen,
+                                samplingRate = 1000,
+                                freq = input$amFreq,
+                                shape = input$amShape)
     trill = (.5 - sig) * input$amDep
     plot(x = 1:input$sylLen,
          y = trill,

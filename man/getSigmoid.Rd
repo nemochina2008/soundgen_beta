@@ -5,7 +5,7 @@
 \title{Get sigmoid filter}
 \usage{
 getSigmoid(len, samplingRate = 16000, freq = 5, shape = 0,
-  spikiness = 5)
+  spikiness = 1)
 }
 \arguments{
 \item{len}{the length of output vector}
@@ -32,7 +32,7 @@ filter is made from concatenated sigmoids and their mirror reflections.
 }
 \examples{
 for (shape in c(0, -.1, .1, -1, 1)) {
-  plot(getSigmoid(shape = shape, len = 1000, samplingRate = 500,  freq = 2),
-  type = 'l',  main = paste('shape =', shape), xlab = '', ylab = '')
+  s = soundgen:::getSigmoid(shape = shape, len = 1000, samplingRate = 500,  freq = 2)
+  plot(s, type = 'l',  main = paste('shape =', shape), xlab = '', ylab = '')
 }
 }

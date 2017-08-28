@@ -635,8 +635,8 @@ isCentral.localMax = function(x, threshold) {
 #'   sine-like approximation as shape deviates from 0
 #' @examples
 #' for (shape in c(0, -.1, .1, -1, 1)) {
-#'   plot(getSigmoid(shape = shape, len = 1000, samplingRate = 500,  freq = 2),
-#'   type = 'l',  main = paste('shape =', shape), xlab = '', ylab = '')
+#'   s = soundgen:::getSigmoid(shape = shape, len = 1000, samplingRate = 500,  freq = 2)
+#'   plot(s, type = 'l',  main = paste('shape =', shape), xlab = '', ylab = '')
 #' }
 getSigmoid = function(len,
                       samplingRate = 16000,

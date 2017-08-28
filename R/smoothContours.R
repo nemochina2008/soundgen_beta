@@ -64,7 +64,12 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
                             voiced = NULL,
                             contourLabel = NULL,
                             ...) {
-  if (class(anchors) == 'list') anchors = as.data.frame(anchors)
+  if (class(anchors) == 'list') {
+    anchors = as.data.frame(anchors)
+  }
+  if (!is.list(anchors)) {  # no anchors specified
+    return(NA)
+  }
   if (!is.null(valueFloor)) {
     anchors$value[anchors$value < valueFloor] = valueFloor
   }
@@ -89,14 +94,13 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
     anchors$time = anchors$time / max(anchors$time) # strictly 0 to 1
     duration_ms = len / samplingRate * 1000
   }
-  if (!is.numeric(duration_ms) | duration_ms == 0 | len == 0)
-    return (NA)
+
+  if (!is.numeric(duration_ms) || duration_ms == 0 || !is.numeric(len) || len == 0) {
+    return(NA)
+  }
 
   time = 1:len
-  if (nrow(anchors) < 1) {
-    stop ('getSmoothContour() requires at least one anchor')
-    # alternatively, smoothContour = rep(0, length(time))
-  } else if (nrow(anchors) == 1) {
+  if (nrow(anchors) == 1) {
     # flat
     smoothContour = rep(anchors$value[1], len)
   } else if (nrow(anchors) == 2) {
@@ -211,10 +215,10 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
     par("mar" = op)  # restore original margin settings
   }
   # NA's may arise if the first anchor time > 0
-  smoothContour[is.na(smoothContour)] = 0
+  if (nrow(anchors) > 0) smoothContour[is.na(smoothContour)] = 0
   if (thisIsPitch)
     smoothContour = semitonesToHz(smoothContour)
-  return (smoothContour)
+  return(smoothContour)
 }
 
 

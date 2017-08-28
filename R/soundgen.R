@@ -1,3 +1,4 @@
+# pitchContours = NA or NULL - just generate the noise; double-click fails to remove anchors on pitch contour
 # build pdf manual (terminal): R CMD Rd2pdf "/home/allgoodguys/Documents/Studying/Lund_PhD/methods/sound-synthesis/soundgen"
 
 # To install from github (in RStudio):
@@ -338,7 +339,9 @@ soundgen = function(repeatBout = 1,
   if (maleFemale != 0) {
     # adjust pitch and formants along the male-female dimension
     # pitch varies by 1 octave up or down
-    pitchAnchors$value = pitchAnchors$value * 2 ^ maleFemale
+    if (is.list(pitchAnchors)) {
+      pitchAnchors$value = pitchAnchors$value * 2 ^ maleFemale
+    }
     if (is.list(formants)) {
       for (f in 1:length(formants)) {
         # formants vary by 25% up or down:
@@ -431,11 +434,13 @@ soundgen = function(repeatBout = 1,
   }
 
   # make sure pitchAnchors$time range from 0 to 1
-  if (min(pitchAnchors$time) < 0) {
-    pitchAnchors$time = pitchAnchors$time - min(pitchAnchors$time)
-  }
-  if (max(pitchAnchors$time) > 1) {
-    pitchAnchors$time = pitchAnchors$time / max(pitchAnchors$time)
+  if (is.list(pitchAnchors)) {
+    if (min(pitchAnchors$time) < 0) {
+      pitchAnchors$time = pitchAnchors$time - min(pitchAnchors$time)
+    }
+    if (max(pitchAnchors$time) > 1) {
+      pitchAnchors$time = pitchAnchors$time / max(pitchAnchors$time)
+    }
   }
 
   wiggleNoise = temperature > 0 &&
@@ -527,13 +532,15 @@ soundgen = function(repeatBout = 1,
           # /10 to have less variation in the spectral pars vs.
           # duration of separate syllables
         }
-        pitchAnchors_per_syl = wiggleAnchors(
-          df = pitchAnchors_per_syl,
-          temperature = temperature,
-          low = c(0, permittedValues['pitch', 'low']),
-          high = c(1, permittedValues['pitch', 'high']),
-          temp_coef = tempEffects$pitchAnchorsDep
-        )
+        if (is.list(pitchAnchors_per_syl)) {
+          pitchAnchors_per_syl = wiggleAnchors(
+            df = pitchAnchors_per_syl,
+            temperature = temperature,
+            low = c(0, permittedValues['pitch', 'low']),
+            high = c(1, permittedValues['pitch', 'high']),
+            temp_coef = tempEffects$pitchAnchorsDep
+          )
+        }
         if (wiggleNoise) {
           noiseAnchors_syl[[s]] = wiggleAnchors(
             df = noiseAnchors,
@@ -557,19 +564,22 @@ soundgen = function(repeatBout = 1,
 
       # generate smooth pitch contour for this particular syllable
       dur_syl = as.numeric(syllables[s, 'end'] - syllables[s, 'start'])
-      pitchContour_syl = getSmoothContour(
-        anchors = pitchAnchors_per_syl,
-        len = round(dur_syl * pitchSamplingRate / 1000),
-        samplingRate = pitchSamplingRate,
-        valueFloor = pitchFloor,
-        valueCeiling = pitchCeiling,
-        thisIsPitch = TRUE
-      ) * pitchDeltas[s]
-      # plot(pitchContour_syl, type = 'l')
+      if (is.list(pitchAnchors_per_syl)) {
+        pitchContour_syl = getSmoothContour(
+          anchors = pitchAnchors_per_syl,
+          len = round(dur_syl * pitchSamplingRate / 1000),
+          samplingRate = pitchSamplingRate,
+          valueFloor = pitchFloor,
+          valueCeiling = pitchCeiling,
+          thisIsPitch = TRUE
+        ) * pitchDeltas[s]
+        # plot(pitchContour_syl, type = 'l')
+      }
 
       # generate the voiced part
       if (dur_syl < permittedValues['sylLen', 'low'] |
-          (!is.na(noiseAnchors) && min(noiseAnchors$value) >= 40)) {
+          (!is.na(noiseAnchors) && min(noiseAnchors$value) >= 40) |
+          !is.list(pitchAnchors_per_syl)) {
         # only synthesize voiced part if noise is weaker than 40 dB
         #   and the voiced part is long enough to bother synthesizing it
         syllable = rep(0, round(dur_syl * samplingRate / 1000))

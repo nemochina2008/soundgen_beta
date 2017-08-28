@@ -8,7 +8,7 @@ ui = fluidPage(
                                   tabPanel("Syllables",
                                            sidebarLayout(
                                              sidebarPanel(
-                                               sliderInput('sylLen', 'Syllable length, ms', value=permittedValues['sylLen','default'], min=0, max=permittedValues['sylLen', 'high'], step=permittedValues['sylLen','step']),
+                                               sliderInput('sylLen', 'Syllable length, ms', value=permittedValues['sylLen','default'], min=permittedValues['sylLen', 'low'], max=permittedValues['sylLen', 'high'], step=permittedValues['sylLen','step']),
                                                shinyBS:::bsPopover(id='sylLen', title=NULL, content='Average duration of a continuous VOICED syllable (unvoiced noise is added separately and may fill in the pauses)', placement="right", trigger="hover"),
                                                sliderInput('nSyl', 'Number of syllables', value=permittedValues['nSyl','default'], min=permittedValues['nSyl', 'low'], max=permittedValues['nSyl', 'high'], step=permittedValues['nSyl','step']),
                                                shinyBS:::bsPopover(id='nSyl', title=NULL, content='Each sound consists of one or several syllables separated by pauses', placement="right", trigger="hover"),
@@ -42,9 +42,9 @@ ui = fluidPage(
                                   tabPanel("Settings",
                                            sidebarLayout(
                                              sidebarPanel(
-                                               numericInput('samplingRate', 'Sampling rate, Hz', value=16000, min=8000, max=44000, step=4000),
+                                               numericInput('samplingRate', 'Sampling rate, Hz', value=permittedValues['samplingRate','default'], min=permittedValues['samplingRate', 'low'], max=permittedValues['samplingRate', 'high'], step=permittedValues['samplingRate','step']),
                                                shinyBS:::bsPopover(id='samplingRate', title=NULL, content='The number of points per second of audio. Higher = better quality; lower = faster. Can be any integer, not necessarily a power of two.', placement="right", trigger="hover"),
-                                               numericInput('windowLength', 'FFT window length, ms', value=50, min=5, max=100, step=5),
+                                               numericInput('windowLength', 'FFT window length, ms', value=permittedValues['windowLength','default'], min=permittedValues['windowLength', 'low'], max=permittedValues['windowLength', 'high'], step=permittedValues['windowLength','step']),
                                                shinyBS:::bsPopover(id='samplingRate', title=NULL, content='The length of window for performing FFT - inverse FFT when filtering the source.', placement="right", trigger="hover"),
                                                numericInput('pitchSamplingRate', 'Pitch sampling rate, Hz', value=3500, min=100, max=44000, step=100),
                                                shinyBS:::bsPopover(id='pitchSamplingRate', title=NULL, content='The number of considered F0 values per second of audio. Should be >= pitchCeiling for best quality', placement="right", trigger="hover"),
@@ -64,6 +64,7 @@ ui = fluidPage(
                                   tabPanel("Intonation syllable",
                                            sidebarLayout(
                                              sidebarPanel(
+                                               checkboxInput(inputId = 'generateVoiced', label = 'Generate voiced component?', value = TRUE),
                                                actionButton(inputId = "pitch_flatten", label = "Flatten pitch contour"),
                                                shinyBS:::bsPopover(id='pitch_flatten', title=NULL, content='Revert to a flat intonation contour with pitch equal to the first (left) anchor', placement="right", trigger="hover"),
                                                tableOutput("pitch_anchors"),
