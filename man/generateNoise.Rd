@@ -34,7 +34,7 @@ noise (ms)}
 \item{overlap}{FFT window overlap, \%}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB) to save computational resources}
+number (in dB, defaults to -120) to save computational resources}
 
 \item{filterNoise}{(optional): in addition to using rolloffNoise,
 we can provide the exact filter - a vector of length windowLength_points/2

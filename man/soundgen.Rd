@@ -38,12 +38,14 @@ Details)}
 
 \item{pauseLen}{average duration of pauses between syllables, ms}
 
-\item{pitchAnchors}{dataframe specifying the time (ms) and value (Hz) of
-pitch anchors. These anchors are used to create a smooth contour of
-fundamental frequency f0 (pitch) within one syllable (see Examples)}
+\item{pitchAnchors}{a numeric vector of f0 values in Hz (assuming equal time
+steps) or a dataframe specifying the time (ms) and value (Hz) of each
+anchor. These anchors are used to create a smooth contour of fundamental
+frequency f0 (pitch) within one syllable (see Examples)}
 
-\item{pitchAnchorsGlobal}{unlike \code{pitchAnchors}, this dataframe is used
-to create a smooth contour of average f0 across multiple syllables}
+\item{pitchAnchorsGlobal}{unlike \code{pitchAnchors}, these anchors are used
+to create a smooth contour of average f0 across multiple syllables. The
+values are in semitones relative to the existing pitch, i.e. 0 = no change}
 
 \item{temperature}{hyperparameter for regulating the amount of stochasticity
 in sound generation}
@@ -149,8 +151,10 @@ modulation with amplitude range equal to the dynamic range of the sound}
 
 \item{amShape}{amplitude modulation shape (-1 to +1, defaults to 0)}
 
-\item{noiseAnchors}{dataframe specifying the time (ms) and amplitude (dB) of
-anchors for generating the noise component such as aspiration, hissing, etc}
+\item{noiseAnchors}{a numeric vector of noise amplitudes (-120 dB = none, 0
+dB = as loud as voiced component) or a dataframe specifying the time (ms)
+and amplitude (dB) of anchors for generating the noise component such as
+aspiration, hissing, etc}
 
 \item{formantsNoise}{the same as \code{formants}, but for the
 noise component instead of the harmonic component. If NA (default), the
@@ -161,14 +165,16 @@ component, approximating aspiration noise [h]}
 \code{rolloff}, but while \code{rolloff} applies to the harmonic component,
 \code{rolloffNoise} applies to the noise component}
 
-\item{mouthAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
-mouth-opening anchors}
+\item{mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
+i.e. no modification) or a dataframe specifying the time (ms) and value of
+mouth opening}
 
-\item{amplAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
-amplitude anchors}
+\item{amplAnchors}{a numeric vector of amplitude envelope (0 to 1) or a
+dataframe specifying the time (ms) and value of amplitude anchors}
 
-\item{amplAnchorsGlobal}{dataframe specifying the time (ms) and value (0 to
-1) of global amplitude anchors, i.e. spanning multiple syllables}
+\item{amplAnchorsGlobal}{a numeric vector of global amplitude envelope
+spanning multiple syllables or a dataframe specifying the time (ms) and
+value (0 to 1) of each anchor}
 
 \item{samplingRate}{sampling frequency, Hz}
 
@@ -185,7 +191,7 @@ values reduce processing time. A rule of thumb is to set this to
 the same value as \code{pitchCeiling}}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB) to save computational resources}
+number (in dB, defaults to -120) to save computational resources}
 
 \item{invalidArgAction}{what to do if an argument is invalid or outside the
 range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
@@ -193,7 +199,8 @@ range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
 
 \item{plot}{if TRUE, plots a spectrogram}
 
-\item{play}{if TRUE, plays the synthesized sound}
+\item{play}{if TRUE, plays the synthesized sound. In case of errors, try
+setting another default player for \code{\link[tuneR]{play}}}
 
 \item{savePath}{full path for saving the output, e.g. '~/Downloads/temp.wav'.
 If NA (default), doesn't save anything}

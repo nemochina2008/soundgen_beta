@@ -1,4 +1,4 @@
-# pitchContours = NA or NULL - just generate the noise; double-click fails to remove anchors on pitch contour
+# improve (add this functionality to crossFade?) and export addVectors()
 # build pdf manual (terminal): R CMD Rd2pdf "/home/allgoodguys/Documents/Studying/Lund_PhD/methods/sound-synthesis/soundgen"
 
 # To install from github (in RStudio):
@@ -35,11 +35,13 @@ NULL
 #'   Details)
 #' @param sylLen average duration of each syllable, ms
 #' @param pauseLen average duration of pauses between syllables, ms
-#' @param pitchAnchors dataframe specifying the time (ms) and value (Hz) of
-#'   pitch anchors. These anchors are used to create a smooth contour of
-#'   fundamental frequency f0 (pitch) within one syllable (see Examples)
-#' @param pitchAnchorsGlobal unlike \code{pitchAnchors}, this dataframe is used
-#'   to create a smooth contour of average f0 across multiple syllables
+#' @param pitchAnchors a numeric vector of f0 values in Hz (assuming equal time
+#'   steps) or a dataframe specifying the time (ms) and value (Hz) of each
+#'   anchor. These anchors are used to create a smooth contour of fundamental
+#'   frequency f0 (pitch) within one syllable (see Examples)
+#' @param pitchAnchorsGlobal unlike \code{pitchAnchors}, these anchors are used
+#'   to create a smooth contour of average f0 across multiple syllables. The
+#'   values are in semitones relative to the existing pitch, i.e. 0 = no change
 #' @param temperature hyperparameter for regulating the amount of stochasticity
 #'   in sound generation
 #' @param tempEffects a list of scale factors regulating the effect of
@@ -116,8 +118,10 @@ NULL
 #'   modulation with amplitude range equal to the dynamic range of the sound
 #' @param amFreq amplitude modulation frequency, Hz
 #' @param amShape amplitude modulation shape (-1 to +1, defaults to 0)
-#' @param noiseAnchors dataframe specifying the time (ms) and amplitude (dB) of
-#'   anchors for generating the noise component such as aspiration, hissing, etc
+#' @param noiseAnchors a numeric vector of noise amplitudes (-120 dB = none, 0
+#'   dB = as loud as voiced component) or a dataframe specifying the time (ms)
+#'   and amplitude (dB) of anchors for generating the noise component such as
+#'   aspiration, hissing, etc
 #' @param formantsNoise the same as \code{formants}, but for the
 #'   noise component instead of the harmonic component. If NA (default), the
 #'   noise component will be filtered through the same formants as the harmonic
@@ -125,12 +129,14 @@ NULL
 #' @param rolloffNoise rolloff of noise, dB/octave. It is analogous to
 #'   \code{rolloff}, but while \code{rolloff} applies to the harmonic component,
 #'   \code{rolloffNoise} applies to the noise component
-#' @param mouthAnchors dataframe specifying the time (ms) and value (0 to 1) of
-#'   mouth-opening anchors
-#' @param amplAnchors dataframe specifying the time (ms) and value (0 to 1) of
-#'   amplitude anchors
-#' @param amplAnchorsGlobal dataframe specifying the time (ms) and value (0 to
-#'   1) of global amplitude anchors, i.e. spanning multiple syllables
+#' @param mouthAnchors a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
+#'   i.e. no modification) or a dataframe specifying the time (ms) and value of
+#'   mouth opening
+#' @param amplAnchors a numeric vector of amplitude envelope (0 to 1) or a
+#'   dataframe specifying the time (ms) and value of amplitude anchors
+#' @param amplAnchorsGlobal a numeric vector of global amplitude envelope
+#'   spanning multiple syllables or a dataframe specifying the time (ms) and
+#'   value (0 to 1) of each anchor
 #' @param samplingRate sampling frequency, Hz
 #' @param windowLength length of FFT window, ms
 #' @param overlap FFT window overlap, \%
@@ -140,12 +146,13 @@ NULL
 #'   values reduce processing time. A rule of thumb is to set this to
 #'   the same value as \code{pitchCeiling}
 #' @param throwaway discard harmonics and noise that are quieter than this
-#'   number (in dB) to save computational resources
+#'   number (in dB, defaults to -120) to save computational resources
 #' @param invalidArgAction what to do if an argument is invalid or outside the
 #'   range in \code{permittedValues}: 'adjust' = reset to default value, 'abort'
 #'   = stop execution, 'ignore' = throw a warning and continue (may crash)
 #' @param plot if TRUE, plots a spectrogram
-#' @param play if TRUE, plays the synthesized sound
+#' @param play if TRUE, plays the synthesized sound. In case of errors, try
+#'   setting another default player for \code{\link[tuneR]{play}}
 #' @param savePath full path for saving the output, e.g. '~/Downloads/temp.wav'.
 #'   If NA (default), doesn't save anything
 #' @param ... other plotting parameters passed to \code{\link{spectrogram}}
@@ -287,6 +294,19 @@ soundgen = function(repeatBout = 1,
                        "invalidArgAction = 'ignore' to force."))
       }
     }
+  }
+
+  # convert numeric anchors to dataframes
+  for (anchor in c('pitchAnchors', 'pitchAnchorsGlobal',
+                   'amplAnchors', 'amplAnchorsGlobal', 'mouthAnchors')) {
+    if (is.numeric(get(anchor)) && length(get(anchor)) > 0) {
+      assign(anchor, data.frame(time = seq(0, 1, length.out = length(get(anchor))),
+                                value = get(anchor)))
+    }
+  }
+  if (is.numeric(noiseAnchors) && length(noiseAnchors) > 0) {
+    noiseAnchors = data.frame(time = seq(0, sylLen, length.out = length(noiseAnchors)),
+                              value = noiseAnchors)
   }
 
   windowLength_points = floor(windowLength / 1000 * samplingRate / 2) * 2
@@ -567,7 +587,7 @@ soundgen = function(repeatBout = 1,
 
       # generate smooth pitch contour for this particular syllable
       dur_syl = as.numeric(syllables[s, 'end'] - syllables[s, 'start'])
-      if (is.list(pitchAnchors_per_syl)) {
+      if (is.list(pitchAnchors_per_syl) | is.numeric(pitchAnchors_per_syl)) {
         pitchContour_syl = getSmoothContour(
           anchors = pitchAnchors_per_syl,
           len = round(dur_syl * pitchSamplingRate / 1000),

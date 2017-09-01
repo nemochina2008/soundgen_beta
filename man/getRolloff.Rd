@@ -43,7 +43,7 @@ steeper basic rolloff as f0 goes up by 1000 Hz}
 takes place regardless of \code{rolloffKHz}}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB) to save computational resources}
+number (in dB, defaults to -120) to save computational resources}
 
 \item{samplingRate}{sampling rate (needed to stop at Nyquist frequency and
 for plotting purposes)}

@@ -70,6 +70,11 @@ getSmoothContour = function(anchors = data.frame(time = c(0, 1), value = c(0, 1)
   if (!is.list(anchors)) {  # no anchors specified
     return(NA)
   }
+  if (nrow(anchors) > 10 && method == 'loess') {
+    method = 'spline'
+    warning('More than 10 anchors; changing interpolation method from loess to spline')
+  }
+
   if (!is.null(valueFloor)) {
     anchors$value[anchors$value < valueFloor] = valueFloor
   }

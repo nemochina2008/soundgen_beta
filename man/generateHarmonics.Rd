@@ -109,8 +109,8 @@ modulation with amplitude range equal to the dynamic range of the sound}
 
 \item{amFreq}{amplitude modulation frequency, Hz}
 
-\item{amplAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
-amplitude anchors}
+\item{amplAnchors}{a numeric vector of amplitude envelope (0 to 1) or a
+dataframe specifying the time (ms) and value of amplitude anchors}
 
 \item{overlap}{FFT window overlap, \%}
 
@@ -125,7 +125,7 @@ values reduce processing time. A rule of thumb is to set this to
 the same value as \code{pitchCeiling}}
 
 \item{throwaway}{discard harmonics and noise that are quieter than this
-number (in dB) to save computational resources}
+number (in dB, defaults to -120) to save computational resources}
 }
 \description{
 Internal soundgen function.

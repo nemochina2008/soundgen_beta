@@ -27,8 +27,9 @@ to amplitudes in \code{formants})}
 (the default of +6 dB/oct produces a high-frequency boost when the mouth is
 open)}
 
-\item{mouthAnchors}{dataframe specifying the time (ms) and value (0 to 1) of
-mouth-opening anchors}
+\item{mouthAnchors}{a numeric vector of mouth opening (0 to 1, 0.5 = neutral,
+i.e. no modification) or a dataframe specifying the time (ms) and value of
+mouth opening}
 
 \item{mouthOpenThres}{the mouth is considered to be open when its
 opening is greater than \code{mouthOpenThres}. Defaults to 0}

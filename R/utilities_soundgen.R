@@ -102,13 +102,15 @@ playme = function(sound, samplingRate = 16000) {
 
   os = Sys.info()[['sysname']]
   if (os == 'Linux' | os == 'linux') {
-    tuneR::play(soundWave, 'play')
+    p = tuneR::play(soundWave, 'play')
   } else if (os == 'Windows' | os == 'windows') {
-    tuneR::play(soundWave)
+    p = tuneR::play(soundWave)
   } else if (os == 'Darwin' | os == 'darwin') {
-    tuneR::play(soundWave)  # ?
+    p = tuneR::play(soundWave)
   }
-
+  if (p > 0) {  # error in sh
+    warning("Error in tuneR::play. Try setting the default audio player. See http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf")
+  }
   # can't get rid of printed output! sink(), capture.output, invisible don't work!!!
 }
 
