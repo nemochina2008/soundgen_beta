@@ -1,4 +1,3 @@
-# improve (add this functionality to crossFade?) and export addVectors()
 # build pdf manual (terminal): R CMD Rd2pdf "/home/allgoodguys/Documents/Studying/Lund_PhD/methods/sound-synthesis/soundgen"
 
 # To install from github (in RStudio):
@@ -651,7 +650,7 @@ soundgen = function(repeatBout = 1,
                                   samplingRate / 1000)
 
         # calculate noise spectrum
-        if (is.na(formantsNoise[1])) {
+        if (is.null(formantsNoise) || is.na(formantsNoise[1])) {
           spectralEnvelopeNoise = NA
         } else {
           movingFormants = max(unlist(lapply(formantsNoise, length))) > 1 |
@@ -701,7 +700,7 @@ soundgen = function(repeatBout = 1,
     #   the voiced part), we mix voiced+unvoiced BEFORE filtering the sound,
     #   otherwise we filter first and then mix voiced+unvoiced
     sound = voiced
-    if (length(unvoiced) > 0 && is.na(formantsNoise)) {
+    if (length(unvoiced) > 0 && (is.null(formantsNoise) || is.na(formantsNoise))) {
       for (s in 1:length(unvoiced)) {
         sound = addVectors(sound, unvoiced[[s]],
                            insertionPoint = syllableStartIdx[s])
@@ -805,7 +804,7 @@ soundgen = function(repeatBout = 1,
     # playme(soundFiltered, samplingRate = samplingRate)
 
     # add the separately filtered noise back into the sound at the appropriate time points AFTER filtering the sound
-    if (length(unvoiced) > 0 && !is.na(formantsNoise)) {
+    if (length(unvoiced) > 0 && is.list(formantsNoise)) {
       for (s in 1:length(unvoiced)) {
         soundFiltered = addVectors(soundFiltered, unvoiced[[s]],
                                    insertionPoint = syllableStartIdx[s])

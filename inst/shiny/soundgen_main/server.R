@@ -153,6 +153,20 @@ server = function(input, output, session) {
                       choices = head(names(presets[[input$speaker]]), -1),
                       selected = head(names(presets[[input$speaker]]), 1))
     # NB: this triggers observeEvent(input$callType), and that in turn triggers reset_all()
+    updateSelectInput(session, inputId = 'noiseType',
+                      choices = noiseType_alternatives())
+
+  })
+
+  noiseType_alternatives = reactive({
+    cons = names(presets[[input$speaker]]$Formants$consonants)
+    choices = list(Breathing = 'b')
+    if (!is.null(cons) && length(cons) > 0) {
+      lbls = sapply(presets[[input$speaker]]$Formants$consonants, function(x) x$label)
+      choices = c(choices, as.list(cons))
+      names(choices)[2:length(choices)] = lbls
+    }
+    choices
   })
 
   observeEvent(input$formants, {
@@ -168,13 +182,16 @@ server = function(input, output, session) {
 
   updateVowels = reactive({
     if (nchar(input$vowelString) > 0) {
-      try({converted = soundgen:::convertStringToFormants(input$vowelString,
-                                                          speaker = input$speaker)})
-      if (sum(unlist(converted)) > 0) { # if the converted formant list is not empty
-        myPars$formants = converted
-        # (...otherwise don't change myPars$formants to prevent crashing)
-      }
-      updateTextInput(session, inputId = 'formants', value = as.character(call('print', converted)[2]))
+      try({
+        converted = soundgen:::convertStringToFormants(input$vowelString,
+                                                       speaker = input$speaker)
+        if (sum(unlist(converted)) > 0) { # if the converted formant list is not empty
+          myPars$formants = converted
+          # (...otherwise don't change myPars$formants to prevent crashing)
+        }
+        updateTextInput(session, inputId = 'formants',
+                        value = as.character(call('print', converted)[2]))
+      })
     }
   })
 
@@ -194,8 +211,8 @@ server = function(input, output, session) {
       myPars$formantsNoise = NA
       updateTextInput(session, inputId = 'formantsNoise', value = 'NA')
     } else if (nchar(input$noiseType) > 0) {  # TODO - check if this always works!!!
-      n = presets[[input$speaker]][['Formants']][input$noiseType] [[1]]
-      myPars$formantsNoise = n[2:length(n)]
+      n = presets[[input$speaker]]$Formants$consonants[input$noiseType] [[1]]
+      myPars$formantsNoise = n[3:length(n)]
       updateSliderInput(session, inputId = 'rolloffNoise',
                         value = n[['rolloffNoise']])
       updateTextInput(session, inputId = 'formantsNoise',
@@ -886,7 +903,7 @@ server = function(input, output, session) {
   })
 
   output$plotConsonant = renderPlot({
-    if (is.na(myPars$formantsNoise)) {
+    if (is.null(myPars$formantsNoise) || is.na(myPars$formantsNoise)) {
       # same as plotFormants
       getSpectralEnvelope(
         nr = floor(input$specWindowLength * input$samplingRate / 1000 / 2),

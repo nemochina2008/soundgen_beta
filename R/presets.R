@@ -157,7 +157,7 @@ presets = list(
   M1 = list(
     Vowel1 = 'soundgen()', # these are just the global defaults
 
-    Gasp = 'soundgen(sylLen = 270, pitchAnchors = list(time = c(0, 1), value = c(154, 154)), temperature = 0.05, nonlinBalance = 67, jitterDep = 1, shimmerDep = 15, rolloffOct = -30, rolloffKHz = -15, formants = list(f1 = list(time = 0, freq = 500, amp = 30, width = 150), f2 = list(time = 0, freq = 900, amp = 40, width = 170), f3 = list(time = 0, freq = 1500, amp = 40, width = 200), f3.5 = list(time = 0, freq = 2000, amp = -40, width = 150), f4 = list(time = 0, freq = 2700, amp = 40, width = 200)), formantDep = 1.3, vocalTract = 19.5, subFreq = 80, subDep = 40, shortestEpoch = 150, amDep = 20, amFreq = 10, noiseAnchors = list(time = c(-104, -10, 261, 401), value = c(-104, -15, -35, -120)), rolloffNoise = -12, mouthAnchors = list(time = c(0, 0.48, 1), value = c(0.37, 0.33, 0.05)), amplAnchors = list(time = c(0, 1), value = c(120, 95)))',
+    Gasp = 'soundgen(sylLen = 250, pitchAnchors = list(time = c(0, 0.38, 1), value = c(147, 163, 150)), temperature = 0.05, nonlinBalance = 36, jitterDep = 1, shimmerDep = 15, rolloff = -25, rolloffOct = -9, rolloffParab = 40, rolloffParabHarm = 5, rolloffKHz = -15, rolloffLip = 0, formants = list(f1 = list(time = 0, freq = 900, amp = 40, width = 100), f2 = list(time = 0, freq = 1400, amp = 30, width = 150), f3 = list(time = 0, freq = 2200, amp = 40, width = 150)), formantDepStoch = 20, vocalTract = 18, subFreq = 80, subDep = 30, shortestEpoch = 50, amDep = 20, amFreq = 10, noiseAnchors = list(time = c(-87, -12, 242, 403), value = c(-81, -23, -34, -120)), formantsNoise = list(f1 = list(time = 0, freq = 900, amp = 40, width = 100), f2 = list(time = 0, freq = 1400, amp = 30, width = 150), f3 = list(time = 0, freq = 2200, amp = 40, width = 150), f4 = list(time = c(0, 1), freq = c(3100, 3800), amp = 40, width = 200)), rolloffNoise = -9, amplAnchors = list(time = c(0, 1), value = c(120, 95)))',
 
     Roar = 'soundgen(sylLen = 960, pitchAnchors = list(time = c(0, 0.14, 0.88, 1), value = c(174, 200, 191, 131)), temperature = 0.05, nonlinBalance = 70, jitterDep = 0.7, rolloff = -20, rolloffOct = -3, rolloffParab = -10, rolloffParabHarm = 13, formants = list(f1 = list(time = 0, freq = 620, amp = 40, width = 80), f2 = list(time = 0, freq = 1000, amp = 50, width = 80), f3 = list(time = 0, freq = 1800, amp = 40, width = 200), f4 = list(time = 0, freq = 2560, amp = 50, width = 300), f5 = list(time = 0, freq = 3400, amp = 35, width = 300)), subDep = 40, noiseAnchors = list(time = c(0, 960), value = c(-120, -120)), formantsNoise = list(f1 = list(time = 0, freq = 620, amp = 40, width = 80), f2 = list(time = 0, freq = 1000, amp = 50, width = 80), f3 = list(time = 0, freq = 1800, amp = 40, width = 200), f4 = list(time = 0, freq = 2560, amp = 50, width = 300), f5 = list(time = 0, freq = 3400, amp = 35, width = 300)), mouthAnchors = list(time = c(0, 0.14, 0.88, 1), value = c(0.4, 0.59, 0.61, 0.45)))',
 
@@ -173,73 +173,80 @@ presets = list(
     # a list of 'Formants' presets for each vowel and consonant, otherwise you won't be
     # able to specify formants in a string like 'aui' for this speaker
     Formants = list(
-      # vowels
-      'a' = list(
-        'f1'=list(time=0, freq=860, amp=30, width=120), # amplitude in dB, freq and width in Hz
-        'f2'=list(time=0, freq=1280, amp=40, width=120),
-        'f3'=list(time=0, freq=2900, amp=25, width=200) # any number of formants may be specified
+      vowels = list(
+        'a' = list(
+          f1=list(time=0, freq=860, amp=30, width=120), # amplitude in dB, freq and width in Hz
+          f2=list(time=0, freq=1280, amp=40, width=120),
+          f3=list(time=0, freq=2900, amp=25, width=200) # any number of formants may be specified
+        ),
+        'o' = list(
+          f1=list(time=0, freq=630, amp=35, width=100),
+          f2=list(time=0, freq=900, amp=35, width=100),
+          f3=list(time=0, freq=3000, amp=30, width=200),
+          f4=list(time=0, freq=3960, amp=30, width=200)
+        ),
+        'i' = list(
+          f1=list(time=0, freq=300, amp=25, width=80),
+          f2=list(time=0, freq=2700, amp=30, width=100),
+          f3=list(time=0, freq=3400, amp=40, width=350),
+          f4=list(time=0, freq=4200, amp=40, width=350)
+        ),
+        'e' = list(
+          f1=list(time=0, freq=530, amp=30, width=50),
+          'f1.4'=list(time=0, freq=1100, amp=-20, width=100), # insert a zero-pole pair between F1 and F2
+          'f1.6'=list(time=0, freq=1400, amp=20, width=100),  # insert a zero-pole pair between F1 and F2
+          f2=list(time=0, freq=2400, amp=40, width=300),
+          f3=list(time=0, freq=4000, amp=30, width=300)
+        ),
+        'u' = list(
+          f1=list(time=0, freq=375, amp=25, width=80),
+          f2=list(time=0, freq=550, amp=35, width=120),
+          f3=list(time=0, freq=2100, amp=25, width=300),
+          f4=list(time=0, freq=4200, amp=45, width=250)
+        ),
+        '0' = list(  # schwa
+          f1=list(time=0, freq=640, amp=30, width=100),
+          f2=list(time=0, freq=1670, amp=30, width=100),
+          f3=list(time=0, freq=2700, amp=30, width=100),
+          f4=list(time=0, freq=3880, amp=30, width=100)
+        )
       ),
-      'o' = list(
-        'f1'=list(time=0, freq=630, amp=35, width=100),
-        'f2'=list(time=0, freq=900, amp=35, width=100),
-        'f3'=list(time=0, freq=3000, amp=30, width=200),
-        'f4'=list(time=0, freq=3960, amp=30, width=200)
-      ),
-      'i' = list(
-        'f1'=list(time=0, freq=300, amp=25, width=80),
-        'f2'=list(time=0, freq=2700, amp=30, width=100),
-        'f3'=list(time=0, freq=3400, amp=40, width=350),
-        'f4'=list(time=0, freq=4200, amp=40, width=350)
-      ),
-      'e' = list(
-        'f1'=list(time=0, freq=530, amp=30, width=50),
-        'f1.4'=list(time=0, freq=1100, amp=-20, width=100), # insert a zero-pole pair between F1 and F2
-        'f1.6'=list(time=0, freq=1400, amp=20, width=100),  # insert a zero-pole pair between F1 and F2
-        'f2'=list(time=0, freq=2400, amp=40, width=300),
-        'f3'=list(time=0, freq=4000, amp=30, width=300)
-      ),
-      'u' = list(
-        'f1'=list(time=0, freq=375, amp=25, width=80),
-        'f2'=list(time=0, freq=550, amp=35, width=120),
-        'f3'=list(time=0, freq=2100, amp=25, width=300),
-        'f4'=list(time=0, freq=4200, amp=45, width=250)
-      ),
-      '0' = list(  # schwa
-        'f1'=list(time=0, freq=640, amp=30, width=100),
-        'f2'=list(time=0, freq=1670, amp=30, width=100),
-        'f3'=list(time=0, freq=2700, amp=30, width=100),
-        'f4'=list(time=0, freq=3880, amp=30, width=100)
-      ),
-      # consonants
-      'h' = list(  # sh
-        'rolloffNoise'=-13,
-        f1=list(time=0, freq=420, amp=20, width=150),
-        f2=list(time=0, freq=1200, amp=50, width=250),
-        f3=list(time=0, freq=5000, amp=10, width=200),
-        f4=list(time=0, freq=8500, amp=10, width=300)
-      ),
-      's' = list(
-        'rolloffNoise'=0,
-        'f1'=list(time=0, freq=5500, amp=20, width=200),
-        'f2'=list(time=0, freq=7000, amp=30, width=1000),
-        'f3'=list(time=0, freq=9000, amp=30, width=1000)
-      ),
-      'x' = list(  # sh
-        'rolloffNoise'=-9,
-        'f1'=list(time=0, freq=1700, amp=15, width=80),
-        'f2'=list(time=0, freq=2600, amp=30, width=300),
-        'f3'=list(time=0, freq=3400, amp=25, width=200),
-        'f4'=list(time=0, freq=4800, amp=10, width=300)
-      ),
-      'f' = list(
-        'rolloffNoise'=-10,
-        'f1'=list(time=0, freq=1400, amp=30, width=200),
-        'f2'=list(time=0, freq=2000, amp=10, width=80),
-        'f3'=list(time=0, freq=2900, amp=20, width=1000)
-      ),
-      'n' = list( # sNuffle (breathing through the nose)
-        'rolloffNoise'=0,
-        'f1'=list(time=0, freq=5400, amp=25, width=2000)
+      consonants = list(
+        'h' = list(
+          label = 'h',
+          rolloffNoise = -13,
+          f1=list(time=0, freq=420, amp=20, width=150),
+          f2=list(time=0, freq=1200, amp=50, width=250),
+          f3=list(time=0, freq=5000, amp=10, width=200),
+          f4=list(time=0, freq=8500, amp=10, width=300)
+        ),
+        's' = list(
+          label = 's',
+          rolloffNoise = 0,
+          f1=list(time=0, freq=5500, amp=20, width=200),
+          f2=list(time=0, freq=7000, amp=30, width=1000),
+          f3=list(time=0, freq=9000, amp=30, width=1000)
+        ),
+        'x' = list(
+          label = 'sh',
+          rolloffNoise = -9,
+          f1=list(time=0, freq=1700, amp=15, width=80),
+          f2=list(time=0, freq=2600, amp=30, width=300),
+          f3=list(time=0, freq=3400, amp=25, width=200),
+          f4=list(time=0, freq=4800, amp=10, width=300)
+        ),
+        'f' = list(
+          label = 'f',
+          rolloffNoise = -10,
+          f1=list(time=0, freq=1400, amp=30, width=200),
+          f2=list(time=0, freq=2000, amp=10, width=80),
+          f3=list(time=0, freq=2900, amp=20, width=1000)
+        ),
+        'n' = list(
+          label = 'snuffle',  # sNuffle (breathing through the nose)
+          rolloffNoise = 0,
+          f1=list(time=0, freq=5400, amp=25, width=2000)
+        )
       )
     )
   ),
@@ -258,74 +265,81 @@ presets = list(
     Cry = 'soundgen(sylLen = 1600, pitchAnchors = list(time = c(0, 1), value = c(610, 511)), temperature = 0.2, nonlinBalance = 15, formants = list(f1 = list(time = 0, freq = 790, amp = 30, width = 100), f2 = list(time = 0, freq = 1600, amp = 30, width = 100), f3 = list(time = 0, freq = 3100, amp = 30, width = 100), f4 = list(time = 0, freq = 3900, amp = 30, width = 100)), subFreq = 125, subDep = 70, noiseAnchors = list(time = c(0, 1600), value = c(-120, -120)), rolloffNoise = 0, mouthAnchors = list(time = c(0, 1), value = c(0, 0)), amplAnchorsGlobal = list(time = c(0, 1), value = c(120, 60)))',
 
     Formants = list( # reserved name - the list of presets for every caller must end with a list of 'Formants' presets for each vowel and consonant
-      # vowels
-      'a' = list(
-        'f1'=list(time=0, freq=900, amp=30, width=80), # amplitude in dB, freq and width in Hz
-        'f2'=list(time=0, freq=1300, amp=30, width=160),
-        'f3'=list(time=0, freq=3300, amp=25, width=130),
-        'f4'=list(time=0, freq=4340, amp=20, width=370) # any number of formants may be specified
+      vowels = list(
+        'a' = list(
+          f1=list(time=0, freq=900, amp=30, width=80), # amplitude in dB, freq and width in Hz
+          f2=list(time=0, freq=1300, amp=30, width=160),
+          f3=list(time=0, freq=3300, amp=25, width=130),
+          f4=list(time=0, freq=4340, amp=20, width=370) # any number of formants may be specified
+        ),
+        'o' = list(
+          f1=list(time=0, freq=800, amp=30, width=80),
+          f2=list(time=0, freq=1100, amp=30, width=80),
+          f3=list(time=0, freq=3560, amp=40, width=200),
+          f4=list(time=0, freq=5830, amp=50, width=200)
+        ),
+        'i' = list(
+          f1=list(time=0, freq=330, amp=30, width=120),
+          f2=list(time=0, freq=2700, amp=40, width=120),
+          f3=list(time=0, freq=3580, amp=30, width=200),
+          f4=list(time=0, freq=4710, amp=30, width=200),
+          'f5'=list(time=0, freq=5800, amp=30, width=200)
+        ),
+        'e' = list(
+          f1=list(time=0, freq=930, amp=30, width=100),
+          f2=list(time=0, freq=2470, amp=30, width=100),
+          f3=list(time=0, freq=3300, amp=25, width=120),
+          f4=list(time=0, freq=4200, amp=30, width=200)
+        ),
+        'u' = list(
+          f1=list(time=0, freq=450, amp=30, width=80),
+          f2=list(time=0, freq=850, amp=40, width=120),
+          f3=list(time=0, freq=2900, amp=30, width=200),
+          f4=list(time=0, freq=4100, amp=30, width=275)
+        ),
+        '0' = list(  # schwa
+          f1=list(time=0, freq=790, amp=30, width=100),
+          f2=list(time=0, freq=1600, amp=30, width=100),
+          f3=list(time=0, freq=3100, amp=30, width=100),
+          f4=list(time=0, freq=3900, amp=30, width=100)
+        )
       ),
-      'o' = list(
-        'f1'=list(time=0, freq=800, amp=30, width=80),
-        'f2'=list(time=0, freq=1100, amp=30, width=80),
-        'f3'=list(time=0, freq=3560, amp=40, width=200),
-        'f4'=list(time=0, freq=5830, amp=50, width=200)
-      ),
-      'i' = list(
-        'f1'=list(time=0, freq=330, amp=30, width=120),
-        'f2'=list(time=0, freq=2700, amp=40, width=120),
-        'f3'=list(time=0, freq=3580, amp=30, width=200),
-        'f4'=list(time=0, freq=4710, amp=30, width=200),
-        'f5'=list(time=0, freq=5800, amp=30, width=200)
-      ),
-      'e' = list(
-        'f1'=list(time=0, freq=930, amp=30, width=100),
-        'f2'=list(time=0, freq=2470, amp=30, width=100),
-        'f3'=list(time=0, freq=3300, amp=25, width=120),
-        'f4'=list(time=0, freq=4200, amp=30, width=200)
-      ),
-      'u' = list(
-        'f1'=list(time=0, freq=450, amp=30, width=80),
-        'f2'=list(time=0, freq=850, amp=40, width=120),
-        'f3'=list(time=0, freq=2900, amp=30, width=200),
-        'f4'=list(time=0, freq=4100, amp=30, width=275)
-      ),
-      '0' = list(  # schwa
-        'f1'=list(time=0, freq=790, amp=30, width=100),
-        'f2'=list(time=0, freq=1600, amp=30, width=100),
-        'f3'=list(time=0, freq=3100, amp=30, width=100),
-        'f4'=list(time=0, freq=3900, amp=30, width=100)
-      ),
-      # consonants
-      'h' = list(  # sh
-        'rolloffNoise'=-13,
-        f1=list(time=0, freq=420, amp=20, width=150),
-        f2=list(time=0, freq=1200, amp=50, width=250),
-        f3=list(time=0, freq=5000, amp=10, width=200),
-        f4=list(time=0, freq=8500, amp=10, width=300)
-      ),
-      's' = list(
-        'rolloffNoise'=0,
-        'f1'=list(time=0, freq=5500, amp=20, width=200), # NB: amplitude in dB for consonants
-        'f2'=list(time=0, freq=7000, amp=30, width=1000),
-        'f3'=list(time=0, freq=9000, amp=30, width=1000)
-      ),
-      'x' = list(  # sh
-        'rolloffNoise'=-9,
-        'f1'=list(time=0, freq=1700, amp=15, width=80),
-        'f2'=list(time=0, freq=2600, amp=30, width=300),
-        'f3'=list(time=0, freq=3400, amp=25, width=200),
-        'f4'=list(time=0, freq=4800, amp=10, width=300)
-      ),
-      'f' = list(
-        'rolloffNoise'=-10,
-        'f1'=list(time=0, freq=1400, amp=30, width=200),
-        'f2'=list(time=0, freq=2000, amp=10, width=80),
-        'f3'=list(time=0, freq=2900, amp=20, width=1000)
-      ),
-      'n' = list( # sNuffle (breathing through the nose)
-        'rolloffNoise'=0,
-        'f1'=list(time=0, freq=5400, amp=25, width=2000)
+      consonants = list(
+        'h' = list(
+          label = 'h',
+          rolloffNoise = -13,
+          f1=list(time=0, freq=420, amp=20, width=150),
+          f2=list(time=0, freq=1200, amp=50, width=250),
+          f3=list(time=0, freq=5000, amp=10, width=200),
+          f4=list(time=0, freq=8500, amp=10, width=300)
+        ),
+        's' = list(
+          label = 's',
+          rolloffNoise = 0,
+          f1=list(time=0, freq=5500, amp=20, width=200), # NB: amplitude in dB for consonants
+          f2=list(time=0, freq=7000, amp=30, width=1000),
+          f3=list(time=0, freq=9000, amp=30, width=1000)
+        ),
+        'x' = list(
+          label = 'sh',
+          rolloffNoise = -9,
+          f1=list(time=0, freq=1700, amp=15, width=80),
+          f2=list(time=0, freq=2600, amp=30, width=300),
+          f3=list(time=0, freq=3400, amp=25, width=200),
+          f4=list(time=0, freq=4800, amp=10, width=300)
+        ),
+        'f' = list(
+          label = 'f',
+          rolloffNoise = -10,
+          f1=list(time=0, freq=1400, amp=30, width=200),
+          f2=list(time=0, freq=2000, amp=10, width=80),
+          f3=list(time=0, freq=2900, amp=20, width=1000)
+        ),
+        'n' = list(
+          label = 'snuffle',  # sNuffle (breathing through the nose)
+          rolloffNoise=0,
+          f1=list(time=0, freq=5400, amp=25, width=2000)
+        )
       )
     )
   ),
@@ -389,9 +403,9 @@ presets = list(
     )
   )
 
-  # # empty container for importing user presets with random names
-  # Custom = list(
-  #
+  # # empty container for adding new speakers
+  # NewSpeaker = list(
+  #   Formants = list()
   # )
 ) # END of presets / dictionaries
 

@@ -478,27 +478,25 @@ matchColumns = function (matrix_short, nCol, padWith = 0) {
 
 #' Add overlapping vectors
 #'
-#' Internal soundgen function.
-#'
-#' Adds two partly overlapping vectors to produce a longer vector. The location
-#' at which vector 2 is pasted is defined by insertionPoint. Algorithm: both
-#' vectors are padded with zeroes to match in length and then added. All NA's
-#' are converted to 0.
+#' Adds two partly overlapping vectors, such as two waveforms, to produce a
+#' longer vector. The location at which vector 2 is pasted is defined by
+#' insertionPoint. Algorithm: both vectors are padded with zeroes to match in
+#' length and then added. All NA's are converted to 0.
 #' @param v1,v2 numeric vectors
 #' @param insertionPoint the index of element in vector 1 at which vector 2 will
 #'   be insterted (any integer, can also be negative)
-#' @keywords internal
+#' @export
 #' @examples
 #' v1 = 1:6
 #' v2 = rep(100, 3)
-#' soundgen:::addVectors(v1, v2, insertionPoint = 5)
-#' soundgen:::addVectors(v1, v2, insertionPoint = -4)
+#' addVectors(v1, v2, insertionPoint = 5)
+#' addVectors(v1, v2, insertionPoint = -4)
 #' # note the asymmetry: insertionPoint refers to the first arg
-#' soundgen:::addVectors(v2, v1, insertionPoint = -4)
+#' addVectors(v2, v1, insertionPoint = -4)
 #'
 #' v3 = rep(100, 15)
-#' soundgen:::addVectors(v1, v3, insertionPoint = -4)
-#' soundgen:::addVectors(v2, v3, insertionPoint = 7)
+#' addVectors(v1, v3, insertionPoint = -4)
+#' addVectors(v2, v3, insertionPoint = 7)
 addVectors = function(v1, v2, insertionPoint) {
   if (!is.numeric(v1)) stop(paste('Non-numeric v1:', head(v1)))
   if (!is.numeric(v2)) stop(paste('Non-numeric v2:', head(v2)))

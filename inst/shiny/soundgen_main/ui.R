@@ -207,12 +207,12 @@ ui = fluidPage(
                                              sidebarPanel(
                                                actionButton(inputId = "noise_flatten", label = "Flatten contour"),
                                                shinyBS:::bsPopover(id='noise_flatten', title=NULL, content='Revert to a flat contour with amplitude equal to the first (left) anchor', placement="right", trigger="hover"),
-                                               sliderInput('noiseTime', 'Breathing start / end, ms', value=c(0, 300), min=-permittedValues['sylLen', 'high'] / 2, max=permittedValues['sylLen', 'high'], step=permittedValues['sylLen','step']),
-                                               shinyBS:::bsPopover(id='noiseTime', title=NULL, content='Timing of respiration noise relative to the voiced component', placement="right", trigger="hover"),
                                                tableOutput("noise_anchors"), width=6
                                              ),
                                              mainPanel(
-                                               plotOutput('plotUnvoiced', click = "plotUnvoiced_click", dblclick = dblclickOpts(id = "plotUnvoiced_dblclick")), width=6
+                                               plotOutput('plotUnvoiced', click = "plotUnvoiced_click", dblclick = dblclickOpts(id = "plotUnvoiced_dblclick")),
+                                               sliderInput('noiseTime', 'Breathing start / end, ms', value=c(0, 300), min=-permittedValues['sylLen', 'high'] / 2, max=permittedValues['sylLen', 'high'], step=permittedValues['sylLen','step']),
+                                               shinyBS:::bsPopover(id='noiseTime', title=NULL, content='Timing of respiration noise relative to the voiced component', placement="right", trigger="hover"), width=6
                                              )
                                            )
                                   )
