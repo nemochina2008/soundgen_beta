@@ -265,7 +265,7 @@ a1 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
 a2 = analyze(s1, samplingRate = 16000, specPlot = NULL, priorMean = NA,
              pitchMethods = 'cep', cepThres = .2, nCands = 2,
              snakeStep = NULL, smooth = 0, interpolTol = Inf,
-             certWeight = 1)  # minimize the absolute distance from center of gravity
+             certWeight = 1)  # minimize deviation from candidates
 par(mfrow = c(1, 1))
 ```
 
@@ -380,6 +380,7 @@ Sometimes we are more interested in the rate of syllables per second and in thei
 Soundgen package contains a function called `segment`, which uses both these approaches: it looks for both syllables and bursts. These two algorithms are not independent: syllables are found first, and then the median length of a syllable becomes the expected interburst interval, guiding burst detection. `segment` operates with amplitude envelopes - smoothed contours of sound intensity. To demonstrate how it works, we will look at the example from `?segment` and go through the control parameters.
 
 ```{r fig.height = 3, fig.width = 7}
+# for info on using soundgen() function, see the vignette on sound synthesis 
 s2 = soundgen(nSyl = 8, sylLen = 50, pauseLen = 70, temperature = 0,
               pitchAnchors = list(time = c(0, 1), value = c(368, 284)),
               noiseAnchors = list(time = c(0, 67, 86, 186), 

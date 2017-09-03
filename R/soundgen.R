@@ -1,5 +1,7 @@
 # build pdf manual (terminal): R CMD Rd2pdf "/home/allgoodguys/Documents/Studying/Lund_PhD/methods/sound-synthesis/soundgen"
 
+# build vignettes: devtools::build_vignettes()
+
 # To install from github (in RStudio):
 # install.packages("devtools", "tuneR", "seewave", "phonTools", "zoo", "shiny", "shinyBS", "reshape2", "mvtnorm", "plyr", "dtw", "grid")
 # library(devtools)

@@ -66,7 +66,7 @@ s = eval(parse(text = presets$Chimpanzee$Scream_conflict))  # screaming chimp
 playme(s)
 ```
 
-Audio playback may fail, depending on your platform and installed software. Soundgen relies on `tuneR` library for audio playback. If `playme` or `soundgen(play = TRUE)` throw an error, save some sound as a vector first: `sound = soundgen(play = FALSE)`. Then try to find a way to play this vector. See the <a href="https://cran.r-project.org/web/packages/seewave/vignettes/seewave_IO.pdf">seewave vignette</a> for an in-depth discussion of audio playback in R. Some tips are also available <a href="http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf"here</a>.
+Audio playback may fail, depending on your platform and installed software. Soundgen relies on `tuneR` library for audio playback. If `playme` or `soundgen(play = TRUE)` throw an error, save some sound as a vector first: `sound = soundgen(play = FALSE)`. Then try to find a way to play this vector. See the <a href="https://cran.r-project.org/web/packages/seewave/vignettes/seewave_IO.pdf">seewave vignette</a> for an in-depth discussion of audio playback in R. Some tips are also available <a href="http://music.informatics.indiana.edu/courses/I546/tuneR_play.pdf">here</a>.
 
 The basic workflow in the Shiny app is as follows:
 
@@ -427,7 +427,7 @@ s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
 
 1.  Any other noise type is added to the voiced component *after* formant filtering, and therefore this noise can be filtered independently of the voiced component. To generate such noise, you can use one of the available presets in the app (for now, only a few human consonants) or specify the formants for the unvoiced component manually in exactly the same format (`formantsNoise`) as for the voiced component (`formants`). 
 
-```{r}
+```{r fig.width = 5, fig.height = 5}
 s = soundgen(noiseAnchors = data.frame(time = c(0, 500), value = c(-40, 20)),
          # specify noise filter ≠ voiced filter to get ~[s]
          formantsNoise = list(
@@ -495,8 +495,8 @@ To achieve a complex vocalization, sometimes it may be necessary - or easier - t
 
 ```{r fig.show = "hold", fig.width = 7, fig.height = 3}
 par(mfrow = c(1, 2))
-sound1 = sin(2 * pi * 1:5000 * 100 / 16000) # pure tone, 300 Hz
-sound2 = sin(2 * pi * 1:5000 * 200 / 16000) # pure tone, 380 Hz
+sound1 = sin(2 * pi * 1:5000 * 100 / 16000) # pure tone, 100 Hz
+sound2 = sin(2 * pi * 1:5000 * 200 / 16000) # pure tone, 200 Hz
 
 # simple concatenation
 comb1 = c(sound1, sound2)
@@ -514,11 +514,11 @@ par(mfrow = c(1, 1))
 
 If you want the two sounds to overlap, you can use `addVectors()`. Note that in this case cross-fading is not appropriate, so it may be safer to fade in-out the sounds to soften the attack. For example, here is how to add chirping of birds in the background:
 
-```{r fig.show = "hold", fig.width = 7, fig.height = 3}
+```{r fig.show = "hold", fig.width = 5, fig.height = 5}
 sound1 = soundgen(sylLen = 700, pitchAnchors = 250:180, formants = 'aaao', 
                   addSilence = 100, play = TRUE)
-sound2 = soundgen(nSyl = 2, sylLen = 150, pitchAnchors = 4300:2200, 
-                  temperature = 0, addSilence = 0, play = TRUE)
+sound2 = soundgen(nSyl = 2, sylLen = 150, pitchAnchors = 4300:2200, attackLen = 10, 
+                  formants = NA, temperature = 0, addSilence = 0, play = TRUE)
 
 insertionTime = .1 + .15  # silence + 150 ms
 samplingRate = 16000
@@ -528,7 +528,7 @@ comb = addVectors(sound1,
                   insertionPoint = insertionPoint)
 # NB: soundgen softens attack by default, so no clicks are produced by overlapping
 playme(comb)
-spectrogram(comb, 16000, windowLength = 15, ylim = c(0, 5))
+spectrogram(comb, 16000, windowLength = 10, ylim = c(0, 5), contrast = .5, colorTheme = 'seewave')
 ```
 
 # Morphing two sounds
