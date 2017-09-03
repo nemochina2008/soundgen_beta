@@ -159,7 +159,7 @@ a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,
 #### Dominant frequency
 Frequency domain: the lowest dominant frequency band, `dom`. 
 
-If the sound is harmonic and relatively noise-free, the spectrum of a frame typically has little energy below F0. It is therefore likely that the first sizeable peak in the spectrum is in fact F0, and all we have to do is choose a reasonable threshold. Natually, there are cases of missing F0 and misleading low-frequency noises. Nevertheless, this simple estimate is often surprisingly accurate, and it may be our best shot when the vocal cords are vibrating in a chaotic fashion (deterministic chaos). For example, sounds such as roars lack clear harmonics but are perceived as voiced, and the lowest dominant frequency band often corresponds to perceived pitch. 
+If the sound is harmonic and relatively noise-free, the spectrum of a frame typically has little energy below F0. It is therefore likely that the first sizable peak in the spectrum is in fact F0, and all we have to do is choose a reasonable threshold. Naturally, there are cases of missing F0 and misleading low-frequency noises. Nevertheless, this simple estimate is often surprisingly accurate, and it may be our best shot when the vocal cords are vibrating in a chaotic fashion (deterministic chaos). For example, sounds such as roars lack clear harmonics but are perceived as voiced, and the lowest dominant frequency band often corresponds to perceived pitch. 
 
 The settings that control `dom` are:
 
@@ -321,7 +321,7 @@ par(mfrow = c(1, 1))
 *TIP Pathfinding ("slow", "fast" or "none") is the only postprocessing module that does not deviate from pitch candidates actually returned by pitch tracking algorithms. Interpolation, snake, and median smoothing produce new pitch values per frame, which may be quite different from any actual candidates*
 
 ## Customization of pitch plotting
-When analyzing a sound, and even when batch-processing an entire folder, it is often helpful to plot both the final pitch contour - perhaps overlaid on a stpectrogram - and individual pitch candidates. You can easily do so from `analyze`, as in all the examples above. The default plotting parameters can also be customized, for example:
+When analyzing a sound, and even when batch-processing an entire folder, it is often helpful to plot both the final pitch contour - perhaps overlaid on a spectrogram - and individual pitch candidates. You can easily do so from `analyze`, as in all the examples above. The default plotting parameters can also be customized, for example:
 
 ```{r fig.height = 5, fig.width = 7}
 a = analyze(s1, samplingRate = 16000, plot = TRUE, priorMean = NA,

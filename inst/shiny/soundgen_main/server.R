@@ -123,7 +123,7 @@ server = function(input, output, session) {
                  !is.null(preset$formantsNoise)) {
         updateTextInput(session, inputId = 'noiseType', value = '')
         updateTextInput(session, inputId = 'formantsNoise',
-                        value = as.character(call('print', preset$formants)[2]))
+                        value = as.character(call('print', preset$formantsNoise)[2]))
         myPars$formantsNoise = preset$formantsNoise
       } else { # if both are NULL
         updateTextInput(session, inputId = 'noiseType', value = 'b')
