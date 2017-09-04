@@ -31,7 +31,7 @@
 #' samplingRate = 16000
 #' noise = soundgen:::generateNoise(len = samplingRate,
 #'   rolloffNoise = 0, samplingRate = samplingRate)
-#' # playme (noise, samplingRate = samplingRate)
+#' # playme(noise, samplingRate = samplingRate)
 #' # 1 s of noise with rolloff -6 dB
 #' noise = soundgen:::generateNoise(len = samplingRate,
 #'   rolloffNoise = -6, samplingRate = samplingRate)
@@ -45,7 +45,7 @@
 #' noise = soundgen:::generateNoise(len = samplingRate, rolloffNoise = -12,
 #'   samplingRate = samplingRate, filterNoise = filterNoise)
 #' # plot (filterNoise, type = 'l')
-#' # playme (noise, samplingRate = samplingRate)
+#' # playme(noise, samplingRate = samplingRate)
 #'
 #' # low-frequency, wind-like noise
 #' filterNoise = soundgen:::getSpectralEnvelope(

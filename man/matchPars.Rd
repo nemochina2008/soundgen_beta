@@ -83,16 +83,19 @@ replacement of - manual optimization. See the vignette on sound generation
 for more information.
 }
 \examples{
+playback = c(TRUE, FALSE)[2]  # set to TRUE to play back the audio from examples
+
 target = soundgen(repeatBout = 3, sylLen = 120, pauseLen = 70,
   pitchAnchors = data.frame(time = c(0, 1), value = c(300, 200)),
-  rolloff = -5, play = TRUE)  # we hope to reproduce this sound
+  rolloff = -5, play = playback)  # we hope to reproduce this sound
 
 # Match pars based on acoustic analysis alone, without any optimization.
 # This *MAY* match temporal structure, pitch, and stationary formants
 m1 = matchPars(target = target,
                samplingRate = 16000,
-               maxIter = 0)  # no optimization, only acoustic analysis
-cand1 = do.call(soundgen, c(m1$pars, list(play = TRUE, temperature = 0)))
+               maxIter = 0,  # no optimization, only acoustic analysis
+               verbose = playback)
+cand1 = do.call(soundgen, c(m1$pars, list(play = playback, temperature = 0)))
 
 # Try to improve the match by optimizing rolloff
 # (this may take a few minutes to run, and the results may vary)
@@ -100,9 +103,10 @@ cand1 = do.call(soundgen, c(m1$pars, list(play = TRUE, temperature = 0)))
 m2 = matchPars(target = target,
                samplingRate = 16000,
                pars = 'rolloff',
-               maxIter = 100)
+               maxIter = 100,
+               verbose = playback)
 # rolloff should be moving from default (-12) to target (-5):
 sapply(m2$history, function(x) x$pars$rolloff)
-cand2 = do.call(soundgen, c(m2$pars, list(play = TRUE, temperature = 0)))
+cand2 = do.call(soundgen, c(m2$pars, list(play = playback, temperature = 0)))
 }
 }

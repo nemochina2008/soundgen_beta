@@ -23,10 +23,10 @@
 #' m = morph(formula1 = list(repeatBout = 2),
 #'           # equivalently: formula1 = 'soundgen(repeatBout = 2)',
 #'           formula2 = presets$Misc$Dog_bark,
-#'           nMorphs = 5, playMorphs = TRUE)
+#'           nMorphs = 5, playMorphs = FALSE)
 #'  # use $formulas to access formulas for each morph, $sounds for waveforms
-#'  m$formulas[[4]]
-#'  playme(m$sounds[[3]])
+#'  # m$formulas[[4]]
+#'  # playme(m$sounds[[3]])
 morph = function(formula1,
                  formula2,
                  nMorphs,

@@ -77,7 +77,7 @@ convert_sec_to_hms = function(time_s) {
 #' Play audio
 #'
 #' Plays an audio file or a numeric vector. This is a simple wrapper for the
-#' functionality provided by tuneR package.
+#' functionality provided by \code{\link[tuneR]{play}}
 #' @param sound a vector of numbers on any scale or a path to a .wav file
 #' @param samplingRate sampling rate (only needed if sound is a vector)
 #' @export
@@ -85,7 +85,8 @@ convert_sec_to_hms = function(time_s) {
 #' \dontrun{playme('~/myfile.wav')}
 #' f0_Hz = 440
 #' sound = sin(2 * pi * f0_Hz * (1:16000) / 16000)
-#' playme(sound, 16000)
+#' # playme(sound, 16000)
+#' # in case of errors, look into tuneR::play()
 playme = function(sound, samplingRate = 16000) {
   # input: a vector of numbers on any scale or a path to a .wav file
   if (class(sound) == 'character') {
@@ -103,9 +104,7 @@ playme = function(sound, samplingRate = 16000) {
   os = Sys.info()[['sysname']]
   if (os == 'Linux' | os == 'linux') {
     p = tuneR::play(soundWave, 'play')
-  } else if (os == 'Windows' | os == 'windows') {
-    p = tuneR::play(soundWave)
-  } else if (os == 'Darwin' | os == 'darwin') {
+  } else {  # windows | darwin
     p = tuneR::play(soundWave)
   }
   if (p > 0) {  # error in sh

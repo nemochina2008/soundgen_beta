@@ -133,7 +133,7 @@ segment = function(x,
     sound,
     f = samplingRate,
     msmooth = c(windowLength_points, overlap),
-    fftw = TRUE,
+    fftw = FALSE,
     plot = FALSE
   )
   timestep = 1000 / samplingRate *

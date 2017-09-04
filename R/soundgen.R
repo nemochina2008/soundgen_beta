@@ -2,6 +2,8 @@
 
 # build vignettes: devtools::build_vignettes()
 
+# devtools::build_win()  # to check on windows
+
 # To install from github (in RStudio):
 # install.packages("devtools", "tuneR", "seewave", "phonTools", "zoo", "shiny", "shinyBS", "reshape2", "mvtnorm", "plyr", "dtw", "grid")
 # library(devtools)
@@ -163,7 +165,9 @@ NULL
 #' # NB: GUI for soundgen is available as a Shiny app.
 #' # Type "soundgen_app()" to start it
 #'
-#' sound = soundgen(play = TRUE)
+#' playback = c(TRUE, FALSE)[2]  # set to TRUE to play back the audio from examples
+#'
+#' sound = soundgen(play = playback)
 #' # spectrogram(sound, 16000, osc = TRUE)
 #' # playme(sound)
 #'
@@ -176,15 +180,15 @@ NULL
 #' # playme(s2)
 
 #' # unless temperature is 0, the sound is different every time
-#' for (i in 1:3) sound = soundgen(play = TRUE, temperature = .2)
+#' for (i in 1:3) sound = soundgen(play = playback, temperature = .2)
 #'
 #' # Bouts versus syllables. Compare:
-#' sound = soundgen(formants = 'uai', repeatBout = 3, play = TRUE)
-#' sound = soundgen(formants = 'uai', nSyl = 3, play = TRUE)
+#' sound = soundgen(formants = 'uai', repeatBout = 3, play = playback)
+#' sound = soundgen(formants = 'uai', nSyl = 3, play = playback)
 #'
 #' # Intonation contours per syllable and globally:
 #' sound = soundgen(nSyl = 5, sylLen = 200, pauseLen = 140,
-#'   play = TRUE, pitchAnchors = data.frame(
+#'   play = playback, pitchAnchors = data.frame(
 #'     time = c(0, 0.65, 1), value = c(977, 1540, 826)),
 #'   pitchAnchorsGlobal = data.frame(time = c(0, .5, 1), value = c(-6, 7, 0)))
 #'
@@ -193,14 +197,14 @@ NULL
 #'   pitchAnchors = data.frame(
 #'     time = c(0, .3, .9, 1), value = c(1200, 1547, 1487, 1154)),
 #'   sylLen = 800,
-#'   play = TRUE, plot = TRUE)
+#'   play = playback, plot = TRUE)
 #'
 #' # Jitter and mouth opening (bark, dog-like)
 #' sound = soundgen(repeatBout = 2, sylLen = 160, pauseLen = 100,
 #'   nonlinBalance = 100, subFreq = 100, subDep = 60, jitterDep = 1,
 #'   pitchAnchors = data.frame(time = c(0, 0.52, 1), value = c(559, 785, 557)),
 #'   mouthAnchors = data.frame(time = c(0, 0.5, 1), value = c(0, 0.5, 0)),
-#'   vocalTract = 5, play = TRUE)
+#'   vocalTract = 5, play = playback)
 soundgen = function(repeatBout = 1,
                     nSyl = 1,
                     sylLen = 300,

@@ -187,11 +187,12 @@ non-linguistic vocalizations. See the vignette on acoustic analysis for
 details.
 }
 \examples{
+\dontrun{
 sound1 = soundgen(sylLen = 900, pitchAnchors = list(
   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
   noiseAnchors = list(time = c(0, 900), value = c(-40, 00)),
   temperature = 0)
-playme(sound1, 16000)
+# playme(sound1, 16000)
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE)
 # or, to improve the quality of postprocessing:
 a1 = analyze(sound1, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
@@ -211,7 +212,7 @@ sound2 = soundgen(sylLen = 900, pitchAnchors = list(
   time = c(0, .3, .8, 1), value = c(300, 900, 400, 2300)),
   noiseAnchors = list(time = c(0, 900), value = c(-40, 20)),
   subDep = 100, jitterDep = 0.5, pitchEffects_amount = 100, temperature = 0)
-playme(sound2, 16000)
+# playme(sound2, 16000)
 a2 = analyze(sound2, samplingRate = 16000, plot = TRUE, pathfinding = 'slow')
 # many candidates are off, but the overall contour should be mostly accurate
 
@@ -223,4 +224,5 @@ a = analyze(sound2, samplingRate = 16000, plot = TRUE,
 
 # Plot pitch candidates w/o a spectrogram
 a = analyze(sound2, samplingRate = 16000, plot = TRUE, specPlot = NA)
+}
 }
